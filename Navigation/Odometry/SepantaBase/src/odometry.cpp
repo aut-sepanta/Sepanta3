@@ -13,25 +13,25 @@
 #include "std_msgs/Int32.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Bool.h"
-#include "athomerobot_msgs/arm.h"
-#include "athomerobot_msgs/omnidata.h"
-#include "athomerobot_msgs/head.h"
-#include "athomerobot_msgs/irsensor.h"
-#include "athomerobot_msgs/motortorques.h"
+#include "sepanta_msgs/arm.h"
+#include "sepanta_msgs/omnidata.h"
+#include "sepanta_msgs/head.h"
+#include "sepanta_msgs/irsensor.h"
+#include "sepanta_msgs/motortorques.h"
 
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/GetMap.h>
 #include <nav_msgs/OccupancyGrid.h>
 
 #include <actionlib/server/simple_action_server.h>
-#include <athomerobot_msgs/sepantaAction.h>
+#include <sepanta_msgs/sepantaAction.h>
 
 #include "math.h"
 using namespace std;
 using namespace boost;
 
 nav_msgs::OccupancyGrid static_map;
-tbb::atomic<int> Compass;
+
 bool first_init = false;
 Eigen::MatrixXf IK_matrix;
 
@@ -63,10 +63,11 @@ float IR[8];
 
 float pid_i_buffer[20] = {0};
 
-typedef actionlib::SimpleActionServer<athomerobot_msgs::sepantaAction> slam_Server;
+typedef actionlib::SimpleActionServer<sepanta_msgs::sepantaAction> slam_Server;
 slam_Server *globalServer;
 
 bool cancel_request = false;
+int Compass =0;
 
 void omnidrive(int x, int y, int w);
 
@@ -376,23 +377,16 @@ void chatterCallback_pose(const geometry_msgs::PoseStamped::ConstPtr &msg)
     slam_position_yaw[2] = ConvertQuatToYaw(pose.orientation); //radians
 }
 
-void chatterCallback_compass(const std_msgs::Int32::ConstPtr &msg)
-{
-    Compass = msg->data;
-}
 
-void chatterCallback_omnispeed(const athomerobot_msgs::omnidata::ConstPtr &msg)
+void chatterCallback_omnispeed(const sepanta_msgs::omnidata::ConstPtr &msg)
 {
     speed_Motor[0] = msg->d0;
     speed_Motor[1] = msg->d1;
     speed_Motor[2] = msg->d2;
     speed_Motor[3] = msg->d3;
-
-   // cout<<speed_Motor[0]<<" "<<speed_Motor[1]<<" "<<speed_Motor[2]<<" "<<speed_Motor[3]<<endl;
-
 }
 
-void chatterCallback_irsensor(const athomerobot_msgs::irsensor::ConstPtr &msg)
+void chatterCallback_irsensor(const sepanta_msgs::irsensor::ConstPtr &msg)
 {
     IR[0] = msg->d0;
     IR[1] = msg->d1;
@@ -404,7 +398,7 @@ void chatterCallback_irsensor(const athomerobot_msgs::irsensor::ConstPtr &msg)
     IR[7] = msg->d7;
 }
 
-void chatterCallback_lasersensor(const athomerobot_msgs::irsensor::ConstPtr &msg)
+void chatterCallback_lasersensor(const sepanta_msgs::irsensor::ConstPtr &msg)
 {
     laser_IR[0] = msg->d0;
     laser_IR[1] = msg->d1;
@@ -474,34 +468,12 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
 void omnidrive(int x,int y,int w)
 {
 
-   athomerobot_msgs::omnidata msg_data;
+   sepanta_msgs::omnidata msg_data;
    msg_data.d0 = x;
    msg_data.d1 = y;
    msg_data.d2 = w;
 
    chatter_pub[0].publish(msg_data);
-}
-
-bool mapCallback(nav_msgs::GetMap::Request &req,nav_msgs::GetMap::Response &res )
-{
-      // // request is empty; we ignore it
-
-      // // = operator is overloaded to make deep copy (tricky!)
-      // res.map = static_map;
-      // ROS_INFO("Sending map");
-      // return true;
-}
-
-void chatterCallback_map(const nav_msgs::OccupancyGrid::ConstPtr &msg)
-{
-   // if ( first_init == false)
-   // {
-   // first_init = true;
-   // static_map.data = msg->data;
-   // static_map.header = msg->header;
-   // static_map.info = msg->info;
-   // ROS_INFO("SEPANTA STATIC MAP INIT DONE");
-   // }
 }
 
 void PreemptThread()
@@ -529,11 +501,11 @@ protected:
 
   ros::NodeHandle nh_;
 
-  actionlib::SimpleActionServer<athomerobot_msgs::sepantaAction> as_;
+  actionlib::SimpleActionServer<sepanta_msgs::sepantaAction> as_;
   std::string action_name_;
 
-  athomerobot_msgs::sepantaFeedback feedback_;
-  athomerobot_msgs::sepantaResult result_;
+  sepanta_msgs::sepantaFeedback feedback_;
+  sepanta_msgs::sepantaResult result_;
 
 public:
 
@@ -550,7 +522,7 @@ public:
   {
   }
 
-  void executeCB(const athomerobot_msgs::sepantaGoalConstPtr &interfacegoal)
+  void executeCB(const sepanta_msgs::sepantaGoalConstPtr &interfacegoal)
   {
 
     boost::thread Preempt_thread(&PreemptThread);
@@ -603,9 +575,9 @@ public:
 
 int main(int argc, char** argv)
 {
-  Compass = 0;
-  ros::init(argc, argv, "odometry_publisher");
-  cout << "SEPANTA ODOMETRY STARTED DONE 17 july" << endl;
+  
+  ros::init(argc, argv, "odometry_base");
+  cout << "SEPANTA III odometry system started" << endl;
 
   ros::Time::init();
   Init();
@@ -615,33 +587,23 @@ int main(int argc, char** argv)
   ros::NodeHandle node_handles[15];
   ros::Subscriber sub_handles[15];
 
-  chatter_pub[0] = node_handles[0].advertise<athomerobot_msgs::omnidata>("AUTROBOTIN_omnidrive", 10);
-  chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odom", 10);
-  chatter_pub[2] = node_handles[2].advertise<sensor_msgs::LaserScan>("scan_filter", 50);
-  chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("AUTROBOTOUT_isrobotmove", 50);
+  chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omni_drive", 10);
+  chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
+  chatter_pub[2] = node_handles[2].advertise<sensor_msgs::LaserScan>("odometry_base/scan_filtered", 50);
+  chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 50);
   //=================================================================================================
-  sub_handles[0] = node_handles[1].subscribe("AUTROBOTOUT_compass", 10, chatterCallback_compass);
-  sub_handles[1] = node_handles[2].subscribe("cmd_vel", 10, chatterCallback_cmd_vel);
-  sub_handles[2] = node_handles[3].subscribe("AUTROBOTOUT_irsensor", 10, chatterCallback_irsensor);
-  sub_handles[3] = node_handles[4].subscribe("AUTROBOTOUT_lasersensor", 10, chatterCallback_lasersensor);
-  sub_handles[4] = node_handles[5].subscribe("AUTROBOTOUT_omnispeed", 10, chatterCallback_omnispeed);
-  sub_handles[6] = node_handles[7].subscribe("/slam_out_pose", 10, chatterCallback_pose);
-  sub_handles[7] = node_handles[8].subscribe("scan", 10, chatterCallback_laser);
-  //sub_handles[8] = node_handles[8].subscribe("AUTROBOTIN_moveglx", 10, chatterCallback_moveglx);
-  //sub_handles[9] = node_handles[9].subscribe("AUTROBOTIN_movegly", 10, chatterCallback_movegly);
-  //sub_handles[10] = node_handles[10].subscribe("/map", 10, chatterCallback_map);
-
- //sub_handles[11] = node_handles[11].subscribe("AUTROBOTIN_omnidrive", 10, chatterCallback_omnidrive);
+ 
+  sub_handles[1] = node_handles[2].subscribe("odometry_base/cmd_vel", 10, chatterCallback_cmd_vel);
+  sub_handles[2] = node_handles[3].subscribe("lowerbodycore/irsensors", 10, chatterCallback_irsensor);
+  sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);
+  sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeeds", 10, chatterCallback_omnispeed);
+  sub_handles[6] = node_handles[7].subscribe("odometry_hector/odometry", 10, chatterCallback_pose);
+  sub_handles[7] = node_handles[8].subscribe("hokuyo/scan", 10, chatterCallback_laser);
 
   tf::TransformBroadcaster odom_broadcaster;
   
-  //ros::NodeHandle n;
-  //ros::ServiceServer service = n.advertiseService("sepanta_static_map", mapCallback);
-
   myactionserver act("sepanta_action");
   
-  //ROS_INFO("SEPANTA ODOMETRY STARTED DONE");
-
   while(ros::ok())
   {
 
@@ -686,7 +648,7 @@ int main(int argc, char** argv)
     std_msgs::Int32 mes;
     mes.data = isrobotmove;
     chatter_pub[3].publish(mes);
-    //======================================================
+    //===================================================
     ros_rate.sleep();
   }
 
