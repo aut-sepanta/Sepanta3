@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   actionlib
   actionlib_msgs 
- 
+  sepanta_msgs
 )
 
 find_package(Boost COMPONENTS system thread date_time REQUIRED)

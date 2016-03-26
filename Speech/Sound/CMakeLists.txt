@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   actionlib
   actionlib_msgs
-  
+  sepanta_msgs
 )
 
 ## Find catkin and any catkin packages
@@ -35,9 +35,13 @@ add_library(pgiticlib_sound
  target_link_libraries(pgiticlib_sound ${OpenCV_LIBS} ${catkin_LIBRARIES})
 
 catkin_package(
+      INCLUDE_DIRS include 
+      CATKIN_DEPENDS message_runtime
 )
 
 
+add_dependencies(soundclient_lib  sepanta_msgs_generate_messages_cpp)
+add_dependencies(pgiticlib_sound  sepanta_msgs_generate_messages_cpp)
 
 add_executable(core_sound src/core_sound.cpp)
 target_link_libraries(core_sound  ${catkin_LIBRARIES} soundclient_lib)

@@ -115,6 +115,7 @@ generate_messages(
     DEPENDENCIES 
     std_msgs 
     actionlib_msgs
+    geometry_msgs
 )
 
-
+catkin_package()

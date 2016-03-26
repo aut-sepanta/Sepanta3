@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   message_generation
   dynamixel_msgs
-  
+  sepanta_msgs
 )
 
 find_package(Boost COMPONENTS system thread date_time REQUIRED)
@@ -38,7 +38,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable(core_tcp src/tcp.cpp)
 target_link_libraries(core_tcp ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(core_tcp sepanta_msgs_generate_messages_cpp)
+add_dependencies(core_tcp ${PROJECT_NAME}_generate_messages_cpp sepanta_msgs_generate_messages_cpp)
 
 
 

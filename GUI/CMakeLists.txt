@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 project(rqt_camera_calib_gui)
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS rqt_gui rqt_gui_cpp image_transport sensor_msgs cv_bridge )
+find_package(catkin REQUIRED COMPONENTS rqt_gui rqt_gui_cpp image_transport sensor_msgs cv_bridge sepanta_msgs)
 
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 

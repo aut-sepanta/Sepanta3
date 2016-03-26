@@ -71,10 +71,8 @@ target_link_libraries(startAudio ${catkin_LIBRARIES} ${Boost_LIBRARIES} /usr/lib
 add_executable(startBody src/startBody.cpp)
 target_link_libraries(startBody ${catkin_LIBRARIES} ${Boost_LIBRARIES}  /usr/lib/x86_64-linux-gnu/libjsoncpp.so)
 
-
-
-
-
-
-
-
+add_dependencies(startRGB ${PROJECT_NAME}_generate_messages_cpp sepanta_msgs_generate_messages_cpp)
+add_dependencies(startIR ${PROJECT_NAME}_generate_messages_cpp sepanta_msgs_generate_messages_cpp)
+add_dependencies(startDepth ${PROJECT_NAME}_generate_messages_cpp sepanta_msgs_generate_messages_cpp)
+add_dependencies(startAudio ${PROJECT_NAME}_generate_messages_cpp sepanta_msgs_generate_messages_cpp)
+add_dependencies(startBody ${PROJECT_NAME}_generate_messages_cpp sepanta_msgs_generate_messages_cpp)
