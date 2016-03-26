@@ -79,16 +79,13 @@ int robot_max_speedy = 300;
 int robot_max_speedw = 250;
 
 //Status
-int voltage_down = 0;
-int voltage_up = 0;
+int voltage = 0;
 bool green_light = false;
 bool red_light = false;
 bool btn_start = false;
 bool btn_stop = false;
 int serial_read_hz = 0;
 int serial_rw_count = 0;
-const int baudrate = 115200;
-const string port_name  = "/dev/serial/by-id/usb-ROBOTIS_CO._LTD._ROBOTIS_Virtual_COM_Port-if00";
 
 void chatterCallback_greenlight(const std_msgs::Bool::ConstPtr &msg)
 {
@@ -157,10 +154,10 @@ void logic()
     ROS_INFO("Sepanta III DCM Started. Version : 2016-March-19");
     while (App_exit == false)
     {
-    	//HZ ?
         serial_rw_count = 0;
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         serial_read_hz =  serial_rw_count;
+        
     }
 }
 
@@ -225,8 +222,43 @@ void Omnidrive(float vx, float vy, float vw)
 
 int control_mode_old = 0;
 
-void Update()
+void Motor_Update()
 {
+    std_msgs::Int32 msg[8];
+
+    if ( init_counter < 20)
+        init_counter++;
+    else
+        robot_init = true;
+
+    for (int i = 0; i < 10; i++)
+    {
+        if ( g_Motortemp[i] != g_Motor[i] && robot_init == true)
+        {
+
+            g_Motortemp[i] = g_Motor[i];
+            msg[i].data = g_Motor[i];
+
+            for ( int m = 0 ; m < 10000000 ; m++ )
+            {
+
+            }
+
+            chatter_pub_motor[i].publish(msg[i]);
+
+
+        }
+
+
+    }
+
+
+    //================================= Global Core Publishers
+
+    std_msgs::Int32 msg_info;
+    msg_info.data = Compass;
+    chatter_pub[3].publish(msg_info);
+
     sepanta_msgs::omnidata omni_info[2];
     omni_info[0].d0 = mobileplatform_motors_read[0];
     omni_info[0].d1 = mobileplatform_motors_read[1];
@@ -262,13 +294,25 @@ void Update()
     ems_msg.data = EMS_STOP;
     chatter_pub[9].publish(ems_msg); //ems stop
 
+    std_msgs::Int32 z_msg;
+    z_msg.data = (p_Motor[8] - 520) * 100;
+    z_msg.data = (int)((float)z_msg.data / 200) + 320;
+
+
+    chatter_pub[2].publish(z_msg); //Z current pos
+
+
+
     std_msgs::Bool btn_msg;
     btn_msg.data = btn_start;
     chatter_pub[11].publish(btn_msg);// btn_start
 
+
+
     std_msgs::Int32 mode_msg;
     mode_msg.data = control_mode;
     chatter_pub[12].publish(mode_msg); //Mode
+
 
     std_msgs::Int32 v1_msg;
     v1_msg.data = voltage_down;
@@ -278,8 +322,11 @@ void Update()
     v2_msg.data = voltage_up;
     chatter_pub[14].publish(v2_msg); //voltage up
     
-}
 
+   
+
+
+}
 
 void serial_logic()
 {
@@ -295,26 +342,31 @@ void serial_logic()
         {
             try
             {
-                serial::Serial my_serial(port_name, baudrate, serial::Timeout::simpleTimeout(500));
+                serial::Serial my_serial("/dev/serial/by-id/usb-ROBOTIS_CO._LTD._ROBOTIS_Virtual_COM_Port-if00", 115200 , serial::Timeout::simpleTimeout(500));
 
                 //Config Serial
                 my_serial.close();
-                my_serial.setBaudrate(baudrate);
+
+                my_serial.setBaudrate(115200);
+
                 serial::parity_t val1 = serial::parity_none;
                 my_serial.setParity(val1);
+
                 serial::stopbits_t val2 = serial::stopbits_one;
                 my_serial.setStopbits(val2);
+
                 serial::bytesize_t val3 = serial::eightbits;
                 my_serial.setBytesize(val3);
-                my_serial.open();
 
-                //=======================================================
+                my_serial.open();
 
                 if (my_serial.isOpen())
                 {
                     ROS_INFO("USB Serial Port OK? : YES");
+
                     result_write[0] = 0;
                     my_serial.write(result_write, 1);
+
                 }
                 else
                 {
@@ -323,7 +375,10 @@ void serial_logic()
                     continue;
                 }
 
+
                 boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
+
 
                 int queuercmpsx[FILTER_QUEU];
                 int queuercmpsy[FILTER_QUEU];
@@ -336,13 +391,15 @@ void serial_logic()
                 int queuerv2[FILTER_QUEU];
 
 
+
                 while (App_exit == false)
                 {
 
                     boost::this_thread::sleep(boost::posix_time::milliseconds(25));
                     serial_rw_count++;
                     /////////////////////////////////////////////////////
-                    //Write Packet
+
+
 
                         result_write[0] = 255;
                         result_write[1] = 190;
@@ -371,8 +428,10 @@ void serial_logic()
 
                         uint8_t read;
 
+
                         while (App_exit == false)
                         {
+
                             my_serial.read(&read, 1);
 
                             if ( read == 255 )
@@ -385,7 +444,8 @@ void serial_logic()
 
                                     if ( read == 255)
                                     {
-                                    	//Read Packet
+
+
                                         my_serial.read(result_read,21);
 
                                         mobileplatform_motors_read[0] = result_read[0];
@@ -508,7 +568,14 @@ void serial_logic()
                                     }
                                 }
                             }
+
+
+
                         }
+
+
+
+
                 }
 
             }//try
@@ -531,48 +598,100 @@ void serial_logic()
 
 int main(int argc, char **argv)
 {
-   
+    init_motors();
+    Compass = 0;
+
     keypad_status_raw = 0;
     keypad_status = 0;
     last_keypad_value = 0;
 
     boost::thread _thread_logic(&logic);
     boost::thread _thread_serial(&serial_logic);
+    boost::thread _thread_rightgrip(&control_rightgrip);
+    boost::thread _thread_leftgrip(&control_leftgrip);
 
-    ros::init(argc, argv, "lowerbodycore");
+    void (*prev_handler)(int);
+    prev_handler = signal (SIGINT, my_handler);
+
+    ros::init(argc, argv, "athomerobot");
 
     ros::NodeHandle node_handles[50];
     ros::Subscriber sub_handles[15];
 
     //===========================================================================================
+    chatter_pub[2] = node_handles[0].advertise<std_msgs::Int32>("AUTROBOTOUT_currentz", 10);
+    chatter_pub[3] = node_handles[1].advertise<std_msgs::Int32>("AUTROBOTOUT_compass", 10);
+    chatter_pub[4] = node_handles[2].advertise<sepanta_msgs::omnidata>("AUTROBOTOUT_omnispeed", 10);
+    chatter_pub[6] = node_handles[3].advertise<sepanta_msgs::irsensor>("AUTROBOTOUT_irsensor", 10);
+    chatter_pub[7] = node_handles[4].advertise<sepanta_msgs::irsensor>("AUTROBOTOUT_lasersensor", 10);
+    chatter_pub[8] = node_handles[5].advertise<std_msgs::Int32>("AUTROBOTOUT_keypad", 10);
+    chatter_pub[9] = node_handles[6].advertise<std_msgs::Int32>("AUTROBOTOUT_EMSSTOP", 10);
 
-    chatter_pub[4] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnispeed", 10);
-    chatter_pub[6] = node_handles[1].advertise<sepanta_msgs::irsensor>("lowerbodycore/irsensors", 10);
-    chatter_pub[7] = node_handles[2].advertise<sepanta_msgs::irsensor>("lowerbodycore/lasersensors", 10);
-    chatter_pub[8] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/joistick", 10);
-    chatter_pub[9] = node_handles[4].advertise<std_msgs::Int32>("lowerbodycore/bntems", 10);
-    chatter_pub[11] = node_handles[5].advertise<std_msgs::Bool>("lowerbodycore/btnstart", 10);
-    chatter_pub[12] = node_handles[6].advertise<std_msgs::Int32>("lowerbodycore/controlmode", 10); //1 down //2 up
-    chatter_pub[13] = node_handles[7].advertise<std_msgs::Int32>("lowerbodycore/voltagedown", 10);
-    chatter_pub[14] = node_handles[8].advertise<std_msgs::Int32>("lowerbodycore/voltageup", 10);
-    sub_handles[1] = node_handles[9].subscribe("lowerbodycore/omnidrive", 10, chatterCallback_omnidrive);
-    sub_handles[2] = node_handles[10].subscribe("scan", 10, chatterCallback_laser);
-    sub_handles[9] = node_handles[11].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
-    sub_handles[10] = node_handles[12].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
-
+    chatter_pub[11] = node_handles[35].advertise<std_msgs::Bool>("AUTROBOTOUT_btnstart", 10);
+    chatter_pub[12] = node_handles[37].advertise<std_msgs::Int32>("AUTROBOTOUT_controlmode", 10); //1 down //2 up
+    chatter_pub[13] = node_handles[38].advertise<std_msgs::Int32>("AUTROBOTOUT_voltagedown", 10);
+    chatter_pub[14] = node_handles[39].advertise<std_msgs::Int32>("AUTROBOTOUT_voltageup", 10);
+    //===========================================================================================
+    sub_handles[0] = node_handles[7].subscribe("/motor_states/dx_port", 10, chatterCallbackw);
+    sub_handles[1] = node_handles[8].subscribe("AUTROBOTIN_omnidrive", 10, chatterCallback_omnidrive);
+    sub_handles[2] = node_handles[9].subscribe("scan", 10, chatterCallback_laser);
+    sub_handles[3] = node_handles[10].subscribe("AUTROBOTIN_arm_right", 10, chatterCallback_arm_right);
+    sub_handles[4] = node_handles[11].subscribe("AUTROBOTIN_desirez", 10, chatterCallback_desireZ);
+    sub_handles[5] = node_handles[12].subscribe("AUTROBOTIN_gripper_right", 10, chatterCallback_loadgripper_right);
+    sub_handles[6] = node_handles[13].subscribe("AUTROBOTIN_arm_left", 10, chatterCallback_arm_left);
+    sub_handles[7] = node_handles[14].subscribe("AUTROBOTIN_gripper_left", 10, chatterCallback_loadgripper_left);
+    sub_handles[8] = node_handles[15].subscribe("AUTROBOTIN_head", 10, chatterCallback_head);
+    sub_handles[9] = node_handles[36].subscribe("AUTROBOTIN_greenlight", 10, chatterCallback_greenlight);
+    sub_handles[10] = node_handles[37].subscribe("AUTROBOTIN_redlight", 10, chatterCallback_redlight);
     //============================================================================================
+    chatter_pub_motor[0] = node_handles[16].advertise<std_msgs::Int32>("/rightshoulderPitch_controller/command", 10);
+    chatter_pub_motor[1] = node_handles[17].advertise<std_msgs::Int32>("/rightshoulderRoll_controller/command", 10);
+    chatter_pub_motor[2] = node_handles[18].advertise<std_msgs::Int32>("/rightelbow_controller/command", 10);
+    chatter_pub_motor[3] = node_handles[19].advertise<std_msgs::Int32>("/rightwristRoll_controller/command", 10);
+    chatter_pub_motor[4] = node_handles[20].advertise<std_msgs::Int32>("/rightwristPitch_controller/command", 10);
+    chatter_pub_motor[5] = node_handles[21].advertise<std_msgs::Int32>("/rightgripper0_controller/command", 10);
+    chatter_pub_motor[6] = node_handles[22].advertise<std_msgs::Int32>("/rightgripper1_controller/command", 10);
+    chatter_pub_motor[7] = node_handles[23].advertise<std_msgs::Int32>("/headTilt_controller/command", 10);
+    chatter_pub_motor[8] = node_handles[24].advertise<std_msgs::Int32>("/Zmotor_controller/command", 10);
+    chatter_pub_motor[9] = node_handles[40].advertise<std_msgs::Int32>("/headPan_controller/command", 10);
+    // chatter_pub_motor[9] = node_handles[25].advertise<std_msgs::Int32>("/leftshoulderRoll_controller/command", 10);
+    // chatter_pub_motor[10] = node_handles[26].advertise<std_msgs::Int32>("/leftelbow_controller/command", 10);
+    // chatter_pub_motor[11] = node_handles[27].advertise<std_msgs::Int32>("/leftwristPitch_controller/command", 10);
+    // chatter_pub_motor[12] = node_handles[28].advertise<std_msgs::Int32>("/leftwristRoll_controller/command", 10);
+    // chatter_pub_motor[13] = node_handles[29].advertise<std_msgs::Int32>("/leftgripper0_controller/command", 10);
+    // chatter_pub_motor[14] = node_handles[30].advertise<std_msgs::Int32>("/headPitch_controller/command", 10);
+    // chatter_pub_motor[15] = node_handles[31].advertise<std_msgs::Int32>("/headRoll_controller/command", 10);
 
-    ros::Rate loop_rate(20);
+    //=============================================================================================
+
+ /*   service_call_torque[0] = node_handles[25].serviceClient<dynamixel_controllers::TorqueEnable>("/rightshoulderPitch_controller/torque_enable");
+    service_call_torque[1] = node_handles[26].serviceClient<dynamixel_controllers::TorqueEnable>("/rightshoulderRoll_controller/torque_enable");
+    service_call_torque[2] = node_handles[27].serviceClient<dynamixel_controllers::TorqueEnable>("/rightelbow_controller/torque_enable");
+    service_call_torque[3] = node_handles[28].serviceClient<dynamixel_controllers::TorqueEnable>("/rightwristRoll_controller/torque_enable");
+    service_call_torque[4] = node_handles[29].serviceClient<dynamixel_controllers::TorqueEnable>("/rightwristPitch_controller/torque_enable");
+    service_call_torque[5] = node_handles[30].serviceClient<dynamixel_controllers::TorqueEnable>("/rightgripper0_controller/torque_enable");
+    service_call_torque[6] = node_handles[31].serviceClient<dynamixel_controllers::TorqueEnable>("/rightgripper1_controller/torque_enable");
+    service_call_torque[7] = node_handles[32].serviceClient<dynamixel_controllers::TorqueEnable>("/headTilt_controller/torque_enable");
+    service_call_torque[8] = node_handles[33].serviceClient<dynamixel_controllers::TorqueEnable>("/Zmotor_controller/torque_enable");*/
+
+    //================================================================================================
+    ros::Rate loop_rate(15);
 
     while (ros::ok() && App_exit == false)
     {
-    	//update publish loop
-        Update();
+        Motor_Update();
+      //  Motor_Update_services();
         ros::spinOnce();
         loop_rate.sleep();
     }
 
     App_exit = true;
+
+    _thread_leftgrip.interrupt();
+    _thread_leftgrip.join();
+
+    _thread_rightgrip.interrupt();
+    _thread_rightgrip.join();
 
     _thread_logic.interrupt();
     _thread_logic.join();
