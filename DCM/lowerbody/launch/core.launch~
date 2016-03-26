@@ -1,0 +1,10 @@
+<launch>
+  
+     <node name="map_server" pkg="map_server" type="map_server" />
+     <node name="athomerobot" pkg="athomerobot" type="athomerobot" />
+     <node name="odometry" pkg="athomerobot" type="odometry" />
+     <node name="slam" pkg="athomerobot" type="slam" />
+     <node name="slam_client" pkg="athomerobot" type="slam_client" />
+     <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
+     
+</launch>

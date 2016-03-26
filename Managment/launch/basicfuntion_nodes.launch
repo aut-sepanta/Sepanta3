@@ -1,0 +1,15 @@
+<launch>
+  
+     <node name="build_pcd_list_pic" pkg="pick_and_place" type="build_pcd_list_pic" />
+     <node name="what_did_you_say_logic" pkg="what_did_you_say" type="what_did_you_say_logic" />
+     <node name="logic_pick_place" pkg="pick_and_place" type="logic_pick_place" />
+     <node name="avoidthat" pkg="avoidthat" type="avoidthat" />
+     
+     <node name="grip_pick_place" pkg="pick_and_place" type="grip_pick_place" />
+     <node name="object_recognition_shotcolor" pkg="pick_and_place" type="object_recognition_shotcolor" />
+     <node name="find_person" pkg="what_did_you_say" type="find_person" />
+     
+     <node name="client_stop" pkg="basic_function" type="client_stop" />
+
+     
+</launch>

@@ -1,0 +1,33 @@
+<launch>
+
+    <arg name="base_frame_name" default="base_link"/>
+    <arg name="map_frame_name" default="map"/>
+    <arg name="odom_frame_name" default="odom"/>
+
+    <arg name="laser_frame_name" default="laser_link"/>
+    
+    <arg name="laser_topic_name" default="scan"/>
+
+   
+
+    <node pkg="hokuyo_node" type="hokuyo_node" name="hokuyo_node" output="screen">
+<remap from="scan"                                  to="$(arg laser_topic_name)"/>
+<remap from="diagnostics"                           to="diagnostics"/>
+<param name="~intensity"                            type="bool"          value="false"/>        
+<param name="~port"                          type="str"  value="/dev/serial/by-id/usb-Hokuyo_Data_Flex_for_USB_URG-Series_USB_Driver-if00"/>
+<param name="~frame_id"                             type="str"          value="$(arg laser_frame_name)"/>
+</node> 
+
+
+   
+    <node pkg="tf" type="static_transform_publisher" name="broadcaster_laserscan_base_to_laser" output="screen"
+        args="0.27 0 0 0 0 0 1 $(arg base_frame_name) $(arg laser_frame_name) 100"
+    />
+    
+ <node pkg="tf" type="static_transform_publisher" name="broadcaster_map_map_link" output="screen"
+        args="0 0 0 0 0 0 1 map map_link 100"
+    />
+
+   
+
+</launch>

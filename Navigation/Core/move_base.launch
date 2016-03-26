@@ -1,0 +1,14 @@
+<launch>
+  <master auto="start"/>
+  
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find athomerobot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find athomerobot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find athomerobot)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find athomerobot)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find athomerobot)/param/base_local_planner_params.yaml" command="load" />
+  </node>
+  
+  <!-- node name="rviz" pkg="rviz" type="rviz" args="-d $(find athomerobot)/rviz/full.rviz" /-->
+  
+</launch> 

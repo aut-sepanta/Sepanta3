@@ -1,0 +1,28 @@
+<library path="lib/librqt_camera_calib_gui">
+  <class name="rqt_camera_calib_gui/CameraCalibView" type="rqt_camera_calib_gui::CameraCalibView" base_class_type="rqt_gui_cpp::Plugin">
+    <description>
+      An example Python GUI plugin to create a great user interface.
+    </description>
+    <qtgui>
+      
+<!--      <group>
+        <label>Autman</label>
+      </group>
+      <group>
+        <label>Calibration</label>
+      </group>
+-->
+
+     <group>
+        <label>Visualization</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to visualization.</statustip>
+      </group>
+
+
+      <label>Camera Calibration Plugin</label>
+      <icon type="theme">image-x-generic</icon>
+      <statustip>Great user interface to provide real value.</statustip>
+    </qtgui>
+  </class>
+</library>

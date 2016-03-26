@@ -1,0 +1,5 @@
+string command
+string id
+int32 value
+---
+string result

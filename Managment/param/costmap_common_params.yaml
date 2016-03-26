@@ -1,0 +1,13 @@
+
+obstacle_range: 3.5
+raytrace_range: 4.0
+#robot_radius: 0.25
+footprint: [[0.4, 0.3], [0.4, -0.3], [-0.3, -0.3],[-0.3, 0.3]]
+inflation_radius: 0.8
+
+# voxel map configuration; z-voxels 0 are filled by bumpers and 1 by laser scan (kinect)
+
+observation_sources: scan 
+
+scan: {data_type: LaserScan, topic: scan , marking: true, clearing: true , observation_persistence: 0}
+
