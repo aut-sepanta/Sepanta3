@@ -1,0 +1,30 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <!-- Load controller configuration to parameter server -->
+    <rosparam file="$(find dynamixel_tutorials)/config/dynamixel_joint_controllers.yaml" command="load"/>
+            
+    <!-- start specified joint controllers -->
+    <node name="dynamixel_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port=dx_port
+                headYaw_controller
+                headPitch_controller
+                rightshoulderYawm_controller
+                rightshoulderPitchm_controller
+                rightshoulderRoll_controller
+                rightelbowPitch_controller
+                rightelbowRoll_controller
+                rightwristPitch_controller
+                rightwristRoll_controller
+                rightgripper_controller
+                leftshoulderYawm_controller
+                leftshoulderPitchm_controller
+                leftshoulderRoll_controller
+                leftelbowPitch_controller
+                leftelbowRoll_controller
+                leftwristPitch_controller
+                leftwristRoll_controller
+                leftgripper_controller"
+          output="screen"/>
+</launch>

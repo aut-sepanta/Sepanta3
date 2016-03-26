@@ -1,0 +1,17 @@
+#include <ros/ros.h>
+#include <upperbodycore_msgs/sound.h>
+
+class client_sound
+{
+	private:
+	     ros::ServiceClient service_sound;
+	     ros::NodeHandle nh_[1];
+	public:
+	    client_sound();
+	    ~client_sound();
+	    void play(std::string path);
+	    void stop();
+	    void resume();
+	    void pause();
+	    void set_default_path(std::string path);
+};

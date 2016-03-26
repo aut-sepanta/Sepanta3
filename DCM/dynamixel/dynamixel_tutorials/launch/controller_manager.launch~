@@ -1,0 +1,17 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+    <node name="dynamixel_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam>
+            namespace: dxl_manager
+            serial_ports:
+                dx_port:
+                    port_name: "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A603KZAR-if00-port0"
+                    baud_rate: 1000000
+                    min_motor_id: 99
+                    max_motor_id: 130
+                    update_rate: 10
+        </rosparam>
+    </node>
+</launch>
+

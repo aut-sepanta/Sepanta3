@@ -1,0 +1,256 @@
+waist_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: waist
+    joint_speed: 20
+
+    motor:
+        id: 121
+        init: 2190
+        min: 1350
+        max: 3030
+
+headYaw_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: headYaw
+    joint_speed: 20
+
+    motor:
+        id: 123
+        init: 3555
+        min: 3083
+        max: 4027
+
+headPitch_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: headPitch
+    joint_speed: 20
+
+    motor:
+        id: 122
+        init: 1020
+        min: 1020
+        max: 1157
+
+rightshoulderYawm_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightshoulderYawm
+    joint_speed: 10
+
+    motor:
+        id: 111
+        init: 2630
+        min: 1660
+        max: 2940
+
+rightshoulderPitchm_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightshoulderPitchm
+    joint_speed: 5
+
+    motor:
+        id: 113
+        init: 3360
+        min: 2590
+        max: 3370
+
+rightshoulderRoll_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightshoulderRoll
+    joint_speed: 20
+    motor:
+        id: 115
+        init: 1540
+        min: 760
+        max: 2340
+
+rightelbowPitch_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightelbowPitch
+    joint_speed: 20
+    motor:
+        id: 116  
+        init: 1107
+        min: 1107
+        max: 2330
+ 
+rightelbowRoll_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightelbowRoll
+    joint_speed: 20
+    motor:
+        id: 117
+        init: 2594
+        min: 1400
+        max: 3600
+
+rightwristPitch_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightwristPitch
+    joint_speed: 20
+    motor:
+        id: 118
+        init: 2217
+        min: 1700
+        max: 3288
+
+
+rightwristRoll_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightwristRoll
+    joint_speed: 20
+    motor:
+        id: 119
+        init: 1442
+        min: 1322
+        max: 2298
+        
+rightgripper_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: rightgripper
+    joint_speed: 20
+    motor:
+        id: 120
+        init: 3308
+        min: 2140
+        max: 3308
+        
+ 
+leftshoulderYawm_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftshoulderYawm
+    joint_speed: 5
+
+    motor:
+        id: 101
+        init: 1380
+        min: 1095
+        max: 2390
+
+leftshoulderPitchm_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftshoulderPitchm
+    joint_speed: 10
+
+    motor:
+        id: 103
+        init: 981
+        min: 940
+        max: 1660
+
+leftshoulderRoll_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftshoulderRoll
+    joint_speed: 10
+    motor:
+        id: 105
+        init: 2432
+        min: 1800
+        max: 3800
+
+leftelbowPitch_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftelbowPitch
+    joint_speed: 20
+    motor:
+        id: 106
+        init: 1356
+        min: 1356
+        max: 2500
+
+leftelbowRoll_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftelbowRoll
+    joint_speed: 10
+    motor:
+        id: 107
+        init: 1914
+        min: 800
+        max: 2700
+
+leftwristPitch_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftwristPitch
+    joint_speed: 10
+    motor:
+        id: 108
+        init: 1291
+        min: 400
+        max: 2200
+
+leftwristRoll_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftwristRoll
+    joint_speed: 10
+    motor:
+        id: 109
+        init: 991
+        min: 900
+        max: 1800
+        
+leftgripper_controller:
+    controller:
+        package: dynamixel_controllers
+        module: joint_position_controller
+        type: JointPositionController
+    joint_name: leftgripper
+    joint_speed: 10
+    motor:
+        id: 110
+        init: 2177
+        min: 2177
+        max: 3200
+

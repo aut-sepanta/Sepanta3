@@ -1,0 +1,44 @@
+#include <ros/ros.h>
+#include <upperbodycore_msgs/rampSrv.h>
+#include <upperbodycore_msgs/ramp_pos.h>
+#include <upperbodycore_msgs/patterns_name.h>
+#include <upperbodycore_msgs/RampPatternsID.h>
+
+using namespace std;
+struct position
+{
+	float x;
+	float y;
+	float z;
+	double slop;
+	string pattern;
+};
+class client_rampStairDetection
+{
+	private:
+		ros::NodeHandle nh_[5];
+		ros::ServiceClient service_ramp_stair;
+		ros::ServiceClient service_patterns_ID;
+		ros::Subscriber ramp_sub;
+		ros::Subscriber stair_sub;
+		ros::Subscriber patternsname_sub;
+		ros::Publisher patternsname_Publisher;
+	    	ros::Publisher LogPublisher;
+		upperbodycore_msgs::patterns_name patternsname;
+		upperbodycore_msgs::RampPatternsID ramppatternsID,stairpatternsID;
+		position ramp_pos,stair_pos;
+		void rampCallBack(const upperbodycore_msgs::ramp_pos msg);
+		void stairCallBack(const upperbodycore_msgs::ramp_pos msg);
+				
+	public:
+	client_rampStairDetection();
+	~client_rampStairDetection();
+        void loadPattern(vector<string> filename);
+	void setRampPatternAndSize(int id0,int id1,int stairsize);
+	void setStairPatternAndSize(int id0,int id1,int stairsize);
+	position getRampPos();
+	position getStairPos();
+	void enable();
+	void disable();
+};
+
