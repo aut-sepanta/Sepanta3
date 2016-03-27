@@ -26,19 +26,25 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
+#ifndef drawinterface_h__
+#define drawinterface_h__
 
-#include <ros/ros.h>
+#include <Eigen/Core>
+#include <string>
 
-#include "HectorMappingRos.h"
+class DrawInterface{
+public:
+  virtual void setNamespace(const std::string& ns) = 0;
 
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "hector_slam");
+  virtual void drawPoint(const Eigen::Vector2f& pointWorldFrame) = 0;
+  virtual void drawArrow(const Eigen::Vector3f& poseWorld) = 0;
+  virtual void drawCovariance(const Eigen::Vector2f& mean, const Eigen::Matrix2f& cov) = 0;
+  virtual void drawCovariance(const Eigen::Vector3f& mean, const Eigen::Matrix3f& covMatrix) = 0;
 
-  HectorMappingRos sm;
+  virtual void setScale(double scale) = 0;
+  virtual void setColor(double r, double g, double b, double a = 1.0) = 0;
 
-  ros::spin();
+  virtual void sendAndResetData() = 0;
+};
 
-  return(0);
-}
-
+#endif

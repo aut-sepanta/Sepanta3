@@ -1,5 +1,5 @@
 //=================================================================================================
-// Copyright (c) 2011, Stefan Kohlbrecher, TU Darmstadt
+// Copyright (c) 2012, Stefan Kohlbrecher, TU Darmstadt
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,26 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
+#ifndef _MAPWRITERINTERFACE_H__
+#define _MAPWRITERINTERFACE_H__
 
-#include <ros/ros.h>
+#include <vector>
+#include <Eigen/Core>
 
-#include "HectorMappingRos.h"
+namespace hector_geotiff{
 
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "hector_slam");
+class MapWriterInterface{
+public:
+  struct Color {
+    Color(unsigned int r, unsigned int g, unsigned int b) : r(r), g(g), b(b) {}
+    unsigned int r,g,b;
+  };
 
-  HectorMappingRos sm;
+  virtual std::string getBasePathAndFileName() const = 0;
+  virtual void drawObjectOfInterest(const Eigen::Vector2f& coords, const std::string& txt, const Color& color) = 0;
+  virtual void drawPath(const Eigen::Vector3f& start, const std::vector<Eigen::Vector2f>& points) = 0;
+};
 
-  ros::spin();
-
-  return(0);
 }
 
+#endif

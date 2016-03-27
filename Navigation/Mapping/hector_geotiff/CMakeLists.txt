@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hector_mapping)
+project(hector_geotiff)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp nav_msgs visualization_msgs tf message_filters laser_geometry tf_conversions message_generation)
+find_package(catkin REQUIRED COMPONENTS cmake_modules hector_map_tools hector_nav_msgs nav_msgs pluginlib roscpp std_msgs)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS thread signals)
-include_directories(${Boost_INCLUDE_DIRS})
+# find_package(Boost REQUIRED COMPONENTS system)
+
+find_package(Qt4 4.6 COMPONENTS QtCore QtGui REQUIRED)
 
 find_package(Eigen REQUIRED)
-include_directories(${EIGEN_INCLUDE_DIRS})
-add_definitions(${EIGEN_DEFINITIONS})
+include_directories(${Eigen_INCLUDE_DIRS})
+add_definitions(${Eigen_DEFINITIONS})
+
+include(${QT_USE_FILE})
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -25,11 +28,11 @@ add_definitions(${EIGEN_DEFINITIONS})
 #######################################
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  HectorDebugInfo.msg
-  HectorIterData.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -39,9 +42,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-)
+# generate_messages(
+#   DEPENDENCIES
+#   hector_nav_msgs#   nav_msgs#   std_msgs
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -54,9 +58,9 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES hector_mapping
-  CATKIN_DEPENDS roscpp nav_msgs visualization_msgs tf message_filters laser_geometry tf_conversions message_runtime
-  DEPENDS Eigen
+  LIBRARIES geotiff_writer
+  CATKIN_DEPENDS hector_map_tools hector_nav_msgs nav_msgs pluginlib roscpp std_msgs
+  DEPENDS Eigen QT
 )
 
 ###########
@@ -65,36 +69,22 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include include/hector_slam_lib)
+include_directories(include include/hector_geotiff)
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a cpp library
-# add_library(hector_mapping
-#   src/${PROJECT_NAME}/hector_mapping.cpp
-# )
+add_library(geotiff_writer src/geotiff_writer/geotiff_writer.cpp)
+target_link_libraries(geotiff_writer ${catkin_LIBRARIES} ${QT_LIBRARIES})
+add_dependencies(geotiff_writer ${catkin_EXPORTED_TARGETS})
 
-## Declare a cpp executable
-add_executable(hector_mapping
-  src/HectorDebugInfoProvider.h
-  src/HectorDrawings.h
-  src/HectorMappingRos.h
-  src/HectorMappingRos.cpp
-  src/main.cpp
-  src/PoseInfoContainer.cpp
-  src/PoseInfoContainer.h
-)
+add_executable(geotiff_saver src/geotiff_saver.cpp)
+target_link_libraries(geotiff_saver geotiff_writer)
+add_dependencies(geotiff_saver ${catkin_EXPORTED_TARGETS})
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-add_dependencies(hector_mapping hector_mapping_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(hector_mapping
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+add_executable(geotiff_node src/geotiff_node.cpp)
+target_link_libraries(geotiff_node geotiff_writer)
+add_dependencies(geotiff_node ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -111,7 +101,7 @@ target_link_libraries(hector_mapping
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS hector_mapping
+install(TARGETS geotiff_writer geotiff_saver geotiff_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -130,6 +120,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
 install(DIRECTORY launch/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch/
 )
@@ -139,7 +130,7 @@ install(DIRECTORY launch/
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_hector_mapping.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_hector_geotiff.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

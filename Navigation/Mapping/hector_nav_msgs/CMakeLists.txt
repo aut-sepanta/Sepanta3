@@ -1,18 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(hector_mapping)
+project(hector_nav_msgs)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp nav_msgs visualization_msgs tf message_filters laser_geometry tf_conversions message_generation)
+find_package(catkin REQUIRED COMPONENTS nav_msgs geometry_msgs message_generation)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS thread signals)
-include_directories(${Boost_INCLUDE_DIRS})
-
-find_package(Eigen REQUIRED)
-include_directories(${EIGEN_INCLUDE_DIRS})
-add_definitions(${EIGEN_DEFINITIONS})
+# find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -25,22 +20,26 @@ add_definitions(${EIGEN_DEFINITIONS})
 #######################################
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  HectorDebugInfo.msg
-  HectorIterData.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  GetDistanceToObstacle.srv
+  GetRecoveryInfo.srv
+  GetRobotTrajectory.srv
+  GetSearchPosition.srv
+  GetNormal.srv
+)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  nav_msgs std_msgs
 )
 
 ###################################
@@ -53,10 +52,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES hector_mapping
-  CATKIN_DEPENDS roscpp nav_msgs visualization_msgs tf message_filters laser_geometry tf_conversions message_runtime
-  DEPENDS Eigen
+#  INCLUDE_DIRS include
+#  LIBRARIES hector_nav_msgs
+  CATKIN_DEPENDS nav_msgs geometry_msgs message_runtime
+#  DEPENDS
 )
 
 ###########
@@ -65,36 +64,27 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include include/hector_slam_lib)
+# include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(hector_mapping
-#   src/${PROJECT_NAME}/hector_mapping.cpp
+# add_library(hector_nav_msgs
+#   src/${PROJECT_NAME}/hector_nav_msgs.cpp
 # )
 
 ## Declare a cpp executable
-add_executable(hector_mapping
-  src/HectorDebugInfoProvider.h
-  src/HectorDrawings.h
-  src/HectorMappingRos.h
-  src/HectorMappingRos.cpp
-  src/main.cpp
-  src/PoseInfoContainer.cpp
-  src/PoseInfoContainer.h
-)
+# add_executable(hector_nav_msgs_node src/hector_nav_msgs_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(hector_mapping hector_mapping_generate_messages_cpp)
+# add_dependencies(hector_nav_msgs_node hector_nav_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(hector_mapping
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+# target_link_libraries(hector_nav_msgs_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -111,18 +101,18 @@ target_link_libraries(hector_mapping
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS hector_mapping
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS hector_nav_msgs hector_nav_msgs_node
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -130,16 +120,13 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch/
-)
 
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_hector_mapping.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_hector_nav_msgs.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

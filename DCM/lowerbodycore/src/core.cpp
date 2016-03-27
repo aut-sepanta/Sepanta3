@@ -47,16 +47,7 @@ void Omnidrive(float vx, float vy, float w);
 
 bool robot_init = false;
 bool App_exit = false;
-int init_counter = 0;
 int control_mode = 0;
-sig_atomic_t signaled = 0;
-
-int g_Motor[10] = {0};
-int g_Motortemp[10] = {0};
-int s_Motor[10] = {0};
-int p_Motor[10] = {0};
-float l_Motor[10] = {0};
-int v_Motor[10] = {0};
 
 float L = 50; //cm
 int mobileplatform_motors_write[4] = {128, 128, 128, 128};
@@ -79,6 +70,7 @@ int robot_max_speedy = 300;
 int robot_max_speedw = 250;
 
 //Status
+int control_mode_old = 0;
 int voltage_down = 0;
 int voltage_up = 0;
 bool green_light = false;
@@ -104,9 +96,7 @@ void chatterCallback_redlight(const std_msgs::Bool::ConstPtr &msg)
 
 void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
-
     int val_count = msg->ranges.size(); //512
-    //cout<<val_count<<" "<<endl;
 
     float read = 0;
     int valid_count = 0;
@@ -135,14 +125,9 @@ void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
 
         laser_IR[7 - i] = (int)laser_IR[7 - i];
 
-
-
         //cout<<i<<" "<<valid_count<<endl;
     }
 
-
-    // cout << Zsensor << "\t" <<endl;
-    //<< Compass << "\t" << laser_IR[0] << "\t" << laser_IR[1] << "\t" << laser_IR[2] << "\t" << laser_IR[3] << "\t" << laser_IR[4] << "\t" << laser_IR[5] << "\t" << laser_IR[6] << "\t" << laser_IR[7] << "\t" << endl;
 }
 
 void chatterCallback_omnidrive(const sepanta_msgs::omnidata::ConstPtr &msg)
@@ -157,23 +142,18 @@ void logic()
     ROS_INFO("Sepanta III DCM Started. Version : 2016-March-19");
     while (App_exit == false)
     {
-    	//HZ ?
+        //HZ ?
         serial_rw_count = 0;
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         serial_read_hz =  serial_rw_count;
     }
 }
 
-float vx_array[50];
-float vy_array[50];
-float vz_array[50];
-
 void Omnidrive(float vx, float vy, float vw)
 {
-
     vw = -vw / 100;
 
-    //speed limits
+    //Speed Limits
     if ( vx > robot_max_speedx ) vx = robot_max_speedx;
     if ( vy > robot_max_speedy ) vy = robot_max_speedy;
     if ( vw > robot_max_speedw ) vw = robot_max_speedw;
@@ -202,11 +182,8 @@ void Omnidrive(float vx, float vy, float vw)
     if (w4 > 254) w4 = 254;
     if (w4 < 1) w4 = 1;
 
-    //write to motors with cm9
-
-    if ( EMS_STOP == 0) //check for emergency stop .... !
+    if ( EMS_STOP == 0)
     {
-        cout<<"send "<<w1<<" "<<w2<<" "<<w3<<" "<<w4<<endl;
         mobileplatform_motors_write[0] = w4;
         mobileplatform_motors_write[1] = w3;
         mobileplatform_motors_write[2] = w1;
@@ -214,8 +191,7 @@ void Omnidrive(float vx, float vy, float vw)
     }
     else
     {
-        cout<<"EMS STOP"<<endl;
-        //emergency stop
+        ROS_WARN("Check Emergency Stop Button , OmniDrive(0,0,0)");
         mobileplatform_motors_write[0] = 128;
         mobileplatform_motors_write[1] = 128;
         mobileplatform_motors_write[2] = 128;
@@ -223,18 +199,17 @@ void Omnidrive(float vx, float vy, float vw)
     }
 }
 
-int control_mode_old = 0;
-
 void Update()
 {
-    sepanta_msgs::omnidata omni_info[2];
-    omni_info[0].d0 = mobileplatform_motors_read[0];
-    omni_info[0].d1 = mobileplatform_motors_read[1];
-    omni_info[0].d2 = mobileplatform_motors_read[2];
-    omni_info[0].d3 = mobileplatform_motors_read[3];
+    //Publisg Omni Speed
+    sepanta_msgs::omnidata omni_info;
+    omni_info.d0 = mobileplatform_motors_read[0];
+    omni_info.d1 = mobileplatform_motors_read[1];
+    omni_info.d2 = mobileplatform_motors_read[2];
+    omni_info.d3 = mobileplatform_motors_read[3];
+    chatter_pub[4].publish(omni_info);
 
-    chatter_pub[4].publish(omni_info[0]);
-
+    //Publisg IR Sensors
     sepanta_msgs::irsensor sensor_info;
     sensor_info.d0 = IR[0];
     sensor_info.d1 = IR[1];
@@ -243,6 +218,7 @@ void Update()
     sensor_info.d4 = IR[4];
     chatter_pub[6].publish(sensor_info);
 
+    //Publish Laser Sensors
     sepanta_msgs::irsensor sensor_info_laser;
     sensor_info_laser.d0 = (int)laser_IR[0];
     sensor_info_laser.d1 = (int)laser_IR[1];
@@ -254,30 +230,35 @@ void Update()
     sensor_info_laser.d7 = (int)laser_IR[7];
     chatter_pub[7].publish(sensor_info_laser);
 
+    //Publisg Keypad
     std_msgs::Int32 key_msg;
     key_msg.data = keypad_status;
     chatter_pub[8].publish(key_msg); //keypad
 
+    //Publish EMS_Stop
     std_msgs::Int32 ems_msg;
     ems_msg.data = EMS_STOP;
     chatter_pub[9].publish(ems_msg); //ems stop
 
+    //Publisg Btn_Start
     std_msgs::Bool btn_msg;
     btn_msg.data = btn_start;
     chatter_pub[11].publish(btn_msg);// btn_start
 
+    //Publisg Mode
     std_msgs::Int32 mode_msg;
     mode_msg.data = control_mode;
     chatter_pub[12].publish(mode_msg); //Mode
 
+    //Publish Voltage Down
     std_msgs::Int32 v1_msg;
     v1_msg.data = voltage_down;
     chatter_pub[13].publish(v1_msg); //voltage down
 
+    //Publish Voltage Up
     std_msgs::Int32 v2_msg;
     v2_msg.data = voltage_up;
     chatter_pub[14].publish(v2_msg); //voltage up
-    
 }
 
 
@@ -344,183 +325,183 @@ void serial_logic()
                     /////////////////////////////////////////////////////
                     //Write Packet
 
-                        result_write[0] = 255;
-                        result_write[1] = 190;
-                        result_write[2] = 255;
-                        result_write[3] = 100;
-                        result_write[4] = 40;
-                        result_write[5] = mobileplatform_motors_write[0];
-                        result_write[6] = mobileplatform_motors_write[1];
-                        result_write[7] = mobileplatform_motors_write[2];
-                        result_write[8] = mobileplatform_motors_write[3];
+                    result_write[0] = 255;
+                    result_write[1] = 190;
+                    result_write[2] = 255;
+                    result_write[3] = 100;
+                    result_write[4] = 40;
+                    result_write[5] = mobileplatform_motors_write[0];
+                    result_write[6] = mobileplatform_motors_write[1];
+                    result_write[7] = mobileplatform_motors_write[2];
+                    result_write[8] = mobileplatform_motors_write[3];
 
-                        char green = 25;
-                        char red = 25;
-                        if ( green_light ) green = 75;
-                        if ( red_light   ) red = 75;
+                    char green = 25;
+                    char red = 25;
+                    if ( green_light ) green = 75;
+                    if ( red_light   ) red = 75;
 
-                        result_write[9] = 75;
-                        result_write[10] = 75;
+                    result_write[9] = 75;
+                    result_write[10] = 75;
 
-                        my_serial.write(result_write, 11);
-                        my_serial.flush();
+                    my_serial.write(result_write, 11);
+                    my_serial.flush();
 
-                        ROS_INFO("USB Serial Write");
+                    ROS_INFO("USB Serial Write");
 
-                        boost::this_thread::sleep(boost::posix_time::milliseconds(25));
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(25));
 
-                        uint8_t read;
+                    uint8_t read;
 
-                        while (App_exit == false)
+                    while (App_exit == false)
+                    {
+                        my_serial.read(&read, 1);
+
+                        if ( read == 255 )
                         {
                             my_serial.read(&read, 1);
 
-                            if ( read == 255 )
+                            if ( read == 190 )
                             {
                                 my_serial.read(&read, 1);
 
-                                if ( read == 190 )
+                                if ( read == 255)
                                 {
-                                    my_serial.read(&read, 1);
+                                    //Read Packet
+                                    my_serial.read(result_read,21);
 
-                                    if ( read == 255)
+                                    mobileplatform_motors_read[0] = result_read[0];
+                                    mobileplatform_motors_read[1] = result_read[1];
+                                    mobileplatform_motors_read[2] = result_read[2];
+                                    mobileplatform_motors_read[3] = result_read[3];
+
+                                    if (  result_read[4] != 0)
                                     {
-                                    	//Read Packet
-                                        my_serial.read(result_read,21);
-
-                                        mobileplatform_motors_read[0] = result_read[0];
-                                        mobileplatform_motors_read[1] = result_read[1];
-                                        mobileplatform_motors_read[2] = result_read[2];
-                                        mobileplatform_motors_read[3] = result_read[3];
-
-                                        if (  result_read[4] != 0)
-                                        {
-                                            keypad_status = result_read[4];
-                                        }
-
-                                       int x = ( result_read[6] << 8 ) + ( result_read[5] ) ; //Compass (2 byte)
-                                       int y = ( result_read[8] << 8 ) + ( result_read[7] ) ; //Compass (2 byte)
-                                        
-                                        control_mode = result_read[9];
-
-
-                                        for ( int i = FILTER_QUEU  - 2 ; i >= 0 ; i--)
-                                        {
-                                            queuercmpsx[i + 1] = queuercmpsx[i];
-                                            queuercmpsy[i + 1] = queuercmpsy[i];
-                                            queuerir1[i+1] =  queuerir1[i];
-                                            queuerir2[i+1] =  queuerir2[i];
-                                            queuerir3[i+1] =  queuerir3[i];
-                                            queuerir4[i+1] =  queuerir4[i];
-                                            queuerir5[i+1] =  queuerir5[i];
-                                            queuerv1[i+1] = queuerv1[i];
-                                            queuerv2[i+1] = queuerv2[i];
-
-                                        }
-
-                                        queuercmpsx[0] = x;
-                                        queuercmpsy[0] = y;
-                                        queuerir1[0] = (int)result_read[12];
-                                        queuerir2[0] = (int)result_read[13];
-                                        queuerir3[0] = (int)result_read[14];
-                                        queuerir4[0] = (int)result_read[15];
-                                        queuerir5[0] = (int)result_read[16];
-                                        queuerv1[0] = ( result_read[18] << 8 ) + ( result_read[17] );
-                                        queuerv2[0] = ( result_read[20] << 8 ) + ( result_read[19] );
-
-                                        float sum1 = 0;
-                                        float sum12 = 0;
-
-                                        float sum2 = 0;
-                                        float sum3 = 0;
-                                        float sum4 = 0;
-                                        float sum5 = 0;
-                                        float sum6 = 0;
-                                        float sum7 = 0;
-                                        float sum8 = 0;
-
-                                        for ( int i = 0 ; i < FILTER_QUEU ; i++ )
-                                        {
-                                            sum1 += queuercmpsx[i];
-                                            sum12 += queuercmpsy[i];
-                                            sum2 += queuerir1[i];
-                                            sum3 += queuerir2[i];
-                                            sum4 += queuerir3[i];
-                                            sum5 += queuerir4[i];
-                                            sum6 += queuerir5[i];
-                                            sum7 += queuerv1[i];
-                                            sum8 += queuerv2[i];
-                                        }
-
-                                        
-                                        x = (int)(sum1 / FILTER_QUEU);
-                                        y = (int)(sum12 / FILTER_QUEU);
-                                        
-                                        if ( x > 1000 )
-                                            x = -1 * ( 65536 - x );
-
-                                        if ( y > 1000 )
-                                            y = -1 * ( 65536 - y );
-
-                                        Compass = atan2(x,y) * 57.29;
-                                        if (Compass < 0) Compass = Compass + 360;
-
-
-                                        char bstart = result_read[11];
-
-                                        if ( bstart < 50 )
-                                            btn_start = false;
-                                        else
-                                            btn_start = true;
-
-
-                                        EMS_STOP = 0;
-
-                                        IR[0] = (int)(sum2 / FILTER_QUEU);
-                                        IR[1] = (int)(sum3 / FILTER_QUEU);
-                                        IR[2] = (int)(sum4 / FILTER_QUEU);
-                                        IR[3] = (int)(sum5 / FILTER_QUEU);
-                                        IR[4] = (int)(sum6 / FILTER_QUEU);
-
-
-                                        voltage_up = (int)(sum7 / 10);
-                                        voltage_down = (int)(sum8 / 10);
-
-
-                                            if ( control_mode_old != control_mode )
-                                            {
-                                            if ( control_mode == 1 )
-                                            {
-                                                red_light = true;
-                                                control_mode_old = 1;
-                                            }
-                                            else
-                                            {
-                                                red_light = false;
-                                                control_mode_old = 2;
-                                            }
-                                            }
-
-
-                                             ROS_INFO("USB Serial Read");
-                                             ROS_INFO("USB Serial Hz %d",serial_read_hz);
-                                        break;
+                                        keypad_status = result_read[4];
                                     }
+
+                                    int x = ( result_read[6] << 8 ) + ( result_read[5] ) ; //Compass (2 byte)
+                                    int y = ( result_read[8] << 8 ) + ( result_read[7] ) ; //Compass (2 byte)
+
+                                    control_mode = result_read[9];
+
+
+                                    for ( int i = FILTER_QUEU  - 2 ; i >= 0 ; i--)
+                                    {
+                                        queuercmpsx[i + 1] = queuercmpsx[i];
+                                        queuercmpsy[i + 1] = queuercmpsy[i];
+                                        queuerir1[i+1] =  queuerir1[i];
+                                        queuerir2[i+1] =  queuerir2[i];
+                                        queuerir3[i+1] =  queuerir3[i];
+                                        queuerir4[i+1] =  queuerir4[i];
+                                        queuerir5[i+1] =  queuerir5[i];
+                                        queuerv1[i+1] = queuerv1[i];
+                                        queuerv2[i+1] = queuerv2[i];
+
+                                    }
+
+                                    queuercmpsx[0] = x;
+                                    queuercmpsy[0] = y;
+                                    queuerir1[0] = (int)result_read[12];
+                                    queuerir2[0] = (int)result_read[13];
+                                    queuerir3[0] = (int)result_read[14];
+                                    queuerir4[0] = (int)result_read[15];
+                                    queuerir5[0] = (int)result_read[16];
+                                    queuerv1[0] = ( result_read[18] << 8 ) + ( result_read[17] );
+                                    queuerv2[0] = ( result_read[20] << 8 ) + ( result_read[19] );
+
+                                    float sum1 = 0;
+                                    float sum12 = 0;
+
+                                    float sum2 = 0;
+                                    float sum3 = 0;
+                                    float sum4 = 0;
+                                    float sum5 = 0;
+                                    float sum6 = 0;
+                                    float sum7 = 0;
+                                    float sum8 = 0;
+
+                                    for ( int i = 0 ; i < FILTER_QUEU ; i++ )
+                                    {
+                                        sum1 += queuercmpsx[i];
+                                        sum12 += queuercmpsy[i];
+                                        sum2 += queuerir1[i];
+                                        sum3 += queuerir2[i];
+                                        sum4 += queuerir3[i];
+                                        sum5 += queuerir4[i];
+                                        sum6 += queuerir5[i];
+                                        sum7 += queuerv1[i];
+                                        sum8 += queuerv2[i];
+                                    }
+
+
+                                    x = (int)(sum1 / FILTER_QUEU);
+                                    y = (int)(sum12 / FILTER_QUEU);
+
+                                    if ( x > 1000 )
+                                        x = -1 * ( 65536 - x );
+
+                                    if ( y > 1000 )
+                                        y = -1 * ( 65536 - y );
+
+                                    Compass = atan2(x,y) * 57.29;
+                                    if (Compass < 0) Compass = Compass + 360;
+
+
+                                    char bstart = result_read[11];
+
+                                    if ( bstart < 50 )
+                                        btn_start = false;
+                                    else
+                                        btn_start = true;
+
+
+                                    EMS_STOP = 0;
+
+                                    IR[0] = (int)(sum2 / FILTER_QUEU);
+                                    IR[1] = (int)(sum3 / FILTER_QUEU);
+                                    IR[2] = (int)(sum4 / FILTER_QUEU);
+                                    IR[3] = (int)(sum5 / FILTER_QUEU);
+                                    IR[4] = (int)(sum6 / FILTER_QUEU);
+
+
+                                    voltage_up = (int)(sum7 / 10);
+                                    voltage_down = (int)(sum8 / 10);
+
+
+                                    if ( control_mode_old != control_mode )
+                                    {
+                                        if ( control_mode == 1 )
+                                        {
+                                            red_light = true;
+                                            control_mode_old = 1;
+                                        }
+                                        else
+                                        {
+                                            red_light = false;
+                                            control_mode_old = 2;
+                                        }
+                                    }
+
+
+                                    ROS_INFO("USB Serial Read");
+                                    ROS_INFO("USB Serial Hz %d",serial_read_hz);
+                                    break;
                                 }
                             }
                         }
+                    }
                 }
 
             }//try
             catch (serial::SerialException e)
             {
-                 ROS_ERROR("USB Serial Read Error");
+                ROS_ERROR("USB Serial Read Error");
             }
 
         }//try
         catch (serial::IOException e)
         {
-             ROS_ERROR("USB Serial Port Error");
+            ROS_ERROR("USB Serial Port Error");
         }
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -531,7 +512,7 @@ void serial_logic()
 
 int main(int argc, char **argv)
 {
-   
+
     keypad_status_raw = 0;
     keypad_status = 0;
     last_keypad_value = 0;
@@ -556,7 +537,7 @@ int main(int argc, char **argv)
     chatter_pub[13] = node_handles[7].advertise<std_msgs::Int32>("lowerbodycore/voltagedown", 10);
     chatter_pub[14] = node_handles[8].advertise<std_msgs::Int32>("lowerbodycore/voltageup", 10);
     sub_handles[1] = node_handles[9].subscribe("lowerbodycore/omnidrive", 10, chatterCallback_omnidrive);
-    sub_handles[2] = node_handles[10].subscribe("scan", 10, chatterCallback_laser);
+    sub_handles[2] = node_handles[10].subscribe("hokuyo/scan", 10, chatterCallback_laser);
     sub_handles[9] = node_handles[11].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
     sub_handles[10] = node_handles[12].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
 
@@ -566,7 +547,7 @@ int main(int argc, char **argv)
 
     while (ros::ok() && App_exit == false)
     {
-    	//update publish loop
+        //update publish loop
         Update();
         ros::spinOnce();
         loop_rate.sleep();

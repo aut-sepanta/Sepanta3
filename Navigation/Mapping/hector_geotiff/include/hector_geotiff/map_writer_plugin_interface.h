@@ -1,5 +1,5 @@
 //=================================================================================================
-// Copyright (c) 2011, Stefan Kohlbrecher, TU Darmstadt
+// Copyright (c) 2012, Stefan Kohlbrecher, TU Darmstadt
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -26,19 +26,22 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
+#ifndef _MAPWRITERPLUGININTERFACE_H__
+#define _MAPWRITERPLUGININTERFACE_H__
 
-#include <ros/ros.h>
+#include "map_writer_interface.h"
 
-#include "HectorMappingRos.h"
+namespace hector_geotiff{
 
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "hector_slam");
+class MapWriterPluginInterface{
 
-  HectorMappingRos sm;
+public:
 
-  ros::spin();
+  virtual void initialize(const std::string& name) = 0;
+  virtual void draw(MapWriterInterface* map_writer_interface) = 0;
 
-  return(0);
-}
+};
 
+} //namespace hector_geotiff
+
+#endif

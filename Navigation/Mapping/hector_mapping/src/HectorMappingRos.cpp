@@ -186,9 +186,6 @@ HectorMappingRos::HectorMappingRos()
 
   scan_point_cloud_publisher_ = node_.advertise<sensor_msgs::PointCloud>("slam_cloud",1,false);
 
-
-  sub = node_.subscribe("/slam_origin",10,&HectorMappingRos::initialPoseCallback_topic,this);
-
   tfB_ = new tf::TransformBroadcaster();
   ROS_ASSERT(tfB_);
 
@@ -321,8 +318,6 @@ void HectorMappingRos::scanCallback(const sensor_msgs::LaserScan& scan)
   poseInfoContainer_.update(slamProcessor->getLastScanMatchPose(), slamProcessor->getLastScanMatchCovariance(), scan.header.stamp, p_map_frame_);
 
   poseUpdatePublisher_.publish(poseInfoContainer_.getPoseWithCovarianceStamped());
-
-  
   posePublisher_.publish(poseInfoContainer_.getPoseStamped());
 
   if(p_pub_odometry_)
@@ -556,18 +551,5 @@ void HectorMappingRos::initialPoseCallback(const geometry_msgs::PoseWithCovarian
   initial_pose_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y, tf::getYaw(pose.getRotation()));
   ROS_INFO("Setting initial pose with world coords x: %f y: %f yaw: %f", initial_pose_[0], initial_pose_[1], initial_pose_[2]);
 }
-
-void HectorMappingRos::initialPoseCallback_topic(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
-{
-  initial_pose_set_ = true;
-
-  tf::Pose pose;
-  tf::poseMsgToTF(msg->pose.pose, pose);
-  initial_pose_ = Eigen::Vector3f(msg->pose.pose.position.x, msg->pose.pose.position.y, tf::getYaw(pose.getRotation()));
-  ROS_INFO("Setting initial pose with world coords x: %f y: %f yaw: %f", initial_pose_[0], initial_pose_[1], initial_pose_[2]);
-}
-
-
-
 
 
