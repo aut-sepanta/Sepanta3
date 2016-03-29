@@ -161,7 +161,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "tcp_server");
   ros::Time::init();
 
-  cout << "SEPANTA TCP/IP STARTED DONE (93/04/02)" << endl;
+  cout << "SEPANTA III TCP CORE STARTED DONE" << endl;
 
   send_message_main(argc,argv);
 

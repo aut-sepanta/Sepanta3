@@ -116,74 +116,6 @@ void reset_position()
    odom_position_yaw[2] = 0;
 }
 
-void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
-{
-
-    int val_count = msg->ranges.size(); //512
-    int int_count = msg->intensities.size(); //? //0
-  
-    float read = 0;
-
-    sensor_msgs::LaserScan scan;
-    scan.header.stamp = ros::Time::now();
-    scan.header.frame_id = "laser";
-    scan.angle_min = msg->angle_min;
-    scan.angle_max = msg->angle_max;
-    scan.angle_increment = msg->angle_increment;
-    scan.time_increment = msg->time_increment;
-    scan.range_min = msg->range_min;
-    scan.range_max = msg->range_max;
-
-    //cout<<scan.range_max<<endl;
-
-    scan.ranges.resize(val_count);
-    scan.intensities.resize(int_count);
-
-     for ( int i = 0 ; i < val_count ; i++)
-     {
-           scan.ranges[i] = msg->ranges[i];
-         
-           if ( std::isnan(scan.ranges[i]) || isinf(scan.ranges[i]) )
-           {
-                 scan.ranges[i] = 5;
-           }
-     }
-
-     for ( int i = 0 ; i < int_count ; i++)
-     {
-           scan.intensities[i] = msg->intensities[i];
-     }
-
-    chatter_pub[2].publish(scan);
-}
-
-//void calibration_test()
-//{
-//    return;
-//    cout << "calib start start" << endl;
-
-//    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-
-//    //reset_position();
-
-//    omnidrive(0, 50, 0);
-//    boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
-//    omnidrive(0, 0, 0);
-//    boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
-
-//    cout << "back" << endl;
-
-
-//    omnidrive(0, -50, 0);
-//    boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
-//    omnidrive(0, 0, 0);
-//    boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
-
-//    cout << "finish" << endl;
-//    // cout << position[0] << " , " << position[1] << " , " << position[2] << " , " << delta<< endl;
-//}
-
 void Init() 
 {
 
@@ -204,6 +136,17 @@ void Init()
     IK_matrix(2, 1) = 0.02;
     IK_matrix(2, 2) = 0.02;
     IK_matrix(2, 3) = -0.02;
+}
+
+void publish_odometry_base_pose()
+{
+    geometry_msgs::Pose pose;
+    pose.position.x = odom_position_yaw[0];
+    pose.position.y = odom_position_yaw[1];
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
+    pose.orientation = odom_quat;
+
+    chatter_pub[5].publish(pose);
 }
 
 void IK_solver(float delta_time)
@@ -240,7 +183,9 @@ void IK_solver(float delta_time)
     odom_position_yaw[1] += odom_speed_xyw[1] * delta_time; //meter
     odom_position_yaw[2] += odom_speed_xyw[2] * delta_time; //radian
 
-   // cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
+    cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
+
+     publish_odometry_base_pose();
 }
 
 void Turn_GL(int degree)
@@ -467,7 +412,6 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
 
 void omnidrive(int x,int y,int w)
 {
-
    sepanta_msgs::omnidata msg_data;
    msg_data.d0 = x;
    msg_data.d1 = y;
@@ -536,20 +480,19 @@ public:
 
     if ( interfacegoal->type == "movex")    
     {
-
-           Move_GLX(Odometry_speed,value);
+        Move_GLX(Odometry_speed,value);
     }
     else if ( interfacegoal->type == "movey")
     {
-           Move_GLY(Odometry_speed,value);
+        Move_GLY(Odometry_speed,value);
     }
     else if ( interfacegoal->type == "tunrgl")
     {
-           Turn_GL(value);
+        Turn_GL(value);
     }
     else if ( interfacegoal->type == "turngllocal" )
     {
-           Turn_GL_local(value);
+        Turn_GL_local(value);
     }
 
     omnidrive(0, 0, 0);
@@ -575,7 +518,6 @@ public:
 
 int main(int argc, char** argv)
 {
-  
   ros::init(argc, argv, "odometry_base");
   cout << "SEPANTA III odometry system started" << endl;
 
@@ -588,20 +530,23 @@ int main(int argc, char** argv)
   ros::Subscriber sub_handles[15];
 
   chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omni_drive", 10);
-  chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
-  chatter_pub[2] = node_handles[2].advertise<sensor_msgs::LaserScan>("odometry_base/scan_filtered", 50);
-  chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 50);
+  chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odometry_hector/odometry", 10);
+
+  chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
+  chatter_pub[4] = node_handles[4].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
+  chatter_pub[5] = node_handles[5].advertise<geometry_msgs::Pose>("odometry_base/pose", 10);
   //=================================================================================================
  
   sub_handles[1] = node_handles[2].subscribe("odometry_base/cmd_vel", 10, chatterCallback_cmd_vel);
   sub_handles[2] = node_handles[3].subscribe("lowerbodycore/irsensors", 10, chatterCallback_irsensor);
   sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);
-  sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeeds", 10, chatterCallback_omnispeed);
-  sub_handles[6] = node_handles[7].subscribe("odometry_hector/odometry", 10, chatterCallback_pose);
-  sub_handles[7] = node_handles[8].subscribe("hokuyo/scan", 10, chatterCallback_laser);
+  sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeed", 10, chatterCallback_omnispeed);
+  sub_handles[6] = node_handles[7].subscribe("hectorslam/pose", 10, chatterCallback_pose);
+ 
 
   tf::TransformBroadcaster odom_broadcaster;
-  
+  tf::TransformBroadcaster odom_broadcaster2;
+
   myactionserver act("sepanta_action");
   
   while(ros::ok())
@@ -615,7 +560,7 @@ int main(int argc, char** argv)
 
     geometry_msgs::TransformStamped odom_trans;
     odom_trans.header.stamp = ros::Time::now();
-    odom_trans.header.frame_id = "odom";
+    odom_trans.header.frame_id = "odom_hector";
     odom_trans.child_frame_id = "base_link";
 
     odom_trans.transform.translation.x = slam_position_yaw[0];
@@ -627,7 +572,7 @@ int main(int argc, char** argv)
     
     nav_msgs::Odometry odom;
     odom.header.stamp = ros::Time::now();
-    odom.header.frame_id = "odom";
+    odom.header.frame_id = "odom_hector";
 
     //set the position
     odom.pose.pose.position.x = slam_position_yaw[0];
@@ -649,6 +594,40 @@ int main(int argc, char** argv)
     mes.data = isrobotmove;
     chatter_pub[3].publish(mes);
     //===================================================
+    odom_quat = tf::createQuaternionMsgFromYaw(odom_position_yaw[2]);
+
+
+    odom_trans.header.stamp = ros::Time::now();
+    odom_trans.header.frame_id = "odom_base";
+    odom_trans.child_frame_id = "base_link2";
+
+    odom_trans.transform.translation.x = odom_position_yaw[0];
+    odom_trans.transform.translation.y = odom_position_yaw[1];
+    odom_trans.transform.translation.z = 0;
+    odom_trans.transform.rotation = odom_quat;
+
+    odom_broadcaster.sendTransform(odom_trans);
+
+
+    odom.header.stamp = ros::Time::now();
+    odom.header.frame_id = "odom_base";
+
+    //set the position
+    odom.pose.pose.position.x = odom_position_yaw[0];
+    odom.pose.pose.position.y = odom_position_yaw[1];
+    odom.pose.pose.position.z = 0;
+    odom.pose.pose.orientation = odom_quat;
+
+    //set the velocity
+    odom.child_frame_id = "base_link2";
+    odom.twist.twist.linear.x = 0;
+    odom.twist.twist.linear.y = 0;
+    odom.twist.twist.angular.z = 0;
+
+    //publish the message
+    chatter_pub[4].publish(odom);
+
+
     ros_rate.sleep();
   }
 

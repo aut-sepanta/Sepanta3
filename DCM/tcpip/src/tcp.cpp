@@ -20,10 +20,17 @@
 #include <iostream>
 #include <fstream>
 #include <errno.h>
-
+#include <sepanta_msgs/arm.h>
+#include <sepanta_msgs/omnidata.h>
+#include <sepanta_msgs/head.h>
+#include <sepanta_msgs/irsensor.h>
+#include <sepanta_msgs/motortorques.h>
 #include <sepanta_msgs/speechkill.h>
 #include <sepanta_msgs/sound.h>
 
+int speedx = 150;
+int speedy = 150;
+int speedt = -100;
 //V3
 //#define USB_MODE
 using namespace std;
@@ -78,10 +85,52 @@ bool callkill_server(sepanta_msgs::speechkill::Request &req,sepanta_msgs::speech
    return true;
 }
 
-void process_command(string input,int mode)
+void set_omni(int x,int y,int w)
 {
-     if ( mode == 1 )
-     {
+ sepanta_msgs::omnidata msg;
+ msg.d0 = x;
+ msg.d1 = y;
+ msg.d2 = w;
+ chatter_pub[2].publish(msg);
+}
+
+void robot_forward()
+{
+set_omni(speedx,0,0);
+}
+
+void robot_backward()
+{
+   set_omni(-speedx,0,0);
+}
+
+void robot_left()
+{
+   set_omni(0,speedy,0);
+}
+
+void robot_right()
+{
+    set_omni(0,-speedy,0);
+}
+
+void robot_turn_left()
+{
+   set_omni(0,0,speedt);
+}
+
+void robot_turn_right()
+{
+   set_omni(0,0,-speedt);
+}
+
+void robot_stop()
+{
+   set_omni(0,0,0);
+}
+
+void process_command(string input)
+{
         cout<<"tcp : "<<input<<endl;
         send_log("tcp : " + input);
         global_tcp = input;
@@ -89,7 +138,22 @@ void process_command(string input,int mode)
         std_msgs::String msg;
         msg.data = global_tcp;
         chatter_pub[1].publish(msg);
-     }
+
+        //==============================================================
+       std::vector<std::string> plugin_list;
+       boost::algorithm::split(plugin_list,input, boost::is_any_of(","));
+
+       if ( plugin_list[0] == "COMMAND")
+       {
+          if ( plugin_list[1] == "forward") robot_forward();
+          if ( plugin_list[1] == "backward") robot_backward();
+          if ( plugin_list[1] == "stop") robot_stop();
+          if ( plugin_list[1] == "left") robot_left();
+          if ( plugin_list[1] == "right") robot_right();
+          if ( plugin_list[1] == "turnleft") robot_turn_left();
+          if ( plugin_list[1] == "turnright") robot_turn_right();
+       }
+
 }
 
 void tcp_write_tcp(std::string msg,string mode)
@@ -142,7 +206,7 @@ void tcp_read_tcp() //9898
 {
     stream_tcp = NULL;
     acceptor_tcp = NULL;
-    acceptor_tcp = new TCPAcceptor(9898);
+    acceptor_tcp = new TCPAcceptor(3000);
 
     if (acceptor_tcp->start() == 0) {
         while (App_exit == false) {
@@ -177,10 +241,7 @@ void tcp_read_tcp() //9898
                                             // cout<<valid_data<<endl;
                                             //=================================
                                             string temp = valid_data;
-                                            temp = temp.substr(1);
-
-                                            if ( valid_data[0] == '1' )
-                                                process_command(temp,1);
+                                            process_command(temp);
                                             //==================================
                                             valid_data = "";
                                             header = 0;
@@ -215,6 +276,7 @@ bool tcp_request(sepanta_msgs::sound::Request  &req,sepanta_msgs::sound::Respons
 }
 
 
+
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "windows_communication_tcp");
@@ -230,9 +292,10 @@ int main(int argc, char** argv)
     ros::NodeHandle node_handles[15];
     ros::Subscriber sub_handles[15];
 
-    chatter_pub[1] = node_handles[1].advertise<std_msgs::String>("pgitic_tcp_out", 10); //send to speakers
+    chatter_pub[1] = node_handles[1].advertise<std_msgs::String>("tcpip/out", 1); 
+    chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
     //==========================================================================================
-    sub_handles[0] = node_handles[4].subscribe("pgitic_tcp_in",10,chatterCallback_tcp);
+    sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
     
     ros::NodeHandle nn;
     chatter_pub_ack = nn.advertise<std_msgs::String>("/core_tcp/ack",10);
