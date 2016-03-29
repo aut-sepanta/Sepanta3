@@ -26,6 +26,10 @@
 */
 
 ObjectPipeline::ObjectPipeline() {
+    this->trained_objects = boost::shared_ptr<std::vector<Object>>(new std::vector<Object>());
+}
+
+ObjectPipeline::ObjectPipeline(boost::shared_ptr<std::vector<Object>> tobjs) : trained_objects(tobjs) {
 }
 
 void ObjectPipeline::computeCloudResolution (Object* object)
@@ -215,12 +219,7 @@ void ObjectPipeline::keyPointExtraction(boost::shared_ptr<std::vector<Object>> o
     iss_detector.setThreshold32 (object_params::iss_gamma_32);
     iss_detector.setMinNeighbors (object_params::iss_min_neighbors);
     iss_detector.setNumberOfThreads (object_params::iss_threads);
-/*
-    pcl::visualization::PCLVisualizer viewer("viewer");
-    viewer.setBackgroundColor (0, 0, 0);
-    viewer.addCoordinateSystem (1.0);
-    viewer.initCameraParameters ();
-*/
+
     for (unsigned int i=0; i<objects->size(); i++) { 
         this->computeCloudResolution(&(objects->at(i)));
         iss_salient_radius = 6 * objects->at(i).cloud_resolution;
@@ -238,27 +237,7 @@ void ObjectPipeline::keyPointExtraction(boost::shared_ptr<std::vector<Object>> o
 
         pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr keypoints = boost::make_shared<const pcl::PointCloud<pcl::PointXYZRGB>>(*(objects->at(i).keypoints));
         ROS_INFO_STREAM("Keypoints found: " << keypoints->size());
-/*
-        std::stringstream s1, s2;
-        s1 << "object cloud #" << i+1;
-        s2 << "keypoints cloud #" << i+1;
-        pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud = boost::make_shared<const pcl::PointCloud<pcl::PointXYZRGB>>(*(objects->at(i).cloud));
-        pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> cloud_rgb(cloud);
-        viewer.addPointCloud<pcl::PointXYZRGB> (cloud, cloud_rgb, s1.str().c_str());
-        viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, s1.str().c_str());
-
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> single_color (keypoints, 0, 255, 0);
-        viewer.addPointCloud<pcl::PointXYZRGB> (keypoints, single_color, s2.str().c_str());
-        viewer.setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, s2.str().c_str());
-*/
     }
-/*
-    while (!viewer.wasStopped ())
-    {
-        viewer.spinOnce (100);
-        boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-    }
-*/
 }
 
 void ObjectPipeline::createObjectDescriptors(boost::shared_ptr<std::vector<Object>> objects) {
@@ -282,7 +261,36 @@ void ObjectPipeline::createObjectDescriptors(boost::shared_ptr<std::vector<Objec
     }
 }
 
-void ObjectPipeline::objectMatching(boost::shared_ptr<std::vector<Object>> objects) {
+void ObjectPipeline::objectMatching(boost::shared_ptr<std::vector<Object>> scene_objects) {
+    pcl::KdTreeFLANN<pcl::SHOT1344> match_search;
+    unsigned int max_correspondences=0;
+    std::string current_label = "unknown";
+    for (unsigned int i=0; i<scene_objects->size(); i++) {
+        max_correspondences=0;
+        scene_objects->at(i).label = current_label;
+        for (unsigned int j=0; j<trained_objects->size(); j++) {
+            pcl::CorrespondencesPtr correspondences (new pcl::Correspondences ());
+            match_search.setInputCloud (trained_objects->at(j).descriptors);
+            for (unsigned int k=0; k<scene_objects->at(j).descriptors->size(); k++) {
+                std::vector<int> neigh_indices(1);
+                std::vector<float> neigh_sqr_dists(1);
+                if (!pcl_isfinite (scene_objects->at(i).descriptors->at(k).descriptor[0])) {
+                    continue;
+                }
+                int found_neighs = match_search.nearestKSearch(scene_objects->at(i).descriptors->at(k), 1, neigh_indices, neigh_sqr_dists);
+                if (found_neighs == 1 && neigh_sqr_dists[0] < 0.25f) {
+                    pcl::Correspondence corr (neigh_indices[0], static_cast<int> (i), neigh_sqr_dists[0]);
+                    correspondences->push_back (corr);
+                }
+            }
+            if (max_correspondences < correspondences->size()) {
+                max_correspondences = correspondences->size();
+                scene_objects->at(i).label = trained_objects->at(j).label;
+                scene_objects->at(i).correspondences = correspondences;
+            }
+        }
+        ROS_INFO_STREAM("Object \"" << scene_objects->at(i).label << "\" found.(correspondences: " << max_correspondences << ")");
+    }
 }
 
 void ObjectPipeline::correspondanceGrouping() {

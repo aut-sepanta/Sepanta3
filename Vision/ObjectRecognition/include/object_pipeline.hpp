@@ -8,6 +8,7 @@
 class ObjectPipeline {
 public:
     ObjectPipeline();
+    ObjectPipeline(boost::shared_ptr<std::vector<Object>> trained_objects);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr passthroughPointCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr findTableHull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud);
@@ -22,6 +23,7 @@ public:
     void hypothesisVerification();
 private:
     void computeCloudResolution (Object* object);
+    boost::shared_ptr<std::vector<Object>> trained_objects;
 };
 
 #endif

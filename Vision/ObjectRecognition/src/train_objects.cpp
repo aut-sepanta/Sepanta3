@@ -14,6 +14,7 @@
 
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
@@ -21,7 +22,8 @@
 #include <train_objects.hpp>
 #include <object_pipeline.hpp>
 
-TrainObjects::TrainObjects() : trainingFinished(false) {}
+TrainObjects::TrainObjects() : trainingFinished(false) { 
+}
 
 void TrainObjects::rgbdImageCallback(const sensor_msgs::ImageConstPtr& input_image, const sensor_msgs::PointCloud2ConstPtr& input_cloud) {
     if (input_image->width == 0 || input_cloud->width == 0) {
@@ -66,6 +68,7 @@ void TrainObjects::pipeline(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud) 
     }
     objects = this->object_pipeline.createObjectClusters(objects_cloud);
     this->object_pipeline.keyPointExtraction(objects);
+    this->object_pipeline.createObjectDescriptors(objects);
 
     this->saveModel(objects);
 }
@@ -105,16 +108,6 @@ void TrainObjects::saveModel(boost::shared_ptr<std::vector<Object>> objects) {
 
     cli_thread.join();
 
-    std::string choose;
-    while (choose.compare("y") && choose.compare("n")) {
-        std::cout << "Do you want to train more objects (y/n)?";
-        std::cin >> choose;
-    }
-
-    if (!choose.compare("n")) {
-        ros::shutdown();
-    }
-    trainingFinished = false;
 }
 
 void TrainObjects::cliThread(boost::shared_ptr<std::vector<Object>> objects) {
@@ -130,8 +123,21 @@ void TrainObjects::cliThread(boost::shared_ptr<std::vector<Object>> objects) {
         std::stringstream filename;
         std::string save_path = ros::package::getPath("object_recognition") + "/trained_objects/";
         filename << save_path << "model_" << chosen_name << ".pcd";
-        pcl::io::savePCDFileBinary(filename.str(), *(objects->at(i).keypoints));   
+        pcl::io::savePCDFileBinary(filename.str(), *(objects->at(i).descriptors));   
     }
+
     trainingFinished = true;
+
+    std::string choose;
+    while (choose.compare("y") && choose.compare("n")) {
+        std::cout << "Do you want to train more objects (y/n)?";
+        std::cin >> choose;
+    }
+
+    if (!choose.compare("n")) {
+        ros::shutdown();
+    }
+
+    trainingFinished = false;
 }
 
