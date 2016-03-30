@@ -81,7 +81,7 @@ bool btn_start = false;
 bool btn_stop = false;
 int serial_read_hz = 0;
 int serial_rw_count = 0;
-const int baudrate = 115200;
+const int baudrate = 1000000;
 const string port_name  = "/dev/serial/by-id/usb-ROBOTIS_CO._LTD._ROBOTIS_Virtual_COM_Port-if00";
 
 void chatterCallback_greenlight(const std_msgs::Bool::ConstPtr &msg)
@@ -331,23 +331,23 @@ void serial_logic()
                 serial::Serial my_serial(port_name, baudrate, serial::Timeout::simpleTimeout(500));
 
                 //Config Serial
-                my_serial.close();
-                my_serial.setBaudrate(baudrate);
-                serial::parity_t val1 = serial::parity_none;
-                my_serial.setParity(val1);
-                serial::stopbits_t val2 = serial::stopbits_one;
-                my_serial.setStopbits(val2);
-                serial::bytesize_t val3 = serial::eightbits;
-                my_serial.setBytesize(val3);
-                my_serial.open();
+                // my_serial.close();
+                // my_serial.setBaudrate(baudrate);
+                // serial::parity_t val1 = serial::parity_none;
+                // my_serial.setParity(val1);
+                // serial::stopbits_t val2 = serial::stopbits_one;
+                // my_serial.setStopbits(val2);
+                // serial::bytesize_t val3 = serial::eightbits;
+                // my_serial.setBytesize(val3);
+                // my_serial.open();
 
                 //=======================================================
 
                 if (my_serial.isOpen())
                 {
                     ROS_INFO("USB Serial Port OK? : YES");
-                    result_write[0] = 0;
-                    my_serial.write(result_write, 1);
+                    //result_write[0] = 0;
+                    //my_serial.write(result_write, 1);
                 }
                 else
                 {
@@ -395,11 +395,12 @@ void serial_logic()
                     result_write[10] = 75;
 
                     my_serial.write(result_write, 11);
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(10));
                     my_serial.flush();
 
                     //ROS_INFO("USB Serial Write");
 
-                    boost::this_thread::sleep(boost::posix_time::milliseconds(25));
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(15));
 
                     uint8_t read;
 
