@@ -186,15 +186,16 @@ void PathFwr()
     {
     	if ( !first_valid )
     	{
-    		  boost::this_thread::sleep(boost::posix_time::milliseconds(1000)); 
-    		  cout<<"Wait for goal ! ..."<<endl;
-              continue;
+            cout<<"Wait for goal ! ..."<<endl;
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            continue;
     	}
 
         if(abs(goalPos[0]-position[0])<=abs(desireErrorX) && abs(goalPos[1]-position[1])<=abs(desireErrorY) && abs(goalTetha-tetha)<=abs(desireErrorTetha))
         {
             first_valid=false;
             cout<<"Goal reached ..."<<endl;
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
             continue;
         }
 
@@ -203,12 +204,12 @@ void PathFwr()
         cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
         cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
 
-        if(step+10 > globalPathSize)
+        if(step+10 >= globalPathSize)
             tempGoalTetha = goalTetha;
         else
             tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step+10].pose.position.x, globalPath.poses[step+10].pose.position.y);
 
-        if (tempGoalTetha < 0) tempGoalTetha += M_PI;
+        if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
 
         errorX = tempGoalPos[0]-position[0];
         errorY = tempGoalPos[1]-position[1];
