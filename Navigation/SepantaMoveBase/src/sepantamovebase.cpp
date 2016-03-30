@@ -65,12 +65,15 @@ bool newPath = false;
 double maxLinSpeed = 0.5;
 double maxTethaSpeed = 0.2;
 
+nav_msgs::Path globalPath;
+short globalPathSize;
+
 ros::Publisher chatter_pub[20];
 ros::Publisher mycmd_vel_pub;
 
 double xSpeed=0;
 double ySpeed=0;
-double thetaSpeed=0;
+double tethaSpeed=0;
 
 double desireErrorX = 0.05;
 double desireErrorY = 0.05;
@@ -79,13 +82,13 @@ double desireErrorTetha = 0.09;
 double errorX = 0;
 double errorY = 0;
 double errorTetha = 0;
+double errorX_R=0;
+double errorY_R=0;
 
 short LKp = 10;
 short WKp = 5;
 
-int step = 10;
-
-double path[2][100] = {0};
+int step = 0;
 
 double position[2] = {0};
 double orientation[4] = {0};
@@ -156,6 +159,11 @@ char getch() {
         return (buf);
 }
 
+double GetToPointsAngle(double x1, double y1, double x2, double y2)
+{
+    return atan2(y2-y1,x2-x1);
+}
+
 
 void PreesKeyToExit()
 {
@@ -183,13 +191,22 @@ void PathFwr()
               continue;
     	}
 
-        tempGoalPos[0] = path[0][step];
-        tempGoalPos[1] = path[1][step];
+        if(abs(goalPos[0]-position[0])<=abs(desireErrorX) && abs(goalPos[1]-position[1])<=abs(desireErrorY) && abs(goalTetha-tetha)<=abs(desireErrorTetha))
+        {
+            first_valid=false;
+            cout<<"Goal reached ..."<<endl;
+            continue;
+        }
+
+        tempGoalPos[0] = globalPath.poses[step].pose.position.x;
+        tempGoalPos[1] = globalPath.poses[step].pose.position.y;
         cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
         cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
 
-
-        tempGoalTetha = atan2(tempGoalPos[1]-position[1],tempGoalPos[0]-position[0]);
+        if(step+10 > globalPathSize)
+            tempGoalTetha = goalTetha;
+        else
+            tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step+10].pose.position.x, globalPath.poses[step+10].pose.position.y);
 
         if (tempGoalTetha < 0) tempGoalTetha += M_PI;
 
@@ -205,37 +222,40 @@ void PathFwr()
         if (errorTetha > 0.833*M_PI) errorTetha = 0.833*M_PI;
         if (errorTetha < -0.833*M_PI) errorTetha = -0.833*M_PI;
 
-        if(abs(errorX)>abs(desireErrorX))
-            xSpeed = (abs(errorX*LKp)<abs(maxLinSpeed))?(errorX*LKp):sign(errorX)*maxLinSpeed;
+
+
+        errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
+        errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
+
+        if(abs(errorX_R)>abs(desireErrorX))
+            xSpeed = (abs(errorX_R*LKp)<abs(maxLinSpeed))?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
         else
             xSpeed = 0;
 
-        if(abs(errorY)>abs(desireErrorY))
-            ySpeed = (abs(errorY*LKp)<abs(maxLinSpeed))?(errorY*LKp):sign(errorY)*maxLinSpeed;
+        if(abs(errorY_R)>abs(desireErrorY))
+            ySpeed = (abs(errorY_R*LKp)<abs(maxLinSpeed))?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
         else
             ySpeed = 0;
 
         if(abs(errorTetha)>abs(desireErrorTetha))
-            thetaSpeed = (abs(errorTetha*WKp)<abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
+            tethaSpeed = (abs(errorTetha*WKp)<abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
         else
-            thetaSpeed = 0;
+            tethaSpeed = 0;
 
         geometry_msgs::Twist myTwist;
 
         myTwist.linear.x = xSpeed;
         myTwist.linear.y = ySpeed;
-        myTwist.angular.z = thetaSpeed;
+        myTwist.angular.z = tethaSpeed;
 
         mycmd_vel_pub.publish(myTwist);
 
-        cout << xSpeed << "\t" << ySpeed << "\t" << thetaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
+        cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(50));
 
         if(abs(errorX)<=abs(desireErrorX) && abs(errorY)<=abs(desireErrorY) && abs(errorTetha)<=abs(desireErrorTetha))
-            step += 10;
-        if(step==100)
-            step=10;
+            step ++;
     }
 }
 
@@ -270,15 +290,12 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 
 void GetPath(const nav_msgs::Path::ConstPtr &msg)
 {
-    for(int i=0;i<100;i++)
-    {
-        path[0][i] = msg->poses[i].pose.position.x;
-        path[1][i] = msg->poses[i].pose.position.y;
-    }
+    globalPath = *msg;
+    globalPathSize = globalPath.poses.size();
 
-    step=10;
+    step=0;
 
-     first_valid=true;
+    first_valid=true;
 //   cout << "TempGoal Position: " << endl;
 //    cout << "\tPosition:\n"<< "X: " << tempGoalPos[0] << "\nY: " << tempGoalPos[1] << "\nZ: " << tempGoalPos[2] << endl;
 //    cout << tempGoalTetha << endl;
