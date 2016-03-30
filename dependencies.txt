@@ -1,5 +1,7 @@
 
-1 ) sudo apt-get install ros-indigo-octomap ros-indigo-octomap-msgs ros-indigo-octomap-rviz-plugins ros-indigo-octomap-mapping ros-indigo-octomap-ros ros-indigo-octomap-server
+1 ) sudo apt-get install ros-indigo-octomaps*
 2 ) sudo apt-get install libjsoncpp-dev
 3 ) sudo apt-get install ros-indigo-hector-mapping
 4 ) sudo apt-get install ros-indigo-hokuyo-node
+5 ) sudo apt-get install ros-indigo-urg-*
+6 ) sudo apt-get install ros-indigo-navigation*
