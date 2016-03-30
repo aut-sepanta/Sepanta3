@@ -62,6 +62,8 @@ int serial_state = 1;
 float laser_IR[8];
 int IR[5] = {0};
 int EMS_STOP = 0;
+int EMS_STOP2 = 0;
+
 ros::Publisher chatter_pub[20];
 ros::Publisher chatter_pub_motor[20];
 tbb::atomic<int> Compass;
@@ -144,6 +146,18 @@ void chatterCallback_omnidrive(const sepanta_msgs::omnidata::ConstPtr &msg)
     omnidrive_w = -msg->d2;
 }
 
+void chatterCallback_tcpes(const std_msgs::String::ConstPtr &msg)
+{
+   if ( msg->data == "false")
+   {
+       EMS_STOP2 = 0;
+   }
+   else
+   {
+       EMS_STOP2 = 1;
+   }
+}
+
 void logic()
 {
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -175,6 +189,7 @@ float w4_current = 0;
 
 void Omnidrive(float vx, float vy, float vw)
 {
+   
     vw = -vw / 100;
 
     //Speed Limits
@@ -189,8 +204,8 @@ void Omnidrive(float vx, float vy, float vw)
     //FK
     float w1 = (vx - vy - vw * (L)) / 7.5;
     float w2 = (vx + vy + vw * (L)) / 7.5;
-    float w3 = -(vx + vy - vw * (L)) / 7.5;
-    float w4 = -(vx - vy + vw * (L)) / 7.5;
+    float w3 = -(vx - vy + vw * (L)) / 7.5;
+    float w4 = -(vx + vy - vw * (L)) / 7.5;
 
     w1 += 128;
     w2 += 128;
@@ -206,9 +221,9 @@ void Omnidrive(float vx, float vy, float vw)
     if (w4 > 254) w4 = 254;
     if (w4 < 1) w4 = 1;
 
-    if ( EMS_STOP == 1)
+    if ( EMS_STOP == 1 || EMS_STOP2 == 1)
     {
-        ROS_WARN("Check Emergency Stop Button , OmniDrive(0,0,0)");
+        ROS_WARN("Check Emergency Stop Button ( 1 or 2 ) , OmniDrive(0,0,0)");
         w4 = 128;
         w3 = 128;
         w2 = 128;
@@ -599,7 +614,7 @@ int main(int argc, char **argv)
     sub_handles[2] = node_handles[10].subscribe("hokuyo/scan", 10, chatterCallback_laser);
     sub_handles[9] = node_handles[11].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
     sub_handles[10] = node_handles[12].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
-
+    sub_handles[11] = node_handles[13].subscribe("tcpip/es", 10, chatterCallback_tcpes);
     //============================================================================================
 
     ros::Rate loop_rate(20);

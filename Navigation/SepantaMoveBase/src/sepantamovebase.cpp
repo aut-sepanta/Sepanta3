@@ -63,7 +63,7 @@ bool App_exit = false;
 bool newPath = false;
 
 double maxLinSpeed = 0.5;
-double maxTethaSpeed = 0.2;
+double maxTethaSpeed = 0.4;
 
 nav_msgs::Path globalPath;
 short globalPathSize;
@@ -75,9 +75,9 @@ double xSpeed=0;
 double ySpeed=0;
 double tethaSpeed=0;
 
-double desireErrorX = 0.05;
-double desireErrorY = 0.05;
-double desireErrorTetha = 0.09;
+double desireErrorX = 0.1;
+double desireErrorY = 0.1;
+double desireErrorTetha = 0.18;
 
 double errorX = 0;
 double errorY = 0;
@@ -85,8 +85,8 @@ double errorTetha = 0;
 double errorX_R=0;
 double errorY_R=0;
 
-short LKp = 10;
-short WKp = 5;
+double LKp = 2;
+double WKp = 0.6;
 
 int step = 0;
 
@@ -178,6 +178,17 @@ void PreesKeyToExit()
     }
 }
 
+void send_omni(double x,double y ,double w)
+{
+     geometry_msgs::Twist myTwist;
+
+        myTwist.linear.x = x;
+        myTwist.linear.y = -y;
+        myTwist.angular.z = -w;
+
+        mycmd_vel_pub.publish(myTwist);
+}
+int info_counter = 0;
 void PathFwr()
 {
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -195,14 +206,15 @@ void PathFwr()
         {
             first_valid=false;
             cout<<"Goal reached ..."<<endl;
+            send_omni(0,0,0);
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
             continue;
         }
 
         tempGoalPos[0] = globalPath.poses[step].pose.position.x;
         tempGoalPos[1] = globalPath.poses[step].pose.position.y;
-        cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
-        cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
+        // cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
+        // cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
 
         if(step+10 >= globalPathSize)
             tempGoalTetha = goalTetha;
@@ -214,8 +226,6 @@ void PathFwr()
         errorX = tempGoalPos[0]-position[0];
         errorY = tempGoalPos[1]-position[1];
         errorTetha = tempGoalTetha-tetha;
-
-        cout << tetha << "\t" << tempGoalTetha << endl;
 
         if (errorTetha >= M_PI) errorTetha = errorTetha - 2*M_PI;
         if (errorTetha < -M_PI) errorTetha = 2*M_PI - errorTetha;
@@ -229,34 +239,40 @@ void PathFwr()
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
         if(abs(errorX_R)>abs(desireErrorX))
-            xSpeed = (abs(errorX_R*LKp)<abs(maxLinSpeed))?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
+            xSpeed = (abs(errorX_R*LKp)<=abs(maxLinSpeed))?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
         else
             xSpeed = 0;
 
         if(abs(errorY_R)>abs(desireErrorY))
-            ySpeed = (abs(errorY_R*LKp)<abs(maxLinSpeed))?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
+            ySpeed = (abs(errorY_R*LKp)<=abs(maxLinSpeed))?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
         else
             ySpeed = 0;
 
         if(abs(errorTetha)>abs(desireErrorTetha))
-            tethaSpeed = (abs(errorTetha*WKp)<abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
+            tethaSpeed = (abs(errorTetha*WKp)<=abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
         else
             tethaSpeed = 0;
 
-        geometry_msgs::Twist myTwist;
 
-        myTwist.linear.x = xSpeed;
-        myTwist.linear.y = ySpeed;
-        myTwist.angular.z = tethaSpeed;
+        send_omni(xSpeed,ySpeed,tethaSpeed);
 
-        mycmd_vel_pub.publish(myTwist);
+        info_counter++;
+        if ( info_counter>50)
+        {
+            info_counter= 0;
+             cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
 
-        cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+        }
+       
+        boost::this_thread::sleep(boost::posix_time::milliseconds(10));
 
         if(abs(errorX)<=abs(desireErrorX) && abs(errorY)<=abs(desireErrorY) && abs(errorTetha)<=abs(desireErrorTetha))
-            step ++;
+        {
+            if(step+10>globalPathSize)
+                step = globalPathSize-1;
+            else
+                step +=10;
+        }
     }
 }
 

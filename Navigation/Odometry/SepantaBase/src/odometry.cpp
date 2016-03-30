@@ -118,7 +118,6 @@ void reset_position()
 
 void Init() 
 {
-
     Eigen::MatrixXf matrix(3,4);
     IK_matrix = matrix;
 
@@ -151,7 +150,6 @@ void publish_odometry_base_pose()
 
 void IK_solver(float delta_time)
 {
-
 	float a ;
     float b ;
     float c ;
@@ -183,9 +181,9 @@ void IK_solver(float delta_time)
     odom_position_yaw[1] += odom_speed_xyw[1] * delta_time; //meter
     odom_position_yaw[2] += odom_speed_xyw[2] * delta_time; //radian
 
-    cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
+    //cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
 
-     publish_odometry_base_pose();
+    publish_odometry_base_pose();
 }
 
 void Turn_GL(int degree)
@@ -365,15 +363,12 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
     int yy = 0;
     int ww = 0;
 
-    //=============== limits
-
     vel_x = vel_x / 2;
     vel_y = vel_y / 2;
     vel_th = vel_th / 2;
 
     if ( abs(vel_x) <= 10 && vel_y == 0 )
     {
-     
       if ( abs(vel_th) > 0.2 ) 
       {
         int s = 1;
@@ -385,21 +380,13 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
         vel_th = s * 0.2;
 
       }
-        
-
-      
     }
-
-   
-
     //=============== Convert
+    
     xx = (int)convert_mps_vx(vel_x);
     yy = (int)convert_mps_vy(vel_y);
     ww = (int)convert_radps_w(vel_th);
 
-
-    //===============
-    //send to driver...
     xx = xx / 2;
     yy = yy / 2;
     ww = ww / 2;

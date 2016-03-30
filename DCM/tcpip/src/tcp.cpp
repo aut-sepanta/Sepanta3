@@ -30,7 +30,7 @@
 
 int speedx = 150;
 int speedy = 150;
-int speedt = -100;
+int speedt = -150;
 //V3
 //#define USB_MODE
 using namespace std;
@@ -106,28 +106,29 @@ void robot_backward()
 
 void robot_left()
 {
-   set_omni(0,speedy,0);
+   set_omni(0,-speedy,0);
 }
 
 void robot_right()
 {
-    set_omni(0,-speedy,0);
+    set_omni(0,speedy,0);
 }
 
 void robot_turn_left()
 {
-   set_omni(0,0,speedt);
+   set_omni(0,0,-speedt);
 }
 
 void robot_turn_right()
 {
-   set_omni(0,0,-speedt);
+   set_omni(0,0,speedt);
 }
 
 void robot_stop()
 {
    set_omni(0,0,0);
 }
+bool es = false;
 
 void process_command(string input)
 {
@@ -152,8 +153,22 @@ void process_command(string input)
           if ( plugin_list[1] == "right") robot_right();
           if ( plugin_list[1] == "turnleft") robot_turn_left();
           if ( plugin_list[1] == "turnright") robot_turn_right();
+          if ( plugin_list[1] == "es0") es = false;
+          if ( plugin_list[1] == "es1") es = true;
        }
 
+}
+
+void send_es()
+{
+        std_msgs::String msg;
+
+        if ( es == false )
+        	msg.data = "false";
+        else
+        	msg.data = "true";
+
+        chatter_pub[3].publish(msg);
 }
 
 void tcp_write_tcp(std::string msg,string mode)
@@ -294,6 +309,7 @@ int main(int argc, char** argv)
 
     chatter_pub[1] = node_handles[1].advertise<std_msgs::String>("tcpip/out", 1); 
     chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
+    chatter_pub[3] = node_handles[3].advertise<std_msgs::String>("tcpip/es", 1);
     //==========================================================================================
     sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
     
@@ -312,6 +328,7 @@ int main(int argc, char** argv)
     {
         ros::spinOnce();
         ros_rate.sleep();
+        send_es();
         send_ack();
     }
 

@@ -1,0 +1,16 @@
+E:\LIFE\sepanta_gui\main\main\bin\Debug\main.exe
+E:\LIFE\sepanta_gui\main\main\bin\Debug\main.pdb
+E:\LIFE\sepanta_gui\main\main\obj\Debug\main.csprojResolveAssemblyReference.cache
+E:\LIFE\sepanta_gui\main\main\obj\Debug\main.Properties.Resources.resources
+E:\LIFE\sepanta_gui\main\main\obj\Debug\main.csproj.GenerateResource.Cache
+E:\LIFE\sepanta_gui\main\main\obj\Debug\main.exe
+E:\LIFE\sepanta_gui\main\main\obj\Debug\main.pdb
+E:\LIFE\sepanta_gui\main\main\obj\Debug\main.frmMain.resources
+Z:\Programing\C#\sepanta_gui\main\main\obj\Debug\main.exe
+Z:\Programing\C#\sepanta_gui\main\main\obj\Debug\main.pdb
+Z:\Programing\C#\sepanta_gui\main\main\bin\Debug\main.exe
+Z:\Programing\C#\sepanta_gui\main\main\bin\Debug\main.pdb
+Z:\Programing\C#\sepanta_gui\main\main\obj\Debug\main.csprojResolveAssemblyReference.cache
+Z:\Programing\C#\sepanta_gui\main\main\obj\Debug\main.frmMain.resources
+Z:\Programing\C#\sepanta_gui\main\main\obj\Debug\main.Properties.Resources.resources
+Z:\Programing\C#\sepanta_gui\main\main\obj\Debug\main.csproj.GenerateResource.Cache
