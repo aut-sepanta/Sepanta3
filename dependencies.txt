@@ -5,3 +5,4 @@
 4 ) sudo apt-get install ros-indigo-hokuyo-node
 5 ) sudo apt-get install ros-indigo-urg-*
 6 ) sudo apt-get install ros-indigo-navigation*
+7 ) sudo apt-get install gstreamer1.0-*
