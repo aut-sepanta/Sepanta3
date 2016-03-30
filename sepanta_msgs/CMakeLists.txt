@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sepanta_msgs)
 
-find_package(catkin REQUIRED COMPONENTS std_msgs genmsg actionlib_msgs geometry_msgs sensor_msgs nav_msgs nav_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS std_msgs genmsg actionlib_msgs geometry_msgs sensor_msgs nav_msgs message_generation)
 
 add_message_files(
     FILES 
@@ -25,12 +25,12 @@ add_message_files(
     nearestfacepos.msg
     imudata.msg
     forcedata.msg
+    Object.msg
+    Objects.msg
   
     wave_hand.msg
     object_fetch.msg
     nameobjects.msg
-    objectpos.msg
-    objectsposition.msg
     ramp_pos.msg
     patterns_name.msg
     ack_packages.msg
@@ -39,8 +39,6 @@ add_message_files(
     NodeEvent.msg
     nodestatus.msg
     nodestatuslist.msg
-    all_rectangle.msg
-    objectrectangle.msg
     modelsName.msg
     voltagedata.msg
     
@@ -116,6 +114,7 @@ generate_messages(
     std_msgs 
     actionlib_msgs
     geometry_msgs
+    sensor_msgs
 )
 
 catkin_package()

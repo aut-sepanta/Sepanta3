@@ -271,7 +271,7 @@ void ObjectPipeline::objectMatching(boost::shared_ptr<std::vector<Object>> scene
         for (unsigned int j=0; j<trained_objects->size(); j++) {
             pcl::CorrespondencesPtr correspondences (new pcl::Correspondences ());
             match_search.setInputCloud (trained_objects->at(j).descriptors);
-            for (unsigned int k=0; k<scene_objects->at(j).descriptors->size(); k++) {
+            for (unsigned int k=0; k<scene_objects->at(i).descriptors->size(); k++) {
                 std::vector<int> neigh_indices(1);
                 std::vector<float> neigh_sqr_dists(1);
                 if (!pcl_isfinite (scene_objects->at(i).descriptors->at(k).descriptor[0])) {

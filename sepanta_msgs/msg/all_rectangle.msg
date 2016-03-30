@@ -1,1 +1,0 @@
-objectrectangle[] rectangl_objects
