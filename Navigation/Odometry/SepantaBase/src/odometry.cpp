@@ -367,8 +367,6 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
 
     //=============== limits
 
-    cout<<"1"<<vel_x<<" "<<vel_y<<" "<<vel_th<<endl;
-
     vel_x = vel_x / 2;
     vel_y = vel_y / 2;
     vel_th = vel_th / 2;
@@ -392,9 +390,7 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
       
     }
 
-   cout<<"1"<<vel_x<<" "<<vel_y<<" "<<vel_th<<endl;
-
-    
+   
 
     //=============== Convert
     xx = (int)convert_mps_vx(vel_x);
@@ -407,6 +403,9 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
     xx = xx / 2;
     yy = yy / 2;
     ww = ww / 2;
+
+    cout<<"FROM MOVEBASE"<<vel_x<<" "<<vel_y<<" "<<vel_th<<endl;
+    cout<<"TO MOTORS"<<xx<<" "<<yy<<" "<<ww<<endl;
     omnidrive(xx,yy,ww);
 }
 
@@ -529,7 +528,7 @@ int main(int argc, char** argv)
   ros::NodeHandle node_handles[15];
   ros::Subscriber sub_handles[15];
 
-  chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omni_drive", 10);
+  chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
   chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odometry_hector/odometry", 10);
 
   chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
@@ -537,7 +536,7 @@ int main(int argc, char** argv)
   chatter_pub[5] = node_handles[5].advertise<geometry_msgs::Pose>("odometry_base/pose", 10);
   //=================================================================================================
  
-  sub_handles[1] = node_handles[2].subscribe("odometry_base/cmd_vel", 10, chatterCallback_cmd_vel);
+  sub_handles[1] = node_handles[2].subscribe("sepantamovebase/cmd_vel", 10, chatterCallback_cmd_vel);
   sub_handles[2] = node_handles[3].subscribe("lowerbodycore/irsensors", 10, chatterCallback_irsensor);
   sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);
   sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeed", 10, chatterCallback_omnispeed);
@@ -556,76 +555,78 @@ int main(int argc, char** argv)
     //======================================================
     IK_solver(0.05);
 
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
-
-    geometry_msgs::TransformStamped odom_trans;
-    odom_trans.header.stamp = ros::Time::now();
-    odom_trans.header.frame_id = "odom_hector";
-    odom_trans.child_frame_id = "base_link";
-
-    odom_trans.transform.translation.x = slam_position_yaw[0];
-    odom_trans.transform.translation.y = slam_position_yaw[1];
-    odom_trans.transform.translation.z = 0;
-    odom_trans.transform.rotation = odom_quat;
-
-    odom_broadcaster.sendTransform(odom_trans);
-    
-    nav_msgs::Odometry odom;
-    odom.header.stamp = ros::Time::now();
-    odom.header.frame_id = "odom_hector";
-
-    //set the position
-    odom.pose.pose.position.x = slam_position_yaw[0];
-    odom.pose.pose.position.y = slam_position_yaw[1];
-    odom.pose.pose.position.z = 0;
-    odom.pose.pose.orientation = odom_quat;
-
-    //set the velocity
-    odom.child_frame_id = "base_link";
-    odom.twist.twist.linear.x = 0;
-    odom.twist.twist.linear.y = 0;
-    odom.twist.twist.angular.z = 0;
-
-    //publish the message
-    chatter_pub[1].publish(odom);
-
-    //publish isrobotmove
     std_msgs::Int32 mes;
     mes.data = isrobotmove;
     chatter_pub[3].publish(mes);
+
+    // geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
+
+    // geometry_msgs::TransformStamped odom_trans;
+    // odom_trans.header.stamp = ros::Time::now();
+    // odom_trans.header.frame_id = "odom";
+    // odom_trans.child_frame_id = "base_link";
+
+    // odom_trans.transform.translation.x = slam_position_yaw[0];
+    // odom_trans.transform.translation.y = slam_position_yaw[1];
+    // odom_trans.transform.translation.z = 0;
+    // odom_trans.transform.rotation = odom_quat;
+
+    // odom_broadcaster.sendTransform(odom_trans);
+    
+    // nav_msgs::Odometry odom;
+    // odom.header.stamp = ros::Time::now();
+    // odom.header.frame_id = "odom";
+
+    // //set the position
+    // odom.pose.pose.position.x = slam_position_yaw[0];
+    // odom.pose.pose.position.y = slam_position_yaw[1];
+    // odom.pose.pose.position.z = 0;
+    // odom.pose.pose.orientation = odom_quat;
+
+    // //set the velocity
+    // odom.child_frame_id = "base_link";
+    // odom.twist.twist.linear.x = 0;
+    // odom.twist.twist.linear.y = 0;
+    // odom.twist.twist.angular.z = 0;
+
+    // //publish the message
+    // chatter_pub[1].publish(odom);
+
+    //publish isrobotmove
+    
     //===================================================
-    odom_quat = tf::createQuaternionMsgFromYaw(odom_position_yaw[2]);
+    // odom_quat = tf::createQuaternionMsgFromYaw(odom_position_yaw[2]);
 
 
-    odom_trans.header.stamp = ros::Time::now();
-    odom_trans.header.frame_id = "odom_base";
-    odom_trans.child_frame_id = "base_link2";
+    // odom_trans.header.stamp = ros::Time::now();
+    // odom_trans.header.frame_id = "odom_base";
+    // odom_trans.child_frame_id = "base_link2";
 
-    odom_trans.transform.translation.x = odom_position_yaw[0];
-    odom_trans.transform.translation.y = odom_position_yaw[1];
-    odom_trans.transform.translation.z = 0;
-    odom_trans.transform.rotation = odom_quat;
+    // odom_trans.transform.translation.x = odom_position_yaw[0];
+    // odom_trans.transform.translation.y = odom_position_yaw[1];
+    // odom_trans.transform.translation.z = 0;
+    // odom_trans.transform.rotation = odom_quat;
 
-    odom_broadcaster.sendTransform(odom_trans);
+    // odom_broadcaster.sendTransform(odom_trans);
 
 
-    odom.header.stamp = ros::Time::now();
-    odom.header.frame_id = "odom_base";
+    // odom.header.stamp = ros::Time::now();
+    // odom.header.frame_id = "odom_base";
 
-    //set the position
-    odom.pose.pose.position.x = odom_position_yaw[0];
-    odom.pose.pose.position.y = odom_position_yaw[1];
-    odom.pose.pose.position.z = 0;
-    odom.pose.pose.orientation = odom_quat;
+    // //set the position
+    // odom.pose.pose.position.x = odom_position_yaw[0];
+    // odom.pose.pose.position.y = odom_position_yaw[1];
+    // odom.pose.pose.position.z = 0;
+    // odom.pose.pose.orientation = odom_quat;
 
-    //set the velocity
-    odom.child_frame_id = "base_link2";
-    odom.twist.twist.linear.x = 0;
-    odom.twist.twist.linear.y = 0;
-    odom.twist.twist.angular.z = 0;
+    // //set the velocity
+    // odom.child_frame_id = "base_link2";
+    // odom.twist.twist.linear.x = 0;
+    // odom.twist.twist.linear.y = 0;
+    // odom.twist.twist.angular.z = 0;
 
-    //publish the message
-    chatter_pub[4].publish(odom);
+    // //publish the message
+    // chatter_pub[4].publish(odom);
 
 
     ros_rate.sleep();

@@ -83,9 +83,9 @@ double errorTetha = 0;
 short LKp = 10;
 short WKp = 5;
 
-int step = 0;
+int step = 10;
 
-double path[2][50] = {0};
+double path[2][100] = {0};
 
 double position[2] = {0};
 double orientation[4] = {0};
@@ -100,6 +100,7 @@ double tempGoalTetha = 0;
 double goalPos[2] = {0};
 double goalOri[4] = {0};
 double goalTetha = 0;
+bool first_valid = false;
 
 inline double Deg2Rad(double deg)
 {
@@ -175,8 +176,19 @@ void PathFwr()
 
     while (!App_exit)
     {
+    	if ( !first_valid )
+    	{
+    		  boost::this_thread::sleep(boost::posix_time::milliseconds(1000)); 
+    		  cout<<"Wait for goal ! ..."<<endl;
+              continue;
+    	}
+
         tempGoalPos[0] = path[0][step];
         tempGoalPos[1] = path[1][step];
+        cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
+        cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
+
+
         tempGoalTetha = atan2(tempGoalPos[1]-position[1],tempGoalPos[0]-position[0]);
 
         if (tempGoalTetha < 0) tempGoalTetha += M_PI;
@@ -184,6 +196,8 @@ void PathFwr()
         errorX = tempGoalPos[0]-position[0];
         errorY = tempGoalPos[1]-position[1];
         errorTetha = tempGoalTetha-tetha;
+
+        cout << tetha << "\t" << tempGoalTetha << endl;
 
         if (errorTetha >= M_PI) errorTetha = errorTetha - 2*M_PI;
         if (errorTetha < -M_PI) errorTetha = 2*M_PI - errorTetha;
@@ -216,12 +230,12 @@ void PathFwr()
 
         cout << xSpeed << "\t" << ySpeed << "\t" << thetaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
 
-        boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(50));
 
         if(abs(errorX)<=abs(desireErrorX) && abs(errorY)<=abs(desireErrorY) && abs(errorTetha)<=abs(desireErrorTetha))
-            step ++;
-        if(step==50)
-            step=0;
+            step += 10;
+        if(step==100)
+            step=10;
     }
 }
 
@@ -229,6 +243,7 @@ void PathFwr()
 //{
 
 //}
+
 
 void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
@@ -255,15 +270,16 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 
 void GetPath(const nav_msgs::Path::ConstPtr &msg)
 {
-    for(int i=0;i<50;i++)
+    for(int i=0;i<100;i++)
     {
         path[0][i] = msg->poses[i].pose.position.x;
         path[1][i] = msg->poses[i].pose.position.y;
     }
 
-    step=0;
+    step=10;
 
-//    cout << "TempGoal Position: " << endl;
+     first_valid=true;
+//   cout << "TempGoal Position: " << endl;
 //    cout << "\tPosition:\n"<< "X: " << tempGoalPos[0] << "\nY: " << tempGoalPos[1] << "\nZ: " << tempGoalPos[2] << endl;
 //    cout << tempGoalTetha << endl;
 }
@@ -292,7 +308,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "mymovebase");
 
     boost::thread _thread_PathFwr(&PathFwr);
-    boost::thread _thread_PreesKeyToExit(&PreesKeyToExit);
 
     tf::TransformBroadcaster broadcaster;
     ros::NodeHandle node_handles[50];
@@ -328,6 +343,10 @@ int main(int argc, char **argv)
         ros::spinOnce();
         loop_rate.sleep();
     }
+
+    _thread_PathFwr.interrupt();
+    _thread_PathFwr.join();
+
 
     return 0;
 }

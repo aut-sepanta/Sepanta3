@@ -154,6 +154,7 @@ void logic()
         serial_rw_count = 0;
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         serial_read_hz =  serial_rw_count;
+        ROS_INFO("USB Serial Hz %d",serial_read_hz);
     }
 }
 
@@ -396,7 +397,7 @@ void serial_logic()
                     my_serial.write(result_write, 11);
                     my_serial.flush();
 
-                    ROS_INFO("USB Serial Write");
+                    //ROS_INFO("USB Serial Write");
 
                     boost::this_thread::sleep(boost::posix_time::milliseconds(25));
 
@@ -509,7 +510,7 @@ void serial_logic()
                                     else
                                         EMS_STOP = 1;
                                     
-                                    cout<<"EMS : "<<EMS_STOP<<endl;
+                                    //cout<<"EMS : "<<EMS_STOP<<endl;
 
                                     
 
@@ -539,8 +540,8 @@ void serial_logic()
                                     }
 
 
-                                    ROS_INFO("USB Serial Read");
-                                    ROS_INFO("USB Serial Hz %d",serial_read_hz);
+                                    //ROS_INFO("USB Serial Read");
+                                   
                                     break;
                                 }
                             }

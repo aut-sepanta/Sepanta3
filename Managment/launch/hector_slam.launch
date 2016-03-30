@@ -1,6 +1,6 @@
 <launch>
     <arg name="base_frame_name" default="base_link"/>
-    <arg name="map_frame_name" default="map_link"/>
+    <arg name="map_frame_name" default="map"/>
     <arg name="odom_frame_name" default="odom"/>
      <arg name="scan_subscriber_queue_size" default="5"/>
     <arg name="laser_topic_name" default=""/>

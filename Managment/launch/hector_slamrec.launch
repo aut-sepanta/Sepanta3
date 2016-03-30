@@ -1,8 +1,8 @@
 <launch>
     <arg name="base_frame_name" default="base_link"/>
-    <arg name="map_frame_name" default="map_link"/>
+    <arg name="map_frame_name" default="map"/>
     <arg name="odom_frame_name" default="base_link"/>
-    <arg name="laser_frame_name" default="laser"/>
+    <arg name="laser_frame_name" default="laser_link"/>
     <arg name="laser_topic_name" default=""/>
 
     <node pkg="hector_mapping" type="hector_mapping" name="hector_slam" output="screen">
@@ -26,7 +26,7 @@
         
   </node>
     
-   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find managment)/rviz/rec.rviz" />
+
     
 </launch>
 
