@@ -249,18 +249,18 @@ void PathFwr()
         errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
-        if(abs(errorX_R)>abs(desireErrorX))
-            xSpeed = (abs(errorX_R*LKp)<=abs(maxLinSpeed))?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
+        if(abs(errorX_R)>desireErrorX)
+            xSpeed = (abs(errorX_R*LKp)<=maxLinSpeed)?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
         else
             xSpeed = 0;
 
-        if(abs(errorY_R)>abs(desireErrorY))
-            ySpeed = (abs(errorY_R*LKp)<=abs(maxLinSpeed))?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
+        if(abs(errorY_R)>desireErrorY)
+            ySpeed = (abs(errorY_R*LKp)<=maxLinSpeed)?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
         else
             ySpeed = 0;
 
-        if(abs(errorTetha)>abs(desireErrorTetha))
-            tethaSpeed = (abs(errorTetha*WKp)<=abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
+        if(abs(errorTetha)>desireErrorTetha)
+            tethaSpeed = (abs(errorTetha*WKp)<=maxTethaSpeed)?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
         else
             tethaSpeed = 0;
 
