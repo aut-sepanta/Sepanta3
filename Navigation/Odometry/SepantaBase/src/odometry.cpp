@@ -367,20 +367,20 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
     vel_y = vel_y / 2;
     vel_th = vel_th / 2;
 
-    if ( abs(vel_x) <= 10 && vel_y == 0 )
-    {
-      if ( abs(vel_th) > 0.2 ) 
-      {
-        int s = 1;
-        if ( vel_th < 0 )
-        {
-          s = -1;
-        }
+    // if ( abs(vel_x) <= 10 && vel_y == 0 )
+    // {
+    //   if ( abs(vel_th) > 0.2 ) 
+    //   {
+    //     int s = 1;
+    //     if ( vel_th < 0 )
+    //     {
+    //       s = -1;
+    //     }
 
-        vel_th = s * 0.2;
+    //     vel_th = s * 0.2;
 
-      }
-    }
+    //   }
+    // }
     //=============== Convert
     
     xx = (int)convert_mps_vx(vel_x);

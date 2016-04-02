@@ -69,9 +69,9 @@ ros::Publisher chatter_pub_motor[20];
 tbb::atomic<int> Compass;
 
 int key_pad_reset = 0;
-int robot_max_speedx = 300;
-int robot_max_speedy = 300;
-int robot_max_speedw = 250;
+int robot_max_speedx = 380;
+int robot_max_speedy = 380;
+int robot_max_speedw = 180;
 
 //Status
 int control_mode_old = 0;
