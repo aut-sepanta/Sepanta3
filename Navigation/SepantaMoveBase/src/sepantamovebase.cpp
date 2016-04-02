@@ -1,3 +1,7 @@
+
+
+
+
 #include "ros/ros.h"
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
@@ -49,6 +53,29 @@
 
 //=============================================================
 
+//MAX SPEED
+#define normal_max_linear_speed  0.6
+#define normal_max_angular_speed  0.4
+//-
+#define goal_max_linear_speed  0.1
+#define goal_max_angular_speed  0.2
+
+//KP
+#define normal_kp_linear 3
+#define norma_kp_angular 1
+//-
+#define goal_kp_linear  6
+#define goal_kp_angular 7
+
+//DESIRE
+#define normal_desire_errorX 0.1
+#define normal_desire_errorY 0.1
+#define normal_desire_errorTetha 0.36 // 20 degree
+//-
+#define goal_desire_errorX 0.02
+#define goal_desire_errorY 0.02
+#define goal_desire_errorTetha 0.036 // 2 degree
+
 using std::string;
 using std::exception;
 using std::cout;
@@ -59,13 +86,13 @@ using namespace std;
 using namespace boost;
 using namespace ros;
 
-bool App_exit = false;
-bool IsGoalValid = false;
 
-double const maxLinSpeed_const = 0.6;
-double const maxTethaSpeed_const = 0.4;
-double maxLinSpeed = maxLinSpeed_const;
-double maxTethaSpeed = maxTethaSpeed_const;
+
+bool App_exit = false;
+bool newPath = false;
+
+double maxLinSpeed = normal_max_linear_speed;
+double maxTethaSpeed = normal_max_angular_speed;
 
 nav_msgs::Path globalPath;
 short globalPathSize;
@@ -77,12 +104,9 @@ double xSpeed=0;
 double ySpeed=0;
 double tethaSpeed=0;
 
-double const desireErrorX_const = 0.1;
-double const desireErrorY_const = 0.1;
-double const desireErrorTetha_const = 0.18;
-double desireErrorX = desireErrorX_const;
-double desireErrorY = desireErrorY_const;
-double desireErrorTetha = desireErrorTetha_const;
+double desireErrorX = normal_desire_errorX;
+double desireErrorY = normal_desire_errorY;
+double desireErrorTetha = normal_desire_errorTetha;
 
 double errorX = 0;
 double errorY = 0;
@@ -90,8 +114,8 @@ double errorTetha = 0;
 double errorX_R=0;
 double errorY_R=0;
 
-double LKp = 3;
-double WKp = 1;
+double LKp = normal_kp_linear;
+double WKp = norma_kp_angular;
 
 int step = 0;
 
@@ -108,6 +132,7 @@ double tempGoalTetha = 0;
 double goalPos[2] = {0};
 double goalOri[4] = {0};
 double goalTetha = 0;
+bool first_valid = false;
 
 inline double Deg2Rad(double deg)
 {
@@ -199,38 +224,55 @@ void PathFwr()
 
     while (!App_exit)
     {
-        if ( !IsGoalValid )
+    	if ( !first_valid )
     	{
             cout<<"Wait for goal ! ..."<<endl;
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             continue;
     	}
 
-        if(abs(goalPos[0]-position[0])<=0.02 && abs(goalPos[1]-position[1])<=0.02 && abs(goalTetha-tetha)<=0.036)
+        if(abs(goalPos[0]-position[0])<= desireErrorX && abs(goalPos[1]-position[1])<= desireErrorY && abs(goalTetha-tetha)<= desireErrorTetha)
         {
-            IsGoalValid=false;
+            first_valid=false;
             cout<<"Goal reached ..."<<endl;
+            //return max limitations
+
+            desireErrorX = normal_desire_errorX;
+            desireErrorY = normal_desire_errorY;
+            desireErrorTetha = normal_desire_errorTetha;
+
+            LKp = normal_kp_linear;
+            WKp = norma_kp_angular;
+ 
+            maxLinSpeed = normal_max_linear_speed;
+            maxTethaSpeed = normal_max_angular_speed;
+
             send_omni(0,0,0);
-            maxLinSpeed = maxLinSpeed_const;
-            maxTethaSpeed = maxTethaSpeed_const;
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
             continue;
         }
+
+        tempGoalPos[0] = globalPath.poses[step].pose.position.x;
+        tempGoalPos[1] = globalPath.poses[step].pose.position.y;
+        // cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
+        // cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
 
         if(step+20 >= globalPathSize)
         {
             tempGoalTetha = goalTetha;
-            if(step+10 >= globalPathSize)
-            {
-                maxLinSpeed = 0.2;
-                maxTethaSpeed = 0.1;
-            }
+            //reduce limita
+
+	         desireErrorX = goal_desire_errorX;
+	         desireErrorY = goal_desire_errorY;
+	         desireErrorTetha = goal_desire_errorTetha;
+
+	    	 maxLinSpeed = goal_max_linear_speed;
+	         maxTethaSpeed = goal_max_angular_speed;
+	         LKp = goal_kp_linear;
+	         WKp = goal_kp_angular;
         }
         else
-            tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step+10].pose.position.x, globalPath.poses[step+10].pose.position.y);
-
-        // cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
-        // cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
+            tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step+20].pose.position.x, globalPath.poses[step+20].pose.position.y);
 
         if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
 
@@ -277,12 +319,12 @@ void PathFwr()
        
         boost::this_thread::sleep(boost::posix_time::milliseconds(10));
 
-        if(abs(errorX)<=desireErrorX && abs(errorY)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
+        if(abs(errorX)<=abs(desireErrorX) && abs(errorY)<=abs(desireErrorY) && abs(errorTetha)<=abs(desireErrorTetha))
         {
-            if(step+10 > globalPathSize)
+            if(step+20>globalPathSize)
                 step = globalPathSize-1;
             else
-                step +=10;
+                step +=20;
         }
     }
 }
@@ -323,7 +365,7 @@ void GetPath(const nav_msgs::Path::ConstPtr &msg)
 
     step=0;
 
-    IsGoalValid=true;
+    first_valid=true;
 //   cout << "TempGoal Position: " << endl;
 //    cout << "\tPosition:\n"<< "X: " << tempGoalPos[0] << "\nY: " << tempGoalPos[1] << "\nZ: " << tempGoalPos[2] << endl;
 //    cout << tempGoalTetha << endl;
@@ -395,3 +437,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
