@@ -54,23 +54,21 @@
 //=============================================================
 
 //MAX SPEED
-#define normal_max_linear_speed  0.6
-#define normal_max_angular_speed  0.4
+#define normal_max_linear_speed  1
+#define normal_max_angular_speed  1
 //-
 #define goal_max_linear_speed  0.1
 #define goal_max_angular_speed  0.2
-
 //KP
 #define normal_kp_linear 3
 #define norma_kp_angular 1
 //-
 #define goal_kp_linear  6
 #define goal_kp_angular 7
-
 //DESIRE
 #define normal_desire_errorX 0.1
 #define normal_desire_errorY 0.1
-#define normal_desire_errorTetha 0.36 // 20 degree
+#define normal_desire_errorTetha 0.18 // 10 degree
 //-
 #define goal_desire_errorX 0.02
 #define goal_desire_errorY 0.02
@@ -291,17 +289,17 @@ void PathFwr()
         errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
-        if(abs(errorX_R)>abs(desireErrorX))
+        if(abs(errorX_R)>desireErrorX)
             xSpeed = (abs(errorX_R*LKp)<=abs(maxLinSpeed))?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
         else
             xSpeed = 0;
 
-        if(abs(errorY_R)>abs(desireErrorY))
+        if(abs(errorY_R)>desireErrorY)
             ySpeed = (abs(errorY_R*LKp)<=abs(maxLinSpeed))?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
         else
             ySpeed = 0;
 
-        if(abs(errorTetha)>abs(desireErrorTetha))
+        if(abs(errorTetha)>desireErrorTetha)
             tethaSpeed = (abs(errorTetha*WKp)<=abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
         else
             tethaSpeed = 0;
@@ -319,7 +317,7 @@ void PathFwr()
        
         boost::this_thread::sleep(boost::posix_time::milliseconds(10));
 
-        if(abs(errorX)<=abs(desireErrorX) && abs(errorY)<=abs(desireErrorY) && abs(errorTetha)<=abs(desireErrorTetha))
+        if(abs(errorX_R)<=desireErrorX && abs(errorY_R)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
         {
             if(step+20>globalPathSize)
                 step = globalPathSize-1;
@@ -390,9 +388,11 @@ void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
 
 int main(int argc, char **argv)
 {
-    cout << "MyMoveBase STARTED ..." << endl;
+   
 
     ros::init(argc, argv, "mymovebase");
+
+    ROS_INFO("SepantaMoveBase Version 1.0.1");
 
     boost::thread _thread_PathFwr(&PathFwr);
 
