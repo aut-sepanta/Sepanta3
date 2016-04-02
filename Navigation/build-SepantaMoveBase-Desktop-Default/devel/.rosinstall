@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/user1/catkin_ws/src/Sepanta3/Navigation/build-SepantaMoveBase-Desktop-Default/devel/setup.sh

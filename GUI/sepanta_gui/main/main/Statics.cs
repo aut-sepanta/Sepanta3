@@ -78,7 +78,7 @@ namespace main
             {
                 statics.main_config = (config)statics.XMLload_data(Environment.CurrentDirectory, typeof(config));
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 saveXML_config();
             }
