@@ -79,7 +79,7 @@ double tethaSpeed=0;
 
 double const desireErrorX_const = 0.1;
 double const desireErrorY_const = 0.1;
-double const desireErrorTetha_const = 0.09;
+double const desireErrorTetha_const = 0.18;
 double desireErrorX = desireErrorX_const;
 double desireErrorY = desireErrorY_const;
 double desireErrorTetha = desireErrorTetha_const;
@@ -279,7 +279,7 @@ void PathFwr()
 
         if(abs(errorX)<=desireErrorX && abs(errorY)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
         {
-            if(step+15 > globalPathSize)
+            if(step+10 > globalPathSize)
                 step = globalPathSize-1;
             else
                 step +=10;
