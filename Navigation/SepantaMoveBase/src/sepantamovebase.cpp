@@ -53,6 +53,17 @@
 
 //=============================================================
 
+using std::string;
+using std::exception;
+using std::cout;
+using std::cerr;
+using std::endl;
+
+using namespace std;
+using namespace boost;
+using namespace ros;
+
+
 //MAX SPEED
 #define normal_max_linear_speed  1
 #define normal_max_angular_speed  1
@@ -74,28 +85,16 @@
 #define goal_desire_errorY 0.02
 #define goal_desire_errorTetha 0.036 // 2 degree
 
-using std::string;
-using std::exception;
-using std::cout;
-using std::cerr;
-using std::endl;
-
-using namespace std;
-using namespace boost;
-using namespace ros;
-
-
-
 bool App_exit = false;
 bool newPath = false;
+bool IsGoalValid = false;
 
 double maxLinSpeed = normal_max_linear_speed;
 double maxTethaSpeed = normal_max_angular_speed;
 
 nav_msgs::Path globalPath;
-short globalPathSize;
+int globalPathSize;
 
-ros::Publisher chatter_pub[20];
 ros::Publisher mycmd_vel_pub;
 
 double xSpeed=0;
@@ -109,8 +108,8 @@ double desireErrorTetha = normal_desire_errorTetha;
 double errorX = 0;
 double errorY = 0;
 double errorTetha = 0;
-double errorX_R=0;
-double errorY_R=0;
+double errorX_R = 0;
+double errorY_R = 0;
 
 double LKp = normal_kp_linear;
 double WKp = norma_kp_angular;
@@ -130,7 +129,6 @@ double tempGoalTetha = 0;
 double goalPos[2] = {0};
 double goalOri[4] = {0};
 double goalTetha = 0;
-bool first_valid = false;
 
 inline double Deg2Rad(double deg)
 {
@@ -166,43 +164,9 @@ int roundData(double data)
         return floor(data);
 }
 
-char getch() {
-        char buf = 0;
-        struct termios old = {0};
-        if (tcgetattr(0, &old) < 0)
-                perror("tcsetattr()");
-        old.c_lflag &= ~ICANON;
-        old.c_lflag &= ~ECHO;
-        old.c_cc[VMIN] = 1;
-        old.c_cc[VTIME] = 0;
-        if (tcsetattr(0, TCSANOW, &old) < 0)
-                perror("tcsetattr ICANON");
-        if (read(0, &buf, 1) < 0)
-                perror ("read()");
-        old.c_lflag |= ICANON;
-        old.c_lflag |= ECHO;
-        if (tcsetattr(0, TCSADRAIN, &old) < 0)
-                perror ("tcsetattr ~ICANON");
-        return (buf);
-}
-
 double GetToPointsAngle(double x1, double y1, double x2, double y2)
 {
     return atan2(y2-y1,x2-x1);
-}
-
-
-void PreesKeyToExit()
-{
-    while (!App_exit)
-    {
-        char ch = getch();
-
-        if(ch=='x')
-        {
-            App_exit = true;
-        }
-    }
 }
 
 void send_omni(double x,double y ,double w)
@@ -215,6 +179,7 @@ void send_omni(double x,double y ,double w)
 
         mycmd_vel_pub.publish(myTwist);
 }
+
 int info_counter = 0;
 void PathFwr()
 {
@@ -222,7 +187,7 @@ void PathFwr()
 
     while (!App_exit)
     {
-    	if ( !first_valid )
+        if ( !IsGoalValid )
     	{
             cout<<"Wait for goal ! ..."<<endl;
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -231,7 +196,7 @@ void PathFwr()
 
         if(abs(goalPos[0]-position[0])<= desireErrorX && abs(goalPos[1]-position[1])<= desireErrorY && abs(goalTetha-tetha)<= desireErrorTetha)
         {
-            first_valid=false;
+            IsGoalValid=false;
             cout<<"Goal reached ..."<<endl;
             //return max limitations
 
@@ -250,30 +215,6 @@ void PathFwr()
             continue;
         }
 
-        tempGoalPos[0] = globalPath.poses[step].pose.position.x;
-        tempGoalPos[1] = globalPath.poses[step].pose.position.y;
-        // cout<<"GOAL :"<<tempGoalPos[0]<<" "<<tempGoalPos[1]<<endl;
-        // cout<<"POSITION :"<<position[0]<<" "<<position[1]<<endl;
-
-        if(step+20 >= globalPathSize)
-        {
-            tempGoalTetha = goalTetha;
-            //reduce limita
-
-	         desireErrorX = goal_desire_errorX;
-	         desireErrorY = goal_desire_errorY;
-	         desireErrorTetha = goal_desire_errorTetha;
-
-	    	 maxLinSpeed = goal_max_linear_speed;
-	         maxTethaSpeed = goal_max_angular_speed;
-	         LKp = goal_kp_linear;
-	         WKp = goal_kp_angular;
-        }
-        else
-            tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step+20].pose.position.x, globalPath.poses[step+20].pose.position.y);
-
-        if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
-
         errorX = tempGoalPos[0]-position[0];
         errorY = tempGoalPos[1]-position[1];
         errorTetha = tempGoalTetha-tetha;
@@ -290,29 +231,17 @@ void PathFwr()
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
         if(abs(errorX_R)>desireErrorX)
-<<<<<<< HEAD
             xSpeed = (abs(errorX_R*LKp)<=maxLinSpeed)?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
-=======
-            xSpeed = (abs(errorX_R*LKp)<=abs(maxLinSpeed))?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
->>>>>>> 1017436045d9bacf855623a3bfb6f790aeab8e3d
         else
             xSpeed = 0;
 
         if(abs(errorY_R)>desireErrorY)
-<<<<<<< HEAD
             ySpeed = (abs(errorY_R*LKp)<=maxLinSpeed)?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
-=======
-            ySpeed = (abs(errorY_R*LKp)<=abs(maxLinSpeed))?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
->>>>>>> 1017436045d9bacf855623a3bfb6f790aeab8e3d
         else
             ySpeed = 0;
 
         if(abs(errorTetha)>desireErrorTetha)
-<<<<<<< HEAD
             tethaSpeed = (abs(errorTetha*WKp)<=maxTethaSpeed)?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
-=======
-            tethaSpeed = (abs(errorTetha*WKp)<=abs(maxTethaSpeed))?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
->>>>>>> 1017436045d9bacf855623a3bfb6f790aeab8e3d
         else
             tethaSpeed = 0;
 
@@ -331,19 +260,38 @@ void PathFwr()
 
         if(abs(errorX_R)<=desireErrorX && abs(errorY_R)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
         {
-            if(step+20>globalPathSize)
+            if(step+20>=globalPathSize)
+            {
                 step = globalPathSize-1;
+
+                tempGoalTetha = goalTetha;
+
+                //reduce limita
+
+                 desireErrorX = goal_desire_errorX;
+                 desireErrorY = goal_desire_errorY;
+                 desireErrorTetha = goal_desire_errorTetha;
+
+                 maxLinSpeed = goal_max_linear_speed;
+                 maxTethaSpeed = goal_max_angular_speed;
+                 LKp = goal_kp_linear;
+                 WKp = goal_kp_angular;
+            }
             else
+            {
                 step +=20;
+
+                tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step].pose.position.x, globalPath.poses[step].pose.position.y);
+
+                if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
+
+            }
+
+            tempGoalPos[0] = globalPath.poses[step].pose.position.x;
+            tempGoalPos[1] = globalPath.poses[step].pose.position.y;
         }
     }
 }
-
-//void GetVelocity(const dynamixel_msgs::MotorStateList::ConstPtr &msg)
-//{
-
-//}
-
 
 void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
@@ -361,11 +309,6 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     orientation[2] = msg->pose.orientation.z;
     orientation[3] = msg->pose.orientation.w;
     tetha = Quat2Rad(orientation);
-
-//    cout << "Courent Position: " << endl;
-//    cout << "\tPosition:\n"<< "X: " << position[0] << "\nY: " << position[1] << endl;
-//    cout << "\tOrientation:\n"<< "X: " << orientation[0] << "\nY: " << orientation[1] << "\nZ: " << orientation[2] << "\nW: " << orientation[3] << endl;
-//    cout << Quat2Rad(orientation) << endl;
 }
 
 void GetPath(const nav_msgs::Path::ConstPtr &msg)
@@ -375,10 +318,7 @@ void GetPath(const nav_msgs::Path::ConstPtr &msg)
 
     step=0;
 
-    first_valid=true;
-//   cout << "TempGoal Position: " << endl;
-//    cout << "\tPosition:\n"<< "X: " << tempGoalPos[0] << "\nY: " << tempGoalPos[1] << "\nZ: " << tempGoalPos[2] << endl;
-//    cout << tempGoalTetha << endl;
+    IsGoalValid=true;
 }
 
 void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
@@ -390,27 +330,19 @@ void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
     goalOri[2] = msg->goal.target_pose.pose.orientation.z;
     goalOri[3] = msg->goal.target_pose.pose.orientation.w;
     goalTetha = Quat2Rad(goalOri);
-
-//    cout << "Goal Position: " << endl;
-//    cout << "\tPosition:\n"<< "X: " << goalPos[0] << "\nY: " << goalPos[1] << endl;
-//    cout << "\tOrientation:\n"<< "X: " << orientation[0] << "\nY: " << orientation[1] << "\nZ: " << orientation[2] << "\nW: " << orientation[3] << endl;
-//    cout << goalTetha << endl;
 }
 
 
 int main(int argc, char **argv)
 {
-   
-
     ros::init(argc, argv, "mymovebase");
 
-    ROS_INFO("SepantaMoveBase Version 1.0.1");
+    ROS_INFO("SepantaMoveBase Version 1.0.2");
 
     boost::thread _thread_PathFwr(&PathFwr);
 
-    tf::TransformBroadcaster broadcaster;
-    ros::NodeHandle node_handles[50];
-    ros::Subscriber sub_handles[15];
+    ros::NodeHandle node_handles[10];
+    ros::Subscriber sub_handles[5];
 
     //============================================================================================
     sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, GetPos);
@@ -421,31 +353,17 @@ int main(int argc, char **argv)
     //============================================================================================
     mycmd_vel_pub = node_handles[4].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
     //============================================================================================
-//    sub_handles[2] = node_handles[2].subscribe("/AUTROBOTIN_omnidrive", 10, chatterCallback_omnidrive);
-    //============================================================================================
-//    chatter_pub_motor[0] = node_handles[3].advertise<std_msgs::Int32>("/m1_controller/command", 10);
-//    chatter_pub_motor[1] = node_handles[4].advertise<std_msgs::Int32>("/m2_controller/command", 10);
-//    chatter_pub_motor[2] = node_handles[5].advertise<std_msgs::Int32>("/m3_controller/command", 10);
-    //============================================================================================
-//    odom_pub = node_handles[6].advertise<nav_msgs::Odometry>("odom", 50);
 
     ros::Rate loop_rate(20);
 
     while (ros::ok() && App_exit == false)
     {
-//	broadcaster.sendTransform(
-//      	tf::StampedTransform(
-//        tf::Transform(tf::Quaternion(0, 0, 0, 1), tf::Vector3(0.1, 0.0, 0.2)),
-//        ros::Time::now(),"base_link", "base_laser"));
-//        OdomPublisher();
-
         ros::spinOnce();
         loop_rate.sleep();
     }
 
     _thread_PathFwr.interrupt();
     _thread_PathFwr.join();
-
 
     return 0;
 }
