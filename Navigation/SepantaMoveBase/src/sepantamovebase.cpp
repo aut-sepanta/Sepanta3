@@ -65,21 +65,21 @@ using namespace ros;
 
 
 //MAX SPEED
-#define normal_max_linear_speedX  0.4
-#define normal_max_linear_speedY  0.33
-#define normal_max_angular_speed  0.46
+#define normal_max_linear_speedX  0.3
+#define normal_max_linear_speedY  0.2
+#define normal_max_angular_speed  0.35
 //-
 #define goal_max_linear_speedX  0.15
-#define goal_max_linear_speedY  0.15
+#define goal_max_linear_speedY  0.1
 #define goal_max_angular_speed  0.2
 //KP
-#define normal_kp_linearX 1.38
-#define normal_kp_linearY 1.14
-#define norma_kp_angular  0.8
+#define normal_kp_linearX 1
+#define normal_kp_linearY 0.7
+#define norma_kp_angular  1
 //-
-#define goal_kp_linearX  0.52
-#define goal_kp_linearY  0.52
-#define goal_kp_angular  0.18
+#define goal_kp_linearX  0.5
+#define goal_kp_linearY  0.3
+#define goal_kp_angular  0.5
 //DESIRE ERRORS
 #define normal_desire_errorX 0.1
 #define normal_desire_errorY 0.1
@@ -225,6 +225,9 @@ void PathFwr()
             continue;
         }
 
+        tempGoalPos[0] = globalPath.poses[step].pose.position.x;
+        tempGoalPos[1] = globalPath.poses[step].pose.position.y;
+
         errorX = tempGoalPos[0]-position[0];
         errorY = tempGoalPos[1]-position[1];
         errorTetha = tempGoalTetha-tetha;
@@ -265,7 +268,7 @@ void PathFwr()
         {
             info_counter= 0;
              cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
-             cout << maxErrorX <<"\t" << maxErrorY << "\t" << maxErrorTetha << endl;
+             cout << "Pos:" << position[0] <<"\t" << position[1] << "\t" << tempGoalPos[0] << "\t" << tempGoalPos[1] << endl;
 
         }
        
@@ -301,9 +304,6 @@ void PathFwr()
                 if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
 
             }
-
-            tempGoalPos[0] = globalPath.poses[step].pose.position.x;
-            tempGoalPos[1] = globalPath.poses[step].pose.position.y;
         }
     }
 }
