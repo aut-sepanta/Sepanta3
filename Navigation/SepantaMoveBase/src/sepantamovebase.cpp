@@ -73,13 +73,21 @@ using namespace ros;
 #define goal_max_linear_speedY  0.1
 #define goal_max_angular_speed  0.2
 //KP
-#define normal_kp_linearX 1
-#define normal_kp_linearY 0.7
-#define norma_kp_angular  1
+#define normal_kp_linearX 0.86
+#define normal_kp_linearY 0.57
+#define norma_kp_angular  0.45
 //-
-#define goal_kp_linearX  0.5
-#define goal_kp_linearY  0.3
-#define goal_kp_angular  0.5
+#define goal_kp_linearX  1
+#define goal_kp_linearY  0.66
+#define goal_kp_angular  0.25
+//Ki
+#define normal_ki_linearX 0.03
+#define normal_ki_linearY 0.004
+#define normal_ki_angular 0.001
+//-
+#define goal_ki_linearX 0.0027
+#define goal_ki_linearY 0.0019
+#define goal_ki_angular 0.0013
 //DESIRE ERRORS
 #define normal_desire_errorX 0.1
 #define normal_desire_errorY 0.1
@@ -116,9 +124,16 @@ double errorTetha = 0;
 double errorX_R = 0;
 double errorY_R = 0;
 
+double iErrorX = 0;
+double iErrorY = 0;
+double iErrorTetha = 0;
+
 double LKpX = normal_kp_linearX;
 double LKpY = normal_kp_linearY;
 double WKp = norma_kp_angular;
+double LKiX = normal_ki_linearX;
+double LKiY = normal_ki_linearY;
+double WKi = normal_ki_angular;
 
 int step = 0;
 
@@ -177,6 +192,43 @@ double GetToPointsAngle(double x1, double y1, double x2, double y2)
     return atan2(y2-y1,x2-x1);
 }
 
+void ResetLimits()
+{
+    desireErrorX = normal_desire_errorX;
+    desireErrorY = normal_desire_errorY;
+    desireErrorTetha = normal_desire_errorTetha;
+
+    LKpX = normal_kp_linearX;
+    LKpY = normal_kp_linearY;
+    WKp = norma_kp_angular;
+
+    LKiX = normal_ki_linearX;
+    LKiY = normal_ki_linearY;
+    WKi = normal_ki_angular;
+
+    maxLinSpeedX = normal_max_linear_speedX;
+    maxLinSpeedY = normal_max_linear_speedY;
+    maxTethaSpeed = normal_max_angular_speed;
+}
+
+void ReduceLimits()
+{
+    desireErrorX = goal_desire_errorX;
+    desireErrorY = goal_desire_errorY;
+    desireErrorTetha = goal_desire_errorTetha;
+
+    maxLinSpeedX = goal_max_linear_speedX;
+    maxLinSpeedY = goal_max_linear_speedY;
+    maxTethaSpeed = goal_max_angular_speed;
+    LKpX = goal_kp_linearX;
+    LKpY = goal_kp_linearY;
+    WKp = goal_kp_angular;
+
+    LKiX = goal_ki_linearX;
+    LKiY = goal_ki_linearY;
+    WKi = goal_ki_angular;
+}
+
 void send_omni(double x,double y ,double w)
 {
      geometry_msgs::Twist myTwist;
@@ -206,19 +258,14 @@ void PathFwr()
         {
             IsGoalValid=false;
             cout<<"Goal reached ..."<<endl;
+
             //return max limitations
 
-            desireErrorX = normal_desire_errorX;
-            desireErrorY = normal_desire_errorY;
-            desireErrorTetha = normal_desire_errorTetha;
+            ResetLimits();
 
-            LKpX = normal_kp_linearX;
-            LKpY = normal_kp_linearY;
-            WKp = norma_kp_angular;
- 
-            maxLinSpeedX = normal_max_linear_speedX;
-            maxLinSpeedY = normal_max_linear_speedY;
-            maxTethaSpeed = normal_max_angular_speed;
+            iErrorX = 0;
+            iErrorY = 0;
+            iErrorTetha = 0;
 
             send_omni(0,0,0);
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
@@ -241,22 +288,22 @@ void PathFwr()
         errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
-        if(abs(errorX_R)>maxErrorX) maxErrorX=abs(errorX_R);
-        if(abs(errorY_R)>maxErrorY) maxErrorY=abs(errorY_R);
-        if(abs(errorTetha)>maxErrorTetha) maxErrorTetha=abs(errorTetha);
+        iErrorX += errorX_R;
+        iErrorY += errorY_R;
+        if(abs(errorTetha)<=0.78) iErrorTetha += errorTetha;
 
         if(abs(errorX_R)>desireErrorX)
-            xSpeed = (abs(errorX_R*LKpX)<=maxLinSpeedX)?(errorX_R*LKpX):sign(errorX_R)*maxLinSpeedX;
+            xSpeed = (abs(errorX_R*LKpX+iErrorX*LKiX)<=maxLinSpeedX)?(errorX_R*LKpX+iErrorX*LKiX):sign(errorX_R)*maxLinSpeedX;
         else
             xSpeed = 0;
 
         if(abs(errorY_R)>desireErrorY)
-            ySpeed = (abs(errorY_R*LKpY)<=maxLinSpeedY)?(errorY_R*LKpY):sign(errorY_R)*maxLinSpeedY;
+            ySpeed = (abs(errorY_R*LKpY+iErrorY*LKiY)<=maxLinSpeedY)?(errorY_R*LKpY+iErrorY*LKiY):sign(errorY_R)*maxLinSpeedY;
         else
             ySpeed = 0;
 
         if(abs(errorTetha)>desireErrorTetha)
-            tethaSpeed = (abs(errorTetha*WKp)<=maxTethaSpeed)?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
+            tethaSpeed = (abs(errorTetha*WKp+iErrorTetha*WKi)<=maxTethaSpeed)?(errorTetha*WKp+iErrorTetha*WKi):sign(errorTetha)*maxTethaSpeed;
         else
             tethaSpeed = 0;
 
@@ -267,15 +314,17 @@ void PathFwr()
         if ( info_counter>50)
         {
             info_counter= 0;
-             cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
-             cout << "Pos:" << position[0] <<"\t" << position[1] << "\t" << tempGoalPos[0] << "\t" << tempGoalPos[1] << endl;
-
+            cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
         }
        
         boost::this_thread::sleep(boost::posix_time::milliseconds(10));
 
         if(abs(errorX_R)<=desireErrorX && abs(errorY_R)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
         {
+            iErrorX = 0;
+            iErrorY = 0;
+            iErrorTetha = 0;
+
             if(step+20>=globalPathSize)
             {
                 step = globalPathSize-1;
@@ -284,16 +333,7 @@ void PathFwr()
 
                 //reduce limita
 
-                 desireErrorX = goal_desire_errorX;
-                 desireErrorY = goal_desire_errorY;
-                 desireErrorTetha = goal_desire_errorTetha;
-
-                 maxLinSpeedX = goal_max_linear_speedX;
-                 maxLinSpeedY = goal_max_linear_speedY;
-                 maxTethaSpeed = goal_max_angular_speed;
-                 LKpX = goal_kp_linearX;
-                 LKpY = goal_kp_linearY;
-                 WKp = goal_kp_angular;
+                 ReduceLimits();
             }
             else
             {
@@ -352,7 +392,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "mymovebase");
 
-    ROS_INFO("SepantaMoveBase Version 1.0.2");
+    ROS_INFO("SepantaMoveBase Version 1.0.3");
 
     boost::thread _thread_PathFwr(&PathFwr);
 
