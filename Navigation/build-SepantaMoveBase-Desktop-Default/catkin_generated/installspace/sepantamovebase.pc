@@ -1,8 +1,0 @@
-prefix=/usr/local
-
-Name: sepantamovebase
-Description: Description of sepantamovebase
-Version: 0.0.2
-Cflags: -I/usr/local/include
-Libs: -L/usr/local/lib 
-Requires: message_runtime

@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "sepantamovebase")
-set(sepantamovebase_MAINTAINER "edwin babaians <edwin.babaians@gmail.com>")
-set(sepantamovebase_DEPRECATED "")
-set(sepantamovebase_VERSION "0.0.2")
-set(sepantamovebase_BUILD_DEPENDS "message_generation" "roscpp" "rospy" "tf" "std_msgs" "geometry_msgs" "nav_msgs" "actionlib" "actionlib_msgs" "dynamixel_msgs" "sepanta_msgs")
-set(sepantamovebase_RUN_DEPENDS "roscpp" "rospy" "std_msgs" "geometry_msgs" "nav_msgs" "tf" "message_runtime" "actionlib" "actionlib_msgs" "dynamixel_msgs" "sepanta_msgs")
-set(sepantamovebase_BUILDTOOL_DEPENDS "catkin")

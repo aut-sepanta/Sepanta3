@@ -38,8 +38,11 @@ string global_tcp;
 
 ros::Publisher chatter_pub[20];
 
-TCPStream* stream_tcp = NULL;
-TCPAcceptor* acceptor_tcp = NULL;
+TCPStream* stream_tcp1 = NULL;
+TCPAcceptor* acceptor_tcp1 = NULL;
+
+TCPStream* stream_tcp2 = NULL;
+TCPAcceptor* acceptor_tcp2 = NULL;
 
 bool App_exit = false;
 
@@ -75,8 +78,11 @@ void send_log(string msg)
 
 void kill_server()
 {
-   acceptor_tcp->~TCPAcceptor();
-   delete acceptor_tcp;
+   acceptor_tcp1->~TCPAcceptor();
+   delete acceptor_tcp1;
+
+   acceptor_tcp2->~TCPAcceptor();
+   delete acceptor_tcp2;
 }
 
 bool callkill_server(sepanta_msgs::speechkill::Request &req,sepanta_msgs::speechkill::Response &resp)
@@ -175,9 +181,9 @@ void tcp_write_tcp(std::string msg,string mode)
 {
     int len = msg.length();
     string data =  msg.c_str() ;
-    if ( stream_tcp != NULL )
+    if ( stream_tcp1 != NULL )
     {
-        stream_tcp->send(data.c_str(), len);
+        stream_tcp1->send(data.c_str(), len);
         cout<<"write : "<<data<<endl;
         send_log("write : " + data);
     }
@@ -217,26 +223,26 @@ void serial_write(string  msg,string mode)
 
 std::vector<char> tcp_data;
 
-void tcp_read_tcp() //9898
+void tcp_read_tcp1() //3000
 {
-    stream_tcp = NULL;
-    acceptor_tcp = NULL;
-    acceptor_tcp = new TCPAcceptor(3000);
+    stream_tcp1 = NULL;
+    acceptor_tcp1 = NULL;
+    acceptor_tcp1 = new TCPAcceptor(3000);
 
-    if (acceptor_tcp->start() == 0) {
+    if (acceptor_tcp1->start() == 0) {
         while (App_exit == false) {
             cout<<"wait for tcp..."<<endl;
-            stream_tcp = acceptor_tcp->accept();
+            stream_tcp1 = acceptor_tcp1->accept();
             cout<<"tcp connected..."<<endl;
             send_log("tcp connected");
-            if (stream_tcp != NULL) {
+            if (stream_tcp1 != NULL) {
                 ssize_t len;
                 char line[1000];
 
                 int header = 0;
                 string valid_data = "";
                 isconnected = true;
-                while ((len = stream_tcp->receive(line, sizeof(line))) > 0 && App_exit ==false)
+                while ((len = stream_tcp1->receive(line, sizeof(line))) > 0 && App_exit ==false)
                 {
                     //cout<<line<<endl;
 
@@ -264,7 +270,62 @@ void tcp_read_tcp() //9898
                                     }
                     }
                 }
-                delete stream_tcp;
+                delete stream_tcp1;
+                cout<<"tcp disconnected..."<<endl;
+                send_log("tcp disconnected");
+                isconnected = false;
+            }
+        }
+    }
+}
+void tcp_read_tcp2() //3100
+{
+    stream_tcp2 = NULL;
+    acceptor_tcp2 = NULL;
+    acceptor_tcp2 = new TCPAcceptor(3100);
+
+    if (acceptor_tcp2->start() == 0) {
+        while (App_exit == false) {
+            cout<<"wait for tcp..."<<endl;
+            stream_tcp2 = acceptor_tcp2->accept();
+            cout<<"tcp connected..."<<endl;
+            send_log("tcp connected");
+            if (stream_tcp2 != NULL) {
+                ssize_t len;
+                char line[1000];
+
+                int header = 0;
+                string valid_data = "";
+                isconnected = true;
+                while ((len = stream_tcp2->receive(line, sizeof(line))) > 0 && App_exit ==false)
+                {
+                    //cout<<line<<endl;
+
+                    for ( int i = 0 ; i < len ; i++)
+                    {
+                        if ( line[i] == '%' && header == 0)
+                        {
+                            header++;
+                        }
+                        else
+                            if ( header == 1)
+                                 {
+                                        if ( line[i] != '$')
+                                            valid_data += line[i];
+                                        else
+                                        {
+                                            // cout<<valid_data<<endl;
+                                            //=================================
+                                            string temp = valid_data;
+                                            process_command(temp);
+                                            //==================================
+                                            valid_data = "";
+                                            header = 0;
+                                        }
+                                    }
+                    }
+                }
+                delete stream_tcp2;
                 cout<<"tcp disconnected..."<<endl;
                 send_log("tcp disconnected");
                 isconnected = false;
@@ -299,7 +360,8 @@ int main(int argc, char** argv)
 
     cout << "WINDOWS COMMUNICATION TCP STARTED" << endl;
 
-    boost::thread _threadsp(&tcp_read_tcp);
+    boost::thread _threadsp1(&tcp_read_tcp1);
+    boost::thread _threadsp2(&tcp_read_tcp2);
     boost::thread _threadsend(&sendd);
 
     ros::Rate ros_rate(20);
@@ -338,19 +400,28 @@ int main(int argc, char** argv)
     _thread.interrupt();
     _thread.join();
   #else
-    _threadsp.interrupt();
-    _threadsp.join();
-    _threadsp.~thread();
 
+    _threadsp1.interrupt();
+    _threadsp1.join();
+    _threadsp1.~thread();
+
+    _threadsp2.interrupt();
+    _threadsp2.join();
+    _threadsp2.~thread();
 
     _threadsend.interrupt();
     _threadsend.join();
     _threadsend.~thread();
 
-    acceptor_tcp->~TCPAcceptor();
+    acceptor_tcp1->~TCPAcceptor();
+    acceptor_tcp2->~TCPAcceptor();
     
-    delete acceptor_tcp;
-    delete stream_tcp;
+    delete acceptor_tcp1;
+    delete stream_tcp1;
+
+    delete acceptor_tcp2;
+    delete stream_tcp2;
+
   #endif;
 
     return 0;

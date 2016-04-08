@@ -65,17 +65,21 @@ using namespace ros;
 
 
 //MAX SPEED
-#define normal_max_linear_speed  1
-#define normal_max_angular_speed  1
+#define normal_max_linear_speedX  0.4
+#define normal_max_linear_speedY  0.33
+#define normal_max_angular_speed  0.46
 //-
-#define goal_max_linear_speed  0.1
+#define goal_max_linear_speedX  0.15
+#define goal_max_linear_speedY  0.15
 #define goal_max_angular_speed  0.2
 //KP
-#define normal_kp_linear 3
-#define norma_kp_angular 1
+#define normal_kp_linearX 1.38
+#define normal_kp_linearY 1.14
+#define norma_kp_angular  0.18
 //-
-#define goal_kp_linear  6
-#define goal_kp_angular 7
+#define goal_kp_linearX  0.52
+#define goal_kp_linearY  0.52
+#define goal_kp_angular  0.8
 //DESIRE
 #define normal_desire_errorX 0.1
 #define normal_desire_errorY 0.1
@@ -89,7 +93,8 @@ bool App_exit = false;
 bool newPath = false;
 bool IsGoalValid = false;
 
-double maxLinSpeed = normal_max_linear_speed;
+double maxLinSpeedX = normal_max_linear_speedX;
+double maxLinSpeedY = normal_max_linear_speedY;
 double maxTethaSpeed = normal_max_angular_speed;
 
 nav_msgs::Path globalPath;
@@ -111,7 +116,8 @@ double errorTetha = 0;
 double errorX_R = 0;
 double errorY_R = 0;
 
-double LKp = normal_kp_linear;
+double LKpX = normal_kp_linearX;
+double LKpY = normal_kp_linearY;
 double WKp = norma_kp_angular;
 
 int step = 0;
@@ -204,10 +210,12 @@ void PathFwr()
             desireErrorY = normal_desire_errorY;
             desireErrorTetha = normal_desire_errorTetha;
 
-            LKp = normal_kp_linear;
+            LKpX = normal_kp_linearX;
+            LKpY = normal_kp_linearY;
             WKp = norma_kp_angular;
  
-            maxLinSpeed = normal_max_linear_speed;
+            maxLinSpeedX = normal_max_linear_speedX;
+            maxLinSpeedY = normal_max_linear_speedY;
             maxTethaSpeed = normal_max_angular_speed;
 
             send_omni(0,0,0);
@@ -225,18 +233,16 @@ void PathFwr()
         if (errorTetha > 0.833*M_PI) errorTetha = 0.833*M_PI;
         if (errorTetha < -0.833*M_PI) errorTetha = -0.833*M_PI;
 
-
-
         errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
         if(abs(errorX_R)>desireErrorX)
-            xSpeed = (abs(errorX_R*LKp)<=maxLinSpeed)?(errorX_R*LKp):sign(errorX_R)*maxLinSpeed;
+            xSpeed = (abs(errorX_R*LKpX)<=maxLinSpeedX)?(errorX_R*LKpX):sign(errorX_R)*maxLinSpeedX;
         else
             xSpeed = 0;
 
         if(abs(errorY_R)>desireErrorY)
-            ySpeed = (abs(errorY_R*LKp)<=maxLinSpeed)?(errorY_R*LKp):sign(errorY_R)*maxLinSpeed;
+            ySpeed = (abs(errorY_R*LKpY)<=maxLinSpeedY)?(errorY_R*LKpY):sign(errorY_R)*maxLinSpeedY;
         else
             ySpeed = 0;
 
@@ -272,9 +278,11 @@ void PathFwr()
                  desireErrorY = goal_desire_errorY;
                  desireErrorTetha = goal_desire_errorTetha;
 
-                 maxLinSpeed = goal_max_linear_speed;
+                 maxLinSpeedX = goal_max_linear_speedX;
+                 maxLinSpeedY = goal_max_linear_speedY;
                  maxTethaSpeed = goal_max_angular_speed;
-                 LKp = goal_kp_linear;
+                 LKpX = goal_kp_linearX;
+                 LKpY = goal_kp_linearY;
                  WKp = goal_kp_angular;
             }
             else

@@ -69,9 +69,9 @@ ros::Publisher chatter_pub_motor[20];
 tbb::atomic<int> Compass;
 
 int key_pad_reset = 0;
-int robot_max_speedx = 380;
-int robot_max_speedy = 380;
-int robot_max_speedw = 180;
+int robot_max_speedx = 400;
+int robot_max_speedy = 350;
+int robot_max_speedw = 400;
 
 //Status
 int control_mode_old = 0;
@@ -84,6 +84,8 @@ bool btn_stop = false;
 int serial_read_hz = 0;
 int serial_rw_count = 0;
 const int baudrate = 1000000;
+bool isserialopen = false;
+
 const string port_name  = "/dev/serial/by-id/usb-ROBOTIS_CO._LTD._ROBOTIS_Virtual_COM_Port-if00";
 
 void chatterCallback_greenlight(const std_msgs::Bool::ConstPtr &msg)
@@ -174,32 +176,38 @@ void logic()
 
 void smooth_drive()
 {
-     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+     Omnidrive(0,0,0);
+     boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
      while (App_exit == false)
      {
+        
          Omnidrive(omnidrive_x,omnidrive_y,omnidrive_w);
+         
          boost::this_thread::sleep(boost::posix_time::milliseconds(50)); //20 hz
      }
 }
 
-float w1_current = 0;
-float w2_current = 0;
-float w3_current = 0;
-float w4_current = 0;
+float w1_current = 128;
+float w2_current = 128;
+float w3_current = 128;
+float w4_current = 128;
 
 void Omnidrive(float vx, float vy, float vw)
 {
    
-    vw = -vw / 100;
+    vw = -vw / 100; 
+    //this is for scale only for better intraction of number
+    //this vw is scaled to match scale factor for vx,vy values
+ 
 
     //Speed Limits
     if ( vx > robot_max_speedx ) vx = robot_max_speedx;
     if ( vy > robot_max_speedy ) vy = robot_max_speedy;
     if ( vw > robot_max_speedw ) vw = robot_max_speedw;
 
-    if ( vw < -robot_max_speedx ) vw = -robot_max_speedx;
+    if ( vx < -robot_max_speedx ) vx = -robot_max_speedx;
     if ( vy < -robot_max_speedy ) vy = -robot_max_speedy;
-    if ( vx < -robot_max_speedw ) vx = -robot_max_speedw;
+    if ( vw < -robot_max_speedw ) vw = -robot_max_speedw;
 
     //FK
     float w1 = (vx - vy - vw * (L)) / 7.5;

@@ -69,6 +69,13 @@ add_executable(managment src/managment.cpp)
 target_link_libraries(managment ${catkin_LIBRARIES} ${Boost_LIBRARIES} libwatchdog )
 add_dependencies(managment sepanta_msgs_generate_messages_cpp)
 
+add_executable(slam src/slam.cpp)
+target_link_libraries(slam ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_dependencies(slam sepanta_msgs_generate_messages_cpp)
+
+add_executable(slam_client src/slam_client.cpp)
+target_link_libraries(slam_client ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_dependencies(slam_client sepanta_msgs_generate_messages_cpp)
 
 
 

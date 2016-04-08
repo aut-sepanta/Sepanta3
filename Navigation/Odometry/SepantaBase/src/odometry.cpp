@@ -46,9 +46,9 @@ int speed_Motor[4] = {128,128,128,128};
 bool App_exit = false;
 int Odometry_speed = 50;
 
-float ratio_X = 15.2;
-float ratio_Y = 15.3;
-float ratio_W = 1800;
+float ratio_X = 1000;
+float ratio_Y = 1041;
+float ratio_W = 860;
 
 float kp_degree = 3.5;
 float ki_degree = 0.03;
@@ -82,11 +82,11 @@ float convert_w_radps(float w) {
 }
 
 float convert_vy_mps(float vy) {
-    return vy / (ratio_Y*100);
+    return vy / (ratio_Y);
 }
 
 float convert_vx_mps(float vx) {
-    return vx / (ratio_X*100);
+    return vx / (ratio_X);
 }
 
 float convert_radps_w(float w) {
@@ -94,11 +94,11 @@ float convert_radps_w(float w) {
 }
 
 float convert_mps_vy(float mps) {
-    return mps * (ratio_Y*100);
+    return mps * (ratio_Y);
 }
 
 float convert_mps_vx(float mps) {
-    return mps * (ratio_X*100);
+    return mps * (ratio_X);
 }
 
 inline float Deg2Rad(float deg) {
@@ -171,7 +171,7 @@ void IK_solver(float delta_time)
 
     odom_speed_xyw[0] = Odometry_raw[0];
     odom_speed_xyw[1] = Odometry_raw[1];
-    odom_speed_xyw[2] = (-Odometry_raw[2] / 4 ) * 100;
+    odom_speed_xyw[2] = (-Odometry_raw[2]) * 100;
 
     odom_speed_xyw[0] = convert_vx_mps(odom_speed_xyw[0]);
     odom_speed_xyw[1] = convert_vy_mps(odom_speed_xyw[1]);
@@ -181,7 +181,7 @@ void IK_solver(float delta_time)
     odom_position_yaw[1] += odom_speed_xyw[1] * delta_time; //meter
     odom_position_yaw[2] += odom_speed_xyw[2] * delta_time; //radian
 
-    //cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
+    cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
 
     publish_odometry_base_pose();
 }
@@ -320,6 +320,11 @@ void chatterCallback_pose(const geometry_msgs::PoseStamped::ConstPtr &msg)
     slam_position_yaw[2] = ConvertQuatToYaw(pose.orientation); //radians
 }
 
+void chatterCallback_syscommand(const geometry_msgs::PoseStamped::ConstPtr &msg)
+{
+  
+}
+
 
 void chatterCallback_omnispeed(const sepanta_msgs::omnidata::ConstPtr &msg)
 {
@@ -363,33 +368,15 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
     int yy = 0;
     int ww = 0;
 
-    vel_x = vel_x / 2;
-    vel_y = vel_y / 2;
-    vel_th = vel_th / 2;
+   
 
-    // if ( abs(vel_x) <= 10 && vel_y == 0 )
-    // {
-    //   if ( abs(vel_th) > 0.2 ) 
-    //   {
-    //     int s = 1;
-    //     if ( vel_th < 0 )
-    //     {
-    //       s = -1;
-    //     }
-
-    //     vel_th = s * 0.2;
-
-    //   }
-    // }
-    //=============== Convert
-    
     xx = (int)convert_mps_vx(vel_x);
     yy = (int)convert_mps_vy(vel_y);
     ww = (int)convert_radps_w(vel_th);
 
-    xx = xx / 2;
-    yy = yy / 2;
-    ww = ww / 2;
+    //xx = xx / 2;
+    //yy = yy / 2;
+    //ww = ww / 2;
 
     cout<<"FROM MOVEBASE"<<vel_x<<" "<<vel_y<<" "<<vel_th<<endl;
     cout<<"TO MOTORS"<<xx<<" "<<yy<<" "<<ww<<endl;
@@ -521,6 +508,7 @@ int main(int argc, char** argv)
   chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
   chatter_pub[4] = node_handles[4].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
   chatter_pub[5] = node_handles[5].advertise<geometry_msgs::Pose>("odometry_base/pose", 10);
+
   //=================================================================================================
  
   sub_handles[1] = node_handles[2].subscribe("sepantamovebase/cmd_vel", 10, chatterCallback_cmd_vel);
@@ -528,7 +516,7 @@ int main(int argc, char** argv)
   sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);
   sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeed", 10, chatterCallback_omnispeed);
   sub_handles[6] = node_handles[7].subscribe("hectorslam/pose", 10, chatterCallback_pose);
- 
+  //sub_handles[7] = node_handles[8].subscribe("odometry_base/syscommand", 10, chatterCallback_pose);
 
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster odom_broadcaster2;
