@@ -75,12 +75,12 @@ using namespace ros;
 //KP
 #define normal_kp_linearX 1.38
 #define normal_kp_linearY 1.14
-#define norma_kp_angular  0.18
+#define norma_kp_angular  0.8
 //-
 #define goal_kp_linearX  0.52
 #define goal_kp_linearY  0.52
-#define goal_kp_angular  0.8
-//DESIRE
+#define goal_kp_angular  0.18
+//DESIRE ERRORS
 #define normal_desire_errorX 0.1
 #define normal_desire_errorY 0.1
 #define normal_desire_errorTetha 0.18 // 10 degree
@@ -135,6 +135,8 @@ double tempGoalTetha = 0;
 double goalPos[2] = {0};
 double goalOri[4] = {0};
 double goalTetha = 0;
+
+double maxErrorX = 0, maxErrorY = 0, maxErrorTetha = 0;
 
 inline double Deg2Rad(double deg)
 {
@@ -236,6 +238,10 @@ void PathFwr()
         errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
         errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
 
+        if(abs(errorX_R)>maxErrorX) maxErrorX=abs(errorX_R);
+        if(abs(errorY_R)>maxErrorY) maxErrorY=abs(errorY_R);
+        if(abs(errorTetha)>maxErrorTetha) maxErrorTetha=abs(errorTetha);
+
         if(abs(errorX_R)>desireErrorX)
             xSpeed = (abs(errorX_R*LKpX)<=maxLinSpeedX)?(errorX_R*LKpX):sign(errorX_R)*maxLinSpeedX;
         else
@@ -259,6 +265,7 @@ void PathFwr()
         {
             info_counter= 0;
              cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
+             cout << maxErrorX <<"\t" << maxErrorY << "\t" << maxErrorTetha << endl;
 
         }
        
