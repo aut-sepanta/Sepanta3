@@ -319,7 +319,7 @@ namespace main
 
         private void btn_paint_g_Click(object sender, EventArgs e)
         {
-            paintColor = Color.Gray;
+            paintColor = Color.FromArgb(216, 216, 216);
             btn_paint_w.Enabled = true;
             btn_paint_b.Enabled = true;
             btn_paint_g.Enabled = false;
