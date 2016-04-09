@@ -9,6 +9,7 @@ namespace main
     class MapTool
     {
         private Bitmap _map;
+        private PGM _pgmMap;
         private Size _boxSize;
         private float _scale;
         private bool _isMapInit;
@@ -20,17 +21,36 @@ namespace main
         public MapTool(string mapPath, Size boxSize)
         {
             _scale = 1;
-            Map = (Bitmap)Image.FromFile(mapPath);
+            _pgmMap = new PGM(mapPath);
+            Map = _pgmMap.ToBitmap();
             BoxSize = boxSize;
             IsMapInit = true;
             AutoScale();
         }
         public void SetMap(string mapPath, Size boxSize)
         {
-            Map = (Bitmap)Image.FromFile(mapPath);
+            _pgmMap = new PGM(mapPath);
+            Map = _pgmMap.ToBitmap();
             BoxSize = boxSize;
             IsMapInit = true;
             AutoScale();
+        }
+
+        public void SaveMap(string _filePath)
+        {
+            ToPGM();
+            _pgmMap.Save(_filePath);
+        }
+
+        public void ToPGM()
+        {
+            for (int Xcount = 0; Xcount < _pgmMap.Width; Xcount++)
+            {
+                for (int Ycount = 0; Ycount < _pgmMap.Length; Ycount++)
+                {
+                    _pgmMap.Data[Ycount * _pgmMap.Length + Xcount] = Map.GetPixel(Xcount, Ycount).G;
+                }
+            }
         }
         private void AutoScale()
         {
