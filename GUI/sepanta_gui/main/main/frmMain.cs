@@ -172,7 +172,7 @@ namespace main
         {
             try
             {
-                objMap.SetMap(@"C:\Users\WPM\Documents\map.tif", img_map.Size);
+                objMap.SetMap(@"/home/user1/catkin_ws/src/Sepanta3/Managment/maps/map.pgm", img_map.Size);
                 img_map.Image = objMap.ThumbnailMap;
                 btn_save_map.Enabled = true;
                 btn_add_current.Enabled = true;
@@ -221,8 +221,8 @@ namespace main
         private void btn_load_map_Click(object sender, EventArgs e)
         {
             OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Filter = "TIFF Files (*.tif)|*.tif";
-            dialog.InitialDirectory = @"C:\";
+            dialog.Filter = "PGM Files (*.pgm)|*.pgm";
+            dialog.InitialDirectory = @"/home/user1/catkin_ws/src/Sepanta3/Managment/maps";
             dialog.Title = "Please select map";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
@@ -319,7 +319,7 @@ namespace main
 
         private void btn_paint_g_Click(object sender, EventArgs e)
         {
-            paintColor = Color.Gray;
+            paintColor = Color.FromArgb(205, 205, 205);
             btn_paint_w.Enabled = true;
             btn_paint_b.Enabled = true;
             btn_paint_g.Enabled = false;
@@ -342,12 +342,12 @@ namespace main
         private void btn_save_map_Click(object sender, EventArgs e)
         {
             SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Filter = "TIFF Files (*.tif)|*.tif";
-            dialog.InitialDirectory = @"C:\";
+            dialog.Filter = "PGM Files (*.pgm)|*.pgm";
+            dialog.InitialDirectory = @"/home/user1/catkin_ws/src/Sepanta3/Managment/maps";
             dialog.Title = "Saving map ...";
             if(dialog.ShowDialog() == DialogResult.OK)
             {
-                objMap.Map.Save(dialog.FileName, ImageFormat.Tiff);
+                objMap.SaveMap(dialog.FileName);
             }
         }
     }
