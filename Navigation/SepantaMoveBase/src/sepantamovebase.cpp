@@ -65,29 +65,29 @@ using namespace ros;
 
 
 //MAX SPEED
-#define normal_max_linear_speedX  0.3
-#define normal_max_linear_speedY  0.2
-#define normal_max_angular_speed  0.35
+#define normal_max_linear_speedX  0.4
+#define normal_max_linear_speedY  0.33
+#define normal_max_angular_speed  0.45
 //-
 #define goal_max_linear_speedX  0.15
-#define goal_max_linear_speedY  0.1
+#define goal_max_linear_speedY  0.15
 #define goal_max_angular_speed  0.2
 //KP
-#define normal_kp_linearX 0.86
-#define normal_kp_linearY 0.57
-#define norma_kp_angular  0.45
+#define normal_kp_linearX 1
+#define normal_kp_linearY 0.7
+#define norma_kp_angular  1
 //-
-#define goal_kp_linearX  1
-#define goal_kp_linearY  0.66
-#define goal_kp_angular  0.25
+#define goal_kp_linearX  0.5
+#define goal_kp_linearY  0.3
+#define goal_kp_angular  0.5
 //Ki
-#define normal_ki_linearX 0.03
-#define normal_ki_linearY 0.004
-#define normal_ki_angular 0.001
+#define normal_ki_linearX 0
+#define normal_ki_linearY 0
+#define normal_ki_angular 0
 //-
-#define goal_ki_linearX 0.0027
-#define goal_ki_linearY 0.0019
-#define goal_ki_angular 0.0013
+#define goal_ki_linearX 0
+#define goal_ki_linearY 0
+#define goal_ki_angular 0
 //DESIRE ERRORS
 #define normal_desire_errorX 0.1
 #define normal_desire_errorY 0.1
@@ -220,6 +220,7 @@ void ReduceLimits()
     maxLinSpeedX = goal_max_linear_speedX;
     maxLinSpeedY = goal_max_linear_speedY;
     maxTethaSpeed = goal_max_angular_speed;
+
     LKpX = goal_kp_linearX;
     LKpY = goal_kp_linearY;
     WKp = goal_kp_angular;
@@ -295,17 +296,26 @@ void PathFwr()
         if(abs(errorX_R)>desireErrorX)
             xSpeed = (abs(errorX_R*LKpX+iErrorX*LKiX)<=maxLinSpeedX)?(errorX_R*LKpX+iErrorX*LKiX):sign(errorX_R)*maxLinSpeedX;
         else
+        {
             xSpeed = 0;
+            iErrorX = 0;
+        }
 
         if(abs(errorY_R)>desireErrorY)
             ySpeed = (abs(errorY_R*LKpY+iErrorY*LKiY)<=maxLinSpeedY)?(errorY_R*LKpY+iErrorY*LKiY):sign(errorY_R)*maxLinSpeedY;
         else
+        {
             ySpeed = 0;
+            iErrorY = 0;
+        }
 
         if(abs(errorTetha)>desireErrorTetha)
             tethaSpeed = (abs(errorTetha*WKp+iErrorTetha*WKi)<=maxTethaSpeed)?(errorTetha*WKp+iErrorTetha*WKi):sign(errorTetha)*maxTethaSpeed;
         else
+        {
             tethaSpeed = 0;
+            iErrorTetha = 0;
+        }
 
 
         send_omni(xSpeed,ySpeed,tethaSpeed);
@@ -314,10 +324,10 @@ void PathFwr()
         if ( info_counter>50)
         {
             info_counter= 0;
-            cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << "\t" << endl;
+            cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << endl;
         }
        
-        boost::this_thread::sleep(boost::posix_time::milliseconds(10));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5));
 
         if(abs(errorX_R)<=desireErrorX && abs(errorY_R)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
         {
