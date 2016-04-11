@@ -354,23 +354,23 @@ void serial_logic()
                 serial::Serial my_serial(port_name, baudrate, serial::Timeout::simpleTimeout(500));
 
                 //Config Serial
-                // my_serial.close();
-                // my_serial.setBaudrate(baudrate);
-                // serial::parity_t val1 = serial::parity_none;
-                // my_serial.setParity(val1);
-                // serial::stopbits_t val2 = serial::stopbits_one;
-                // my_serial.setStopbits(val2);
-                // serial::bytesize_t val3 = serial::eightbits;
-                // my_serial.setBytesize(val3);
-                // my_serial.open();
+                my_serial.close();
+                my_serial.setBaudrate(baudrate);
+                serial::parity_t val1 = serial::parity_none;
+                my_serial.setParity(val1);
+                serial::stopbits_t val2 = serial::stopbits_one;
+                my_serial.setStopbits(val2);
+                serial::bytesize_t val3 = serial::eightbits;
+                my_serial.setBytesize(val3);
+                my_serial.open();
 
                 //=======================================================
 
                 if (my_serial.isOpen())
                 {
                     ROS_INFO("USB Serial Port OK? : YES");
-                    //result_write[0] = 0;
-                    //my_serial.write(result_write, 1);
+                    result_write[0] = 0;
+                    my_serial.write(result_write, 1);
                 }
                 else
                 {
