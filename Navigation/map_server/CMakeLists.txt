@@ -47,8 +47,8 @@ include_directories( include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
 add_library(image_loader src/image_loader.cpp)
 target_link_libraries(image_loader SDL SDL_image ${Boost_LIBRARIES})
 
-add_executable(map_server src/main.cpp)
-target_link_libraries(map_server
+add_executable(sepantamapengine src/main.cpp)
+target_link_libraries(sepantamapengine
     image_loader
     yaml-cpp
     ${catkin_LIBRARIES}
@@ -89,7 +89,7 @@ if(CATKIN_ENABLE_TESTING)
 endif()
 
 ## Install executables and/or libraries
-install(TARGETS map_server-map_saver map_server image_loader
+install(TARGETS map_server-map_saver sepantamapengine image_loader
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

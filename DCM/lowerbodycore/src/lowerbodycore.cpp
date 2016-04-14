@@ -183,7 +183,7 @@ void smooth_drive()
         
          Omnidrive(omnidrive_x,omnidrive_y,omnidrive_w);
          
-         boost::this_thread::sleep(boost::posix_time::milliseconds(50)); //20 hz
+         boost::this_thread::sleep(boost::posix_time::milliseconds(25)); //40 hz
      }
 }
 
@@ -198,8 +198,6 @@ void Omnidrive(float vx, float vy, float vw)
     vw = -vw / 100; 
     //this is for scale only for better intraction of number
     //this vw is scaled to match scale factor for vx,vy values
- 
-
     //Speed Limits
     if ( vx > robot_max_speedx ) vx = robot_max_speedx;
     if ( vy > robot_max_speedy ) vy = robot_max_speedy;

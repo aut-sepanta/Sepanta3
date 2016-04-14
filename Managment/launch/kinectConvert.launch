@@ -1,0 +1,28 @@
+<!-- Convert the depth image and the rgb image into a xyzrgb Point Cloud -->
+<launch>
+
+<arg name="ns" value="/your_namespace"/>
+<arg name="sdepth_subfolder" value="$(arg ns)/sd"/>
+<arg name="srgb_subfolder" value="$(arg ns)/srgb"/>
+
+<arg name="pc2_subfolder" value="$(arg ns)/point_cloud2"/>
+<arg name="sd_on_rgb_frame" value="$(arg ns)/sd_on_rgb_frame"/> 
+
+ <!-- Nodelet manager for this pipeline -->
+<node pkg="nodelet" type="nodelet" args="manager" name="depth_transforms_manager" output="screen"/>
+
+ <!-- Convert to point cloud -->
+<node pkg="nodelet" type="nodelet" name="cloudify"
+args="load depth_image_proc/point_cloud_xyzrgb depth_transforms_manager --no-bond">
+
+    <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
+    <remap from="rgb/camera_info"      to="$(arg srgb_subfolder)/camera_info"/> 
+    <!-- Input: Rectified color image. (sensor_msgs/Image) -->
+    <remap from="rgb/image_rect_color" to="$(arg srgb_subfolder)/scene_rgb_cam_wf"/> 
+    <!-- Input: Rectified depth image, registered to the RGB camera. (sensor_msgs/Image) -->
+    <remap from="depth_registered/image_rect" to="$(arg sd_on_rgb_frame)/image_wf"/>        
+    <!-- Output: XYZ point cloud. If using PCL, subscribe as PointCloud<PointXYZ>.  (sensor_msgs/PointCloud2)  -->
+    <remap from="depth_registered/points" to="$(arg pc2_subfolder)/points"/>
+
+</node>
+</launch>

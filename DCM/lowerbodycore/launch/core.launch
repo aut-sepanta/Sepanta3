@@ -5,4 +5,6 @@
      <node name="map_server" pkg="map_server" type="map_server" />
      <node name="slam" pkg="managment" type="slam" />
      <node name="slam_client" pkg="managment" type="slam_client" />
+     <node name="texttospeech" pkg="texttospeech" type="texttospeech"/>
+     <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket"/>
 </launch>

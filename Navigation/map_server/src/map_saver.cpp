@@ -34,6 +34,7 @@
 #include "nav_msgs/GetMap.h"
 #include "tf/LinearMath/Matrix3x3.h"
 #include "geometry_msgs/Quaternion.h"
+#include "std_srvs/Empty.h"
 
 using namespace std;
  
@@ -42,23 +43,40 @@ using namespace std;
  */
 class MapGenerator 
 {
-
-  public:
+    public:
     MapGenerator(const std::string& mapname) : mapname_(mapname), saved_map_(false)
     {
-      ros::NodeHandle n;
-      ROS_INFO("Waiting for the map");
+      ros::NodeHandle n,n2;
+      ROS_INFO("Waiting for the map & Service v 1.0");
       map_sub_ = n.subscribe("map", 1, &MapGenerator::mapCallback, this);
+
+      get_map = false;
+      service = n2.advertiseService("mapsaver/save", &MapGenerator::checkcommand , this);
     }
 
-    void mapCallback(const nav_msgs::OccupancyGridConstPtr& map)
+   nav_msgs::OccupancyGridConstPtr map;
+   ros::ServiceServer service;
+
+   bool checkcommand(std_srvs::Empty::Request  &req,std_srvs::Empty::Response &res)
+   {
+
+     ROS_INFO("Save Service Request....");
+
+   	if ( get_map == false ) 
+   	{ 
+   	    ROS_ERROR("no map received yet");
+    }
+    else
     {
-      ROS_INFO("Received a %d X %d map @ %.3f m/pix",
-               map->info.width,
-               map->info.height,
-               map->info.resolution);
+      ROS_ERROR("saving...");
+      save_map();
+    }
+  
+      return true;
+    }
 
-
+    void save_map()
+    {
       std::string mapdatafile = mapname_ + ".pgm";
       ROS_INFO("Writing map occupancy data to %s", mapdatafile.c_str());
       FILE* out = fopen(mapdatafile.c_str(), "w");
@@ -85,21 +103,9 @@ class MapGenerator
 
       fclose(out);
 
-
       std::string mapmetadatafile = mapname_ + ".yaml";
       ROS_INFO("Writing map occupancy data to %s", mapmetadatafile.c_str());
       FILE* yaml = fopen(mapmetadatafile.c_str(), "w");
-
-
-      /*
-resolution: 0.100000
-origin: [0.000000, 0.000000, 0.000000]
-#
-negate: 0
-occupied_thresh: 0.65
-free_thresh: 0.196
-
-       */
 
       geometry_msgs::Quaternion orientation = map->info.origin.orientation;
       tf::Matrix3x3 mat(tf::Quaternion(orientation.x, orientation.y, orientation.z, orientation.w));
@@ -115,49 +121,32 @@ free_thresh: 0.196
       saved_map_ = true;
     }
 
+    void mapCallback(const nav_msgs::OccupancyGridConstPtr& _map)
+    {
+    
+    }
+
     std::string mapname_;
     ros::Subscriber map_sub_;
     bool saved_map_;
+    bool get_map;
 
 };
-
-#define USAGE "Usage: \n" \
-              "  map_saver -h\n"\
-              "  map_saver [-f <mapname>] [ROS remapping args]"
 
 int main(int argc, char** argv) 
 {
   ros::init(argc, argv, "map_saver");
   std::string mapname = "map";
 
-  for(int i=1; i<argc; i++)
-  {
-    if(!strcmp(argv[i], "-h"))
-    {
-      puts(USAGE);
-      return 0;
-    }
-    else if(!strcmp(argv[i], "-f"))
-    {
-      if(++i < argc)
-        mapname = argv[i];
-      else
-      {
-        puts(USAGE);
-        return 1;
-      }
-    }
-    else
-    {
-      puts(USAGE);
-      return 1;
-    }
-  }
-  
   MapGenerator mg(mapname);
 
-  while(!mg.saved_map_)
-    ros::spinOnce();
+  ros::Rate loop_rate(20);
+
+    while (ros::ok() )
+    {
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 
   return 0;
 }
