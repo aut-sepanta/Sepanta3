@@ -1,0 +1,2 @@
+E:\LIFE\sepanta_gui\Android\sepanta\sepanta\bin\Debug\sepanta.dll
+E:\LIFE\PGITIC\cu03\CU03\core\core\bin\Debug\AndHUD.dll
