@@ -6,13 +6,14 @@ using Android.Views;
 using Android.Widget;
 using Android.OS;
 using client;
+using Android.Content.PM;
 
 namespace sepanta
 {
-    [Activity(Label = "Sepanta", MainLauncher = true, Icon = "@drawable/logo_small")]
+    [Activity(Label = "Sepanta", MainLauncher = true, Icon = "@drawable/logo_small" ,ScreenOrientation = ScreenOrientation.Portrait)]
     public class MainActivity : Activity
     {
-        int count = 1;
+      
         my_client client;
 
         Button btn_forwad;
@@ -89,7 +90,7 @@ namespace sepanta
             }
             else
             {
-                statics.show_error("Somthing went wrong :(", this);
+                statics.show_error("Something went wrong :(", this);
             }
         }
 
@@ -119,8 +120,7 @@ namespace sepanta
         {
             if (client == null) return;
 
-           
-
+          
             statics.es_mode = !statics.es_mode;
 
             if ( statics.es_mode )

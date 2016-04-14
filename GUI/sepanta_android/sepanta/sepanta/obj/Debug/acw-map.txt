@@ -1,3 +1,0 @@
-sepanta.MainActivity;sepanta.MainActivity
-AndroidHUD.ProgressWheel;androidhud.ProgressWheel
-AndroidHUD.ProgressWheel.SpinHandler;androidhud.ProgressWheel_SpinHandler
