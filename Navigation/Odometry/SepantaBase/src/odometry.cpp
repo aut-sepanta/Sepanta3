@@ -510,7 +510,6 @@ int main(int argc, char** argv)
   chatter_pub[5] = node_handles[5].advertise<geometry_msgs::Pose>("odometry_base/pose", 10);
 
   //=================================================================================================
- 
   sub_handles[1] = node_handles[2].subscribe("sepantamovebase/cmd_vel", 10, chatterCallback_cmd_vel);
   sub_handles[2] = node_handles[3].subscribe("lowerbodycore/irsensors", 10, chatterCallback_irsensor);
   sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);

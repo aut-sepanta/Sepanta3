@@ -50,6 +50,7 @@ void Omnidrive(float vx, float vy, float w);
 bool robot_init = false;
 bool App_exit = false;
 int control_mode = 0;
+ros::Publisher chatter_pub[20];
 
 float L = 50; //cm
 int mobileplatform_motors_write[4] = {128, 128, 128, 128};
@@ -62,7 +63,7 @@ tbb::atomic<int> last_keypad_value;
 float laser_IR[8];
 int IR[5] = {0};
 int EMS_STOP = 0;
-ros::Publisher chatter_pub[20];
+
 ros::Publisher chatter_pub_motor[20];
 tbb::atomic<int> Compass;
 
@@ -136,7 +137,11 @@ float omnidrive_w = 0;
 
 void chatterCallback_speech(const std_msgs::String::ConstPtr &msg)
 {
-    cout<<"Speech Get : "<<msg->data<<endl;
+   cout<<"Speech Get : "<<msg->data<<endl;
+
+   std_msgs::String data;
+   data.data = msg->data;
+   chatter_pub[0].publish(data);
    
 }
 
@@ -210,10 +215,13 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "speechrecognition");
 
     ros::NodeHandle node_handles[50];
-     ros::Subscriber sub_handles[15];
+   ros::Subscriber sub_handles[15];
     //===========================================================================================
 
     sub_handles[0] = node_handles[0].subscribe("/speechRec/cmd_spch", 10, chatterCallback_speech);
+    chatter_pub[0] = node_handles[1].advertise<std_msgs::String>("/texttospeech/message", 10);
+
+   
    
     //============================================================================================
 

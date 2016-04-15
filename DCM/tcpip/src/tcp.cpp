@@ -136,6 +136,47 @@ void robot_stop()
 }
 bool es = false;
 
+
+void reset_costmap()
+{
+cout<<"get reset costmap "<<endl;
+}
+
+void reset_hector()
+{
+cout<<"get reset hector "<<endl;
+}
+
+void offset_hector(string x,string y)
+{
+cout<<"get offset_hector "<<endl;
+}
+
+void move_x(string value)
+{
+cout<<"get move x"<<endl;
+}
+
+void move_y(string value)
+{
+cout<<"get move y "<<endl;
+}
+
+void turngl(string value)
+{
+cout<<"get turngl "<<endl;
+}
+
+void turnlocal(string value)
+{
+   cout<<"get turnlocal "<<endl;
+}
+
+void move_cancle()
+{
+   cout<<"get move cancle "<<endl;
+}
+
 void process_command(string input)
 {
         cout<<"tcp : "<<input<<endl;
@@ -161,6 +202,18 @@ void process_command(string input)
           if ( plugin_list[1] == "turnright") robot_turn_right();
           if ( plugin_list[1] == "es0") es = false;
           if ( plugin_list[1] == "es1") es = true;
+
+          if ( plugin_list[1] == "reset_costmap")  reset_costmap();
+          if ( plugin_list[1] == "reset_hector")  reset_hector();
+          if ( plugin_list[1] == "offset_hector")  offset_hector(plugin_list[2],plugin_list[3]);
+
+          if ( plugin_list[1] == "move_x")  move_x(plugin_list[2]);
+          if ( plugin_list[1] == "move_y")  move_y(plugin_list[2]);
+          if ( plugin_list[1] == "move_turnlocal")  turnlocal(plugin_list[2]);
+          if ( plugin_list[1] == "move_turnto")  turngl(plugin_list[2]);
+          if ( plugin_list[1] == "cancle")  move_cancle();
+          
+
        }
 
 }

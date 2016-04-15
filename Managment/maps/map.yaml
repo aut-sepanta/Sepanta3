@@ -1,4 +1,4 @@
-image: /home/edwin/catkin_ws/src/Sepanta3.1/Managment/maps/map.pgm
+image: /home/sepanta/catkin_ws/src/Sepanta3/Managment/maps/map.pgm
 resolution: 0.025000
 origin: [-12.812499, -12.812499, -nan]
 negate: 0
