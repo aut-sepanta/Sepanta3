@@ -1,7 +1,3 @@
-
-
-
-
 #include "ros/ros.h"
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
@@ -65,21 +61,21 @@ using namespace ros;
 
 
 //MAX SPEED
-#define normal_max_linear_speedX  0.4
-#define normal_max_linear_speedY  0.33
-#define normal_max_angular_speed  0.45
+#define normal_max_linear_speedX  0.45
+#define normal_max_linear_speedY  0.45
+#define normal_max_angular_speed  0.5
 //-
 #define goal_max_linear_speedX  0.15
 #define goal_max_linear_speedY  0.15
 #define goal_max_angular_speed  0.2
 //KP
-#define normal_kp_linearX 1
-#define normal_kp_linearY 0.7
-#define norma_kp_angular  1
+#define normal_kp_linearX 0.4
+#define normal_kp_linearY 0.4
+#define norma_kp_angular  0.8
 //-
-#define goal_kp_linearX  0.5
+#define goal_kp_linearX  0.3
 #define goal_kp_linearY  0.3
-#define goal_kp_angular  0.5
+#define goal_kp_angular  0.6
 //Ki
 #define normal_ki_linearX 0
 #define normal_ki_linearY 0
@@ -93,9 +89,16 @@ using namespace ros;
 #define normal_desire_errorY 0.1
 #define normal_desire_errorTetha 0.18 // 10 degree
 //-
-#define goal_desire_errorX 0.02
-#define goal_desire_errorY 0.02
-#define goal_desire_errorTetha 0.036 // 2 degree
+#define goal_desire_errorX 0.035
+#define goal_desire_errorY 0.035
+#define goal_desire_errorTetha 0.04 // 2 degree
+
+std::string coutcolor0 = "\033[0;0m";
+std::string coutcolor_red = "\033[0;31m";
+std::string coutcolor_green = "\033[0;32m";
+std::string coutcolor_blue = "\033[0;34m";
+std::string coutcolor_magenta = "\033[0;35m";
+std::string coutcolor_brown = "\033[0;33m";
 
 bool App_exit = false;
 bool newPath = false;
@@ -124,10 +127,6 @@ double errorTetha = 0;
 double errorX_R = 0;
 double errorY_R = 0;
 
-double iErrorX = 0;
-double iErrorY = 0;
-double iErrorTetha = 0;
-
 double LKpX = normal_kp_linearX;
 double LKpY = normal_kp_linearY;
 double WKp = norma_kp_angular;
@@ -139,10 +138,7 @@ int step = 0;
 
 double position[2] = {0};
 double orientation[4] = {0};
-double lastPosition[2] = {0};
-double lastOrientation[4] = {0};
 double tetha = 0;
-double lastTetha = 0;
 
 double tempGoalPos[2] = {0};
 double tempGoalTetha = 0;
@@ -230,143 +226,293 @@ void ReduceLimits()
     WKi = goal_ki_angular;
 }
 
+bool isvirtual = true;
 void send_omni(double x,double y ,double w)
 {
      geometry_msgs::Twist myTwist;
 
-        myTwist.linear.x = x;
-        myTwist.linear.y = -y;
-        myTwist.angular.z = -w;
+        if ( isvirtual ) 
+        {
+            myTwist.linear.x = x;
+            myTwist.linear.y = y;
+            myTwist.angular.z = w; 
+        }
+        else
+        {
+            myTwist.linear.x = x;
+            myTwist.linear.y = -y;
+            myTwist.angular.z = -w;     
+        }
+  mycmd_vel_pub.publish(myTwist); 
 
-        mycmd_vel_pub.publish(myTwist);
 }
 
 int info_counter = 0;
-void PathFwr()
+bool get_goal = false;
+int temp_path_size = 0;
+
+void force_stop()
 {
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    send_omni(0,0,0);
+    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+}
 
-    while (!App_exit)
-    {
-        if ( !IsGoalValid )
-    	{
-            cout<<"Wait for goal ! ..."<<endl;
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            continue;
-    	}
+int system_state = 0;
 
-        if(abs(goalPos[0]-position[0])<= desireErrorX && abs(goalPos[1]-position[1])<= desireErrorY && abs(goalTetha-tetha)<= desireErrorTetha)
-        {
-            IsGoalValid=false;
-            cout<<"Goal reached ..."<<endl;
+//0 => wait for goal
+//2 => turn to target
+//4 => go on path
+//6 => turn to goal
+//8 => reached
 
-            //return max limitations
+bool on_the_goal = false;
+int step_size  = 40;
+int calc_next_point()
+{
+            bool isgoalnext = false;
+            if ( step == globalPathSize-1)
+            {
+                on_the_goal = true;
+                return true;
+            }
+                
+            if(step+step_size >= globalPathSize)
+            {
+                step = globalPathSize - 1;
+                //we are very near to goal so next is the goalstep = globalPathSize-1;
+                tempGoalPos[0] = goalPos[0];
+                tempGoalPos[1] = goalPos[1];
+                tempGoalTetha = goalTetha;
+                if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
 
-            ResetLimits();
+                isgoalnext = true;
 
-            iErrorX = 0;
-            iErrorY = 0;
-            iErrorTetha = 0;
+                cout<<coutcolor_magenta<<"goal calc"<<coutcolor0<<endl;
 
-            send_omni(0,0,0);
-            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-            continue;
-        }
+               
+            }
+            else
+            {
+                //select the point in next 20 step and calc all errors
+                step +=step_size;
 
-        tempGoalPos[0] = globalPath.poses[step].pose.position.x;
-        tempGoalPos[1] = globalPath.poses[step].pose.position.y;
-
-        errorX = tempGoalPos[0]-position[0];
-        errorY = tempGoalPos[1]-position[1];
-        errorTetha = tempGoalTetha-tetha;
-
-        if (errorTetha >= M_PI) errorTetha = errorTetha - 2*M_PI;
-        if (errorTetha < -M_PI) errorTetha = 2*M_PI - errorTetha;
-
-        if (errorTetha > 0.833*M_PI) errorTetha = 0.833*M_PI;
-        if (errorTetha < -0.833*M_PI) errorTetha = -0.833*M_PI;
-
-        errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
-        errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
-
-        iErrorX += errorX_R;
-        iErrorY += errorY_R;
-        if(abs(errorTetha)<=0.78) iErrorTetha += errorTetha;
-
-        if(abs(errorX_R)>desireErrorX)
-            xSpeed = (abs(errorX_R*LKpX+iErrorX*LKiX)<=maxLinSpeedX)?(errorX_R*LKpX+iErrorX*LKiX):sign(errorX_R)*maxLinSpeedX;
-        else
-        {
-            xSpeed = 0;
-            iErrorX = 0;
-        }
-
-        if(abs(errorY_R)>desireErrorY)
-            ySpeed = (abs(errorY_R*LKpY+iErrorY*LKiY)<=maxLinSpeedY)?(errorY_R*LKpY+iErrorY*LKiY):sign(errorY_R)*maxLinSpeedY;
-        else
-        {
-            ySpeed = 0;
-            iErrorY = 0;
-        }
-
-        if(abs(errorTetha)>desireErrorTetha)
-            tethaSpeed = (abs(errorTetha*WKp+iErrorTetha*WKi)<=maxTethaSpeed)?(errorTetha*WKp+iErrorTetha*WKi):sign(errorTetha)*maxTethaSpeed;
-        else
-        {
-            tethaSpeed = 0;
-            iErrorTetha = 0;
-        }
+                tempGoalPos[0] = globalPath.poses[step].pose.position.x;
+                tempGoalPos[1] = globalPath.poses[step].pose.position.y;
+                tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step].pose.position.x, globalPath.poses[step].pose.position.y);
+                if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
 
 
-        send_omni(xSpeed,ySpeed,tethaSpeed);
+                 cout<<coutcolor_magenta<<"step calc"<<coutcolor0<<endl;
+                 
+            }
 
+           
+
+            return isgoalnext;
+}
+
+void errors_update()
+{
+            //calc errorX , errorY , errorTetha 
+            errorX = tempGoalPos[0]-position[0];
+            errorY = tempGoalPos[1]-position[1];
+            errorTetha = tempGoalTetha-tetha;
+
+            if (errorTetha >= M_PI) errorTetha = 2*M_PI - errorTetha;
+            if (errorTetha < -M_PI) errorTetha = errorTetha + 2*M_PI;
+            //?
+            //if (errorTetha > 0.833*M_PI) errorTetha = 0.833*M_PI;
+            //if (errorTetha < -0.833*M_PI) errorTetha = -0.833*M_PI;
+
+            errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
+            errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
+}
+
+void publish_info()
+{
         info_counter++;
         if ( info_counter>50)
         {
             info_counter= 0;
-            cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << endl;
+
+            cout << "Speed: " << xSpeed << " - " << ySpeed << " - " << tethaSpeed << endl;
+            cout << "Step: " << step << endl;
+            cout << "TError: " << errorX << " - " << errorY << " - " << errorTetha << endl;
+            cout << "Goal: " << fabs(goalPos[0]-position[0]) << " - " << fabs(goalPos[1]-position[1]) << " - " << fabs(goalTetha-tetha)<< endl; 
         }
-       
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5));
+}
 
-        if(abs(errorX_R)<=desireErrorX && abs(errorY_R)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
+void controller_update(int x,bool y,bool theta)
+{
+    if ( x == 1)
+    xSpeed = (fabs(errorX_R*LKpX)<=maxLinSpeedX)?(errorX_R*LKpX):sign(errorX_R)*maxLinSpeedX;
+    else if ( x == 0)
+    xSpeed = 0;
+    else if ( x == 2)
+    xSpeed = 0.2;
+
+    if ( y )
+    ySpeed = (fabs(errorY_R*LKpY)<=maxLinSpeedY)?(errorY_R*LKpY):sign(errorY_R)*maxLinSpeedY;
+    else
+    ySpeed = 0;
+
+    if ( theta )
+    tethaSpeed = (fabs(errorTetha*WKp)<=maxTethaSpeed)?(errorTetha*WKp):sign(errorTetha)*maxTethaSpeed;
+    else
+    tethaSpeed = 0;
+
+    send_omni(xSpeed,ySpeed,tethaSpeed); 
+}
+
+void PathFwr()
+{
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    force_stop();
+   
+    while (!App_exit)
+    {
+
+      
+        if ( system_state == 0)
         {
-            iErrorX = 0;
-            iErrorY = 0;
-            iErrorTetha = 0;
+            cout<<"Wait for goal ! ... "<<endl;
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
-            if(step+20>=globalPathSize)
+            if ( IsGoalValid && get_goal)
             {
-                step = globalPathSize-1;
-
-                tempGoalTetha = goalTetha;
-
-                //reduce limita
-
-                 ReduceLimits();
+                    IsGoalValid = false;
+                    get_goal = false;
+                    on_the_goal = false;
+                    //get next point
+                    //if next is mid point turn to it (State=1)
+                    //id next is the goal go for it on path (State=3)
+                    bool resutl = calc_next_point();
+                    if ( resutl)
+                    {
+                    	//next is the goal !
+                    	cout<<"Next is goal =>3"<<endl;
+                    	system_state = 3;
+                    }
+                    else
+                    {
+                    	cout<<"Next is step =>1"<<endl;
+                        system_state = 1;
+                    }
+                    
+            }
+        }
+        else
+        if ( system_state == 1)
+        {
+           cout<<"State = 1 -turn to target-"<<endl;
+           system_state = 2;
+        }
+        else
+        if ( system_state == 2)
+        {
+            //turn to goal <loop>
+          
+            if(fabs(errorTetha)<=desireErrorTetha)
+            {
+                
+                cout<<"DONE ! "<<tetha<<" "<<tempGoalTetha<<" "<<errorTetha<<endl;
+                system_state = 3;
+                force_stop();
+                
             }
             else
             {
-                step +=20;
+                controller_update(0,false,true);
+            }
 
-                tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step].pose.position.x, globalPath.poses[step].pose.position.y);
-
-                if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
-
+        }
+        else
+        if ( system_state == 3)
+        {
+           cout<<"State = 3 -go on path- Step = "<<step<<endl;
+           system_state = 4;
+        }
+        else
+        if ( system_state == 4)
+        {
+           
+            if(fabs(errorX_R)<=desireErrorX && fabs(errorY_R)<=desireErrorY && fabs(errorTetha)<=desireErrorTetha)
+            {
+                bool resutl = calc_next_point();
+                if ( resutl )
+                {
+                    if ( on_the_goal )
+                    {
+                        system_state = 5;
+                    }
+                    else
+                    {
+                        system_state = 3;
+                    }
+                    
+                }
+                else
+                {
+                    cout<<"Temp point reached"<<endl;
+                    system_state = 3;
+                }
+            }
+            else
+            {
+            	if ( step < 40 || (globalPathSize - step) < 40 )
+                controller_update(1,true,true); //p
+                else
+                controller_update(2,false,true); //fixed
             }
         }
+        else
+        if ( system_state == 5)
+        {
+            cout<<"State = 5 -turn to goal-"<<endl;
+            system_state = 6;
+        }
+        else
+        if ( system_state == 6)
+        {
+           
+            if(fabs(errorTetha)<=desireErrorTetha)
+            {
+                
+                system_state = 7;
+                force_stop();
+                
+            }
+            else
+            {
+                controller_update(0,false,true);
+            }
+        }
+        else
+        if ( system_state == 7)
+        {
+            cout<<"State = 7 -goal reached-"<<endl;
+            system_state = 8;
+        }
+        else
+        if ( system_state == 8)
+        {
+            cout<<"Finished !"<<endl;
+            temp_path_size = 0;
+            get_goal = false;
+            IsGoalValid = false;
+            on_the_goal = false;
+            force_stop();
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+            system_state = 0;
+        }
+
+        errors_update();
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5));
     }
 }
 
 void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-    lastPosition[0] = position[0];
-    lastPosition[1] = position[1];
-    lastOrientation[0] = orientation[0];
-    lastOrientation[1] = orientation[1];
-    lastOrientation[2] = orientation[2];
-    lastOrientation[3] = orientation[3];
-    lastTetha = tetha;
     position[0] = msg->pose.position.x;
     position[1] = msg->pose.position.y;
     orientation[0] = msg->pose.orientation.x;
@@ -374,20 +520,46 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     orientation[2] = msg->pose.orientation.z;
     orientation[3] = msg->pose.orientation.w;
     tetha = Quat2Rad(orientation);
+    if (tetha < 0) tetha += 2*M_PI;
 }
 
 void GetPath(const nav_msgs::Path::ConstPtr &msg)
 {
-    globalPath = *msg;
-    globalPathSize = globalPath.poses.size();
+       
 
-    step=0;
+        if ( temp_path_size == 0 && get_goal && msg->poses.size() > 20)
+        {
+        //this is a new path reset all states
 
-    IsGoalValid=true;
+        temp_path_size = msg->poses.size();
+        cout<<coutcolor_green<<"get a new PATH from GPLANNER Points : "<< temp_path_size <<coutcolor0<<endl;
+        globalPath = *msg;
+        globalPathSize = globalPath.poses.size();
+        system_state = 0;
+        IsGoalValid=true;
+        on_the_goal = false;
+        step=0;
+
+        }
+        //system_state = 0;
+        //on_the_goal = false;
+        //force_stop();
+    
 }
 
 void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
 {
+    get_goal = true;
+    system_state = 0;
+    IsGoalValid=false;
+    on_the_goal = false;
+    step = 0;
+    force_stop();
+    temp_path_size = 0;
+    globalPathSize = 0;
+   
+
+    cout<<coutcolor_green<<"get a new GOAL from USER " <<coutcolor0<<endl;
     goalPos[0] = msg->goal.target_pose.pose.position.x;
     goalPos[1] = msg->goal.target_pose.pose.position.y;
     goalOri[0] = msg->goal.target_pose.pose.orientation.x;
@@ -395,7 +567,10 @@ void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
     goalOri[2] = msg->goal.target_pose.pose.orientation.z;
     goalOri[3] = msg->goal.target_pose.pose.orientation.w;
     goalTetha = Quat2Rad(goalOri);
+
+
 }
+
 
 
 int main(int argc, char **argv)
@@ -418,6 +593,8 @@ int main(int argc, char **argv)
     //============================================================================================
     mycmd_vel_pub = node_handles[4].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
     //============================================================================================
+ 
+   
 
     ros::Rate loop_rate(20);
 
