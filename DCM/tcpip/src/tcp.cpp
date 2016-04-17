@@ -27,12 +27,16 @@
 #include <sepanta_msgs/motortorques.h>
 #include <sepanta_msgs/speechkill.h>
 #include <sepanta_msgs/sound.h>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PolygonStamped.h>
+#include <move_base_msgs/MoveBaseActionGoal.h>
 
 int speedx = 150;
 int speedy = 150;
 int speedt = -150;
-//V3
-//#define USB_MODE
+
 using namespace std;
 string global_tcp;
 
@@ -100,39 +104,68 @@ void set_omni(int x,int y,int w)
  chatter_pub[2].publish(msg);
 }
 
+bool isvirtual = true;
+void set_omni_cmd_vel(float x,float y,float w)
+{
+        geometry_msgs::Twist myTwist;
+
+        if ( isvirtual ) 
+        {
+            myTwist.linear.x = x;
+            myTwist.linear.y = y;
+            myTwist.angular.z = w; 
+        }
+        else
+        {
+            myTwist.linear.x = x;
+            myTwist.linear.y = -y;
+            myTwist.angular.z = -w;     
+        }
+
+        chatter_pub[4].publish(myTwist); 
+}
+
+
 void robot_forward()
 {
-set_omni(speedx,0,0);
+//set_omni(speedx,0,0);
+set_omni_cmd_vel(0.3,0,0);
 }
 
 void robot_backward()
 {
-   set_omni(-speedx,0,0);
+//set_omni(-speedx,0,0);
+set_omni_cmd_vel(-0.3,0,0);
 }
 
 void robot_left()
 {
-   set_omni(0,-speedy,0);
+   //set_omni(0,-speedy,0);
+   set_omni_cmd_vel(0,0.3,0);
 }
 
 void robot_right()
 {
-    set_omni(0,speedy,0);
+    //set_omni(0,speedy,0);
+    set_omni_cmd_vel(0,-0.3,0);
 }
 
 void robot_turn_left()
 {
-   set_omni(0,0,-speedt);
+  //set_omni(0,0,-speedt);
+   set_omni_cmd_vel(0,0,0.2);
 }
 
 void robot_turn_right()
 {
-   set_omni(0,0,speedt);
+   //set_omni(0,0,speedt);
+   set_omni_cmd_vel(0,0,-0.2);
 }
 
 void robot_stop()
 {
-   set_omni(0,0,0);
+   //set_omni(0,0,0);
+   set_omni_cmd_vel(0,0,0);
 }
 bool es = false;
 
@@ -424,6 +457,7 @@ int main(int argc, char** argv)
 
     chatter_pub[1] = node_handles[1].advertise<std_msgs::String>("tcpip/out", 1); 
     chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
+    chatter_pub[4] = node_handles[5].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 1);
     chatter_pub[3] = node_handles[3].advertise<std_msgs::String>("tcpip/es", 1);
     //==========================================================================================
     sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
@@ -449,10 +483,7 @@ int main(int argc, char** argv)
 
     App_exit = true;
 
-  #ifdef USB_MODE
-    _thread.interrupt();
-    _thread.join();
-  #else
+
 
     _threadsp1.interrupt();
     _threadsp1.join();
@@ -475,7 +506,7 @@ int main(int argc, char** argv)
     delete acceptor_tcp2;
     delete stream_tcp2;
 
-  #endif;
+ 
 
     return 0;
 }
