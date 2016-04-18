@@ -46,6 +46,8 @@
 namespace move_base {
 
   MoveBase::MoveBase(tf::TransformListener& tf) :
+
+
     tf_(tf),
     as_(NULL),
     planner_costmap_ros_(NULL), controller_costmap_ros_(NULL),
@@ -54,6 +56,8 @@ namespace move_base {
     recovery_loader_("nav_core", "nav_core::RecoveryBehavior"),
     planner_plan_(NULL), latest_plan_(NULL), controller_plan_(NULL),
     runPlanner_(false), setup_(false), p_freq_change_(false), c_freq_change_(false), new_global_plan_(false) {
+
+    make_plan = false;
 
     as_ = new MoveBaseActionServer(ros::NodeHandle(), "move_base", boost::bind(&MoveBase::executeCb, this, _1), false);
 
@@ -110,6 +114,7 @@ namespace move_base {
     //create the ros wrapper for the planner's costmap... and initializer a pointer we'll use with the underlying map
     planner_costmap_ros_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
     planner_costmap_ros_->pause();
+
 
     //initialize the global planner
     try {
@@ -390,7 +395,11 @@ namespace move_base {
 
 
   bool MoveBase::planService(nav_msgs::GetPlan::Request &req, nav_msgs::GetPlan::Response &resp){
-    if(as_->isActive()){
+
+
+    ROS_INFO("Plan Called");
+    if(as_->isActive())
+    {
       ROS_ERROR("move_base must be in an inactive state to make a plan for an external user");
       return false;
     }
@@ -411,6 +420,7 @@ namespace move_base {
     else
       start = req.start;
 
+    req.goal.header.frame_id = start.header.frame_id;
     //update the copy of the costmap the planner uses
     clearCostmapWindows(2 * clearing_radius_, 2 * clearing_radius_);
 
@@ -608,7 +618,9 @@ namespace move_base {
     ros::Timer timer;
     bool wait_for_wake = false;
     boost::unique_lock<boost::mutex> lock(planner_mutex_);
-    while(n.ok()){
+    while(n.ok())
+    {
+      boost::this_thread::sleep(boost::posix_time::milliseconds(500));
       //check if we should run the planner (the mutex is locked)
       while(wait_for_wake || !runPlanner_){
         //if we should not be running the planner then suspend this thread
@@ -616,65 +628,44 @@ namespace move_base {
         planner_cond_.wait(lock);
         wait_for_wake = false;
       }
+
       ros::Time start_time = ros::Time::now();
-
-      //time to plan! get a copy of the goal and unlock the mutex
       geometry_msgs::PoseStamped temp_goal = planner_goal_;
-      lock.unlock();
-      ROS_DEBUG_NAMED("move_base_plan_thread","Planning...");
-
+  
       //run planner
       planner_plan_->clear();
       bool gotPlan = n.ok() && makePlan(temp_goal, *planner_plan_);
 
-      if(gotPlan){
-        ROS_DEBUG_NAMED("move_base_plan_thread","Got Plan with %zu points!", planner_plan_->size());
-        //pointer swap the plans under mutex (the controller will pull from latest_plan_)
+      if(gotPlan)
+      {
+        ROS_INFO("Got Plan with %zu points!", planner_plan_->size());
         std::vector<geometry_msgs::PoseStamped>* temp_plan = planner_plan_;
 
-        lock.lock();
         planner_plan_ = latest_plan_;
         latest_plan_ = temp_plan;
         last_valid_plan_ = ros::Time::now();
         new_global_plan_ = true;
 
-        ROS_DEBUG_NAMED("move_base_plan_thread","Generated a plan from the base_global_planner");
-
-        //make sure we only start the controller if we still haven't reached the goal
         if(runPlanner_)
-          state_ = CONTROLLING;
-        if(planner_frequency_ <= 0)
+        {
           runPlanner_ = false;
-        lock.unlock();
-      }
-      //if we didn't get a plan and we are in the planning state (the robot isn't moving)
-      else if(state_==PLANNING){
-        ROS_DEBUG_NAMED("move_base_plan_thread","No Plan...");
-        ros::Time attempt_end = last_valid_plan_ + ros::Duration(planner_patience_);
-
-        //check if we've tried to make a plan for over our time limit
-        lock.lock();
-        if(ros::Time::now() > attempt_end && runPlanner_){
-          //we'll move into our obstacle clearing mode
-          state_ = CLEARING;
-          publishZeroVelocity();
-          recovery_trigger_ = PLANNING_R;
-        }
-        lock.unlock();
-      }
-
-      //take the mutex for the next iteration
-      lock.lock();
-
-      //setup sleep interface if needed
-      if(planner_frequency_ > 0){
-        ros::Duration sleep_time = (start_time + ros::Duration(1.0/planner_frequency_)) - ros::Time::now();
-        if (sleep_time > ros::Duration(0.0)){
           wait_for_wake = true;
-          timer = n.createTimer(sleep_time, &MoveBase::wakePlanner, this);
         }
+
       }
+      else if(state_==PLANNING)
+      {
+        ROS_ERROR("No Plan... :(");
+        runPlanner_ = false;
+        wait_for_wake = true;
+      
+       
+      }
+
+     
     }
+
+    std::cout<<"plan thread out"<<std::endl;
   }
 
   void MoveBase::executeCb(const move_base_msgs::MoveBaseGoalConstPtr& move_base_goal)

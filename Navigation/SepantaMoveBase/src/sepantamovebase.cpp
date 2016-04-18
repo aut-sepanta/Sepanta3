@@ -47,7 +47,33 @@
 
 #include <tf/transform_datatypes.h>
 
+#include <sepanta_msgs/command.h>
+#include <sepanta_msgs/omnidata.h>
+#include <sepanta_msgs/sepantaAction.h> //movex movey turngl turngllocal actions
+#include <sepanta_msgs/slamactionAction.h> //slam action
+#include <ros/package.h>
+
+#include <fstream>
+#include <iostream>
+#include <stdlib.h>
+#include <sstream>
+#include <vector>
+#include <fstream>
+
+#include <nav_core/base_local_planner.h>
+#include <nav_core/base_global_planner.h>
+#include <nav_core/recovery_behavior.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
+#include <nav_msgs/GetPlan.h>
+#include <std_srvs/Empty.h>
+#include <tf/transform_datatypes.h>
+#include <geometry_msgs/PoseStamped.h>
 //=============================================================
+
+#include <visualization_msgs/Marker.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 using std::string;
 using std::exception;
@@ -63,7 +89,7 @@ using namespace ros;
 //MAX SPEED
 #define normal_max_linear_speedX  0.45
 #define normal_max_linear_speedY  0.45
-#define normal_max_angular_speed  0.5
+#define normal_max_angular_speed  0.6
 //-
 #define goal_max_linear_speedX  0.15
 #define goal_max_linear_speedY  0.15
@@ -71,7 +97,7 @@ using namespace ros;
 //KP
 #define normal_kp_linearX 0.4
 #define normal_kp_linearY 0.4
-#define norma_kp_angular  0.8
+#define norma_kp_angular  1.5
 //-
 #define goal_kp_linearX  0.3
 #define goal_kp_linearY  0.3
@@ -93,6 +119,8 @@ using namespace ros;
 #define goal_desire_errorY 0.035
 #define goal_desire_errorTetha 0.04 // 2 degree
 
+//=============================================================
+
 std::string coutcolor0 = "\033[0;0m";
 std::string coutcolor_red = "\033[0;31m";
 std::string coutcolor_green = "\033[0;32m";
@@ -100,18 +128,30 @@ std::string coutcolor_blue = "\033[0;34m";
 std::string coutcolor_magenta = "\033[0;35m";
 std::string coutcolor_brown = "\033[0;33m";
 
+//=============================================================
+
 bool App_exit = false;
 bool newPath = false;
 bool IsGoalValid = false;
+
+ros::ServiceClient client_makeplan;
+ros::ServiceClient client_resetcostmap;
+ros::ServiceClient client_map_save;
+ros::ServiceClient client_map_load;
 
 double maxLinSpeedX = normal_max_linear_speedX;
 double maxLinSpeedY = normal_max_linear_speedY;
 double maxTethaSpeed = normal_max_angular_speed;
 
+ros::Publisher pub_slam_origin;
+ros::Publisher pub_slam_reset;
+
 nav_msgs::Path globalPath;
 int globalPathSize;
 
 ros::Publisher mycmd_vel_pub;
+ros::Publisher pub_tts;
+ros::Publisher pub_current_goal;
 
 double xSpeed=0;
 double ySpeed=0;
@@ -147,7 +187,35 @@ double goalPos[2] = {0};
 double goalOri[4] = {0};
 double goalTetha = 0;
 
+struct goal_data
+{
+  public :
+    int x; //cm
+    int y; //cm
+    int yaw; //angle - degree
+    int height;
+    string id;
+};
+
+geometry_msgs::PoseStamped  target_goal_stamped;
+goal_data target_goal_data;
+
+float distacne_to_goal = 0;
+
 double maxErrorX = 0, maxErrorY = 0, maxErrorTetha = 0;
+std::vector<goal_data> goal_list;
+
+bool isvirtual = true;
+int info_counter = 0;
+bool get_goal = false;
+int temp_path_size = 0;
+bool say_enable = true;
+
+int system_state = 0;
+int logic_state = 0;
+bool on_the_goal = false;
+int step_size  = 40;
+bool wait_flag = false;
 
 inline double Deg2Rad(double deg)
 {
@@ -158,6 +226,141 @@ inline double Rad2Deg(double rad)
 {
     return rad * 180 / M_PI;
 }
+
+
+void sepantamapengine_savemap()
+{
+   std_srvs::Empty _s;
+   client_map_save.call(_s);
+}
+
+void sepantamapengine_loadmap()
+{
+   std_srvs::Empty _s;
+   client_map_load.call(_s);
+}
+
+void clean_costmaps()
+{
+   std_srvs::Empty _s;
+   client_resetcostmap.call(_s);
+}
+
+
+void read_file()
+{
+
+        std::string path_points =  ros::package::getPath("managment") + "/maps/points.txt";
+        //cout<<path_points<<endl;
+        std::string line;
+        std::ifstream text;
+
+        goal_list.clear();
+        text.open(path_points.c_str(), ios_base::in);
+
+        if (text.is_open())
+        {
+        	
+            getline(text,line);
+
+            while (text.good())
+            {
+                vector <string> fields;
+
+                boost::split( fields, line, boost::is_any_of( "," ) );
+
+                goal_data gdata;
+
+                 gdata.id = fields[0].c_str();
+                 gdata.x = atoi(fields[1].c_str());
+                 gdata.y = atoi(fields[2].c_str());
+                 gdata.yaw = atoi(fields[3].c_str());
+                 gdata.height = atoi(fields[4].c_str());
+
+                goal_list.push_back(gdata);
+               
+                getline(text,line);
+
+            }
+            text.close();
+
+        }
+        else
+        {
+            std::cout << coutcolor_blue << "[Unable to open file]" << coutcolor0 <<std::endl << std::endl;
+        }
+
+        std::cout << coutcolor_blue << "read done : " << coutcolor0 << goal_list.size()<<std::endl << std::endl;
+
+}
+
+int find_goal_byname(string name)
+{
+    for ( int i = 0 ; i < goal_list.size() ; i++ )
+    {
+        if ( name == goal_list.at(i).id )
+        {
+           return i;
+        }
+    }
+
+    return -1;
+}
+
+void logic_thread()
+{
+    while(ros::ok() && !App_exit)
+    {
+         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    }
+}
+
+void exe_slam()
+{
+
+    bool valid_point = false;
+    //this function get goal and move robot to there
+    if ( target_goal_data.id == "")
+    {
+       goalPos[0] = target_goal_data.x / 100; //cm => m
+       goalPos[1] = target_goal_data.y / 100; //cm => m
+       goalTetha = Deg2Rad(target_goal_data.yaw); //rad => deg
+
+       valid_point = true;
+       ROS_INFO("EXECUTE MANUAL POINT");
+    }
+    else
+    {
+       int index = find_goal_byname(target_goal_data.id);
+       if ( index != -1)
+       {
+           goal_data data = (goal_data)goal_list.at(index);
+           goalPos[0] = data.x;
+           goalPos[1] = data.y;
+           goalTetha = Deg2Rad(data.yaw);
+
+           valid_point = true;
+           ROS_INFO("EXECUTE LOCAL POINT");
+       }
+       else
+       {
+           valid_point = false;
+           ROS_ERROR("LOCAL POINT NOT FOUND");
+       }
+    }
+
+    if ( valid_point )
+    {
+        //1 make a plan to goal first
+
+    }
+}
+
+void exe_cancle()
+{
+
+}
+
 
 double Quat2Rad(double orientation[])
 {
@@ -226,7 +429,7 @@ void ReduceLimits()
     WKi = goal_ki_angular;
 }
 
-bool isvirtual = true;
+
 void send_omni(double x,double y ,double w)
 {
      geometry_msgs::Twist myTwist;
@@ -247,9 +450,6 @@ void send_omni(double x,double y ,double w)
 
 }
 
-int info_counter = 0;
-bool get_goal = false;
-int temp_path_size = 0;
 
 void force_stop()
 {
@@ -257,7 +457,6 @@ void force_stop()
     boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 }
 
-int system_state = 0;
 
 //0 => wait for goal
 //2 => turn to target
@@ -265,8 +464,7 @@ int system_state = 0;
 //6 => turn to goal
 //8 => reached
 
-bool on_the_goal = false;
-int step_size  = 40;
+
 int calc_next_point()
 {
             bool isgoalnext = false;
@@ -318,14 +516,23 @@ void errors_update()
             errorY = tempGoalPos[1]-position[1];
             errorTetha = tempGoalTetha-tetha;
 
-            if (errorTetha >= M_PI) errorTetha = 2*M_PI - errorTetha;
-            if (errorTetha < -M_PI) errorTetha = errorTetha + 2*M_PI;
+            if (errorTetha >= M_PI) errorTetha =  errorTetha - 2*M_PI;
+            if (errorTetha < -M_PI) errorTetha =  errorTetha + 2*M_PI;
             //?
             //if (errorTetha > 0.833*M_PI) errorTetha = 0.833*M_PI;
             //if (errorTetha < -0.833*M_PI) errorTetha = -0.833*M_PI;
 
             errorX_R = cos(tetha)*errorX+sin(tetha)*errorY;
             errorY_R = -sin(tetha)*errorX+cos(tetha)*errorY;
+
+            float x1 = position[0];
+            float y1 = position[1];
+            float x2 = goalPos[0];
+            float y2 = goalPos[1];
+            float d_1 = (x2 - x1); 
+            float d_2 = (y2 - y1);
+            distacne_to_goal = d_1 * d_1 + d_2 * d_2;
+            distacne_to_goal = sqrt(distacne_to_goal);
 }
 
 void publish_info()
@@ -349,7 +556,7 @@ void controller_update(int x,bool y,bool theta)
     else if ( x == 0)
     xSpeed = 0;
     else if ( x == 2)
-    xSpeed = 0.2;
+    xSpeed = 0.3;
 
     if ( y )
     ySpeed = (fabs(errorY_R*LKpY)<=maxLinSpeedY)?(errorY_R*LKpY):sign(errorY_R)*maxLinSpeedY;
@@ -364,22 +571,59 @@ void controller_update(int x,bool y,bool theta)
     send_omni(xSpeed,ySpeed,tethaSpeed); 
 }
 
+void say_message(string data)
+{
+	if ( say_enable == false ) return;
+    std_msgs::String _mes;
+    _mes.data = data;
+    pub_tts.publish(_mes);
+}
+
+void publish_current_goal()
+{
+  pub_current_goal.publish(target_goal_stamped);
+}
+
+void call_make_plan()
+{
+ nav_msgs::GetPlan srv;
+ srv.request.goal.pose.position.x = goalPos[0];
+ srv.request.goal.pose.position.y = goalPos[1];
+ srv.request.goal.pose.orientation = tf::createQuaternionMsgFromYaw(goalTetha);
+ client_makeplan.call(srv);
+}
+ 
+
 void PathFwr()
 {
+	
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
     force_stop();
    
-    while (!App_exit)
+    say_message("Sepanta Move Base Started");
+
+    while (ros::ok() && !App_exit)
     {
 
+        if ( system_state != 0)
+        	wait_flag = false;
       
         if ( system_state == 0)
         {
-            cout<<"Wait for goal ! ... "<<endl;
+
+            if ( wait_flag == false)
+            {
+               say_message("I am waiting for new goal.");
+               cout<< coutcolor_green <<"Wait for goal ! ... "<< coutcolor0 <<endl;
+               wait_flag = true;
+            }
+          
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
             if ( IsGoalValid && get_goal)
             {
+            	    ResetLimits();
                     IsGoalValid = false;
                     get_goal = false;
                     on_the_goal = false;
@@ -441,6 +685,9 @@ void PathFwr()
                 bool resutl = calc_next_point();
                 if ( resutl )
                 {
+                	//next is the goal
+                	ReduceLimits();
+
                     if ( on_the_goal )
                     {
                         system_state = 5;
@@ -460,14 +707,28 @@ void PathFwr()
             else
             {
             	if ( step < 40 || (globalPathSize - step) < 40 )
-                controller_update(1,true,true); //p
-                else
-                controller_update(2,false,true); //fixed
+                controller_update(1,true,true); //p (X,Y,T)
+                else 
+                {
+                	if ( fabs(errorTetha)<=desireErrorTetha )
+                	{
+                		controller_update(2,true,true); //fixed (F,Y,T)
+                	}
+                	else
+                	{
+                		//if we are going away ! 
+                		controller_update(1,true,true); //p  fixed (X,Y,T)
+                	}
+                }
+
+                	
+                
             }
         }
         else
         if ( system_state == 5)
         {
+
             cout<<"State = 5 -turn to goal-"<<endl;
             system_state = 6;
         }
@@ -497,6 +758,7 @@ void PathFwr()
         if ( system_state == 8)
         {
             cout<<"Finished !"<<endl;
+            say_message("Goal reached");
             temp_path_size = 0;
             get_goal = false;
             IsGoalValid = false;
@@ -507,6 +769,7 @@ void PathFwr()
         }
 
         errors_update();
+        //publish_info();
         boost::this_thread::sleep(boost::posix_time::milliseconds(5));
     }
 }
@@ -526,7 +789,6 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 void GetPath(const nav_msgs::Path::ConstPtr &msg)
 {
        
-
         if ( temp_path_size == 0 && get_goal && msg->poses.size() > 20)
         {
         //this is a new path reset all states
@@ -540,6 +802,10 @@ void GetPath(const nav_msgs::Path::ConstPtr &msg)
         on_the_goal = false;
         step=0;
 
+        }
+        else
+        {
+        	cout<<coutcolor_green<<"get path but ignored : "<< msg->poses.size() <<coutcolor0<<endl;
         }
         //system_state = 0;
         //on_the_goal = false;
@@ -571,17 +837,164 @@ void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
 
 }
 
+//cm cm degree
+void update_hector_origin(int x,int y,int yaw)
+{
+    float ox = (float)(x) / 100;
+    float oy = (float)(y) / 100;
+    float oyaw = yaw;
+    oyaw = Deg2Rad(oyaw);
+    geometry_msgs::PoseWithCovarianceStamped msg;
+    msg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(oyaw);
+    msg.pose.pose.position.x = ox;
+    msg.pose.pose.position.y = oy;
+    pub_slam_origin.publish(msg);
+}
+
+void reset_hector_slam()
+{
+	std_msgs::String _msg;
+	_msg.data = "reset";
+	pub_slam_reset.publish(_msg);
+}
+
+bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Response &res)
+{
+
+	ROS_INFO("Service Request....");
+
+    std::string _cmd = req.command;
+    std::string _id = req.id;
+    int _value1 = req.value1;
+    int _value2 = req.value2;
+    int _value3 = req.value3;
+
+    if ( _cmd == "reload_points")
+    {
+    	read_file();
+    }
+
+    if ( _cmd == "save_map")
+    {
+    	sepantamapengine_savemap();
+    }
+
+    if ( _cmd == "load_map")
+    {
+    	sepantamapengine_loadmap();
+    }
+
+    if ( _cmd == "exe")
+    {
+        exe_slam();
+    }
+
+    if ( _cmd == "cancle")
+    {
+        exe_cancle();
+    }
+
+    if ( _cmd == "reset_hector")
+    {
+        reset_hector_slam();
+    }
+
+    if ( _cmd == "update_hector_origin")
+    {
+        update_hector_origin(0,0,0);
+    }
+
+    res.result = "done";
+    return true;
+}
+
+
+void goalcb(const geometry_msgs::PoseStamped::ConstPtr& goal)
+{
+	cout<<"get new goal from rviz"<<endl;
+    target_goal_stamped = *goal;
+    target_goal_stamped.header.stamp = ros::Time::now();
+    target_goal_stamped.header.frame_id = "map";
+    publish_current_goal();
+}
+
+float f = 0.0;
+ros::Publisher marker_pub;
+
+void test_vis()
+{
+
+	visualization_msgs::Marker points, line_strip, line_list;
+    points.header.frame_id = line_strip.header.frame_id = line_list.header.frame_id = "map";
+    points.header.stamp = line_strip.header.stamp = line_list.header.stamp = ros::Time::now();
+    points.ns = line_strip.ns = line_list.ns = "points_and_lines";
+    points.action = line_strip.action = line_list.action = visualization_msgs::Marker::ADD;
+    points.pose.orientation.w = line_strip.pose.orientation.w = line_list.pose.orientation.w = 1.0;
+
+    points.id = 0;
+    line_strip.id = 1;
+    line_list.id = 2;
+
+    points.type = visualization_msgs::Marker::POINTS;
+    //line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+    //line_list.type = visualization_msgs::Marker::LINE_LIST;
+
+       // POINTS markers use x and y scale for width/height respectively
+    points.scale.x = 0.1;
+    points.scale.y = 0.1;
+
+    // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
+    //line_strip.scale.x = 0.1;
+    //line_list.scale.x = 0.1;
+
+
+
+    // Points are green
+    points.color.g = 1.0f;
+    points.color.a = 1.0;
+
+    // Line strip is blue
+    //line_strip.color.b = 1.0;
+    //line_strip.color.a = 1.0;
+
+    // Line list is red
+    //line_list.color.r = 1.0;
+    //line_list.color.a = 1.0;
+
+     // Create the vertices for the points and lines
+    for (int i = 0; i < globalPath.poses.size(); i += step_size)
+    {
+      
+      geometry_msgs::Point p;
+      p.x = globalPath.poses[i].pose.position.x;
+      p.y = globalPath.poses[i].pose.position.y;
+      p.z = 0;
+
+      points.points.push_back(p);
+      
+    }
+
+
+    marker_pub.publish(points);
+   // marker_pub.publish(line_strip);
+   // marker_pub.publish(line_list);
+
+
+}
+
+
 
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "mymovebase");
 
-    ROS_INFO("SepantaMoveBase Version 1.0.3");
+    ROS_INFO("SepantaMoveBase Version 2.0.0");
 
     boost::thread _thread_PathFwr(&PathFwr);
+    boost::thread _thread_Logic(&logic_thread);
 
-    ros::NodeHandle node_handles[10];
+    ros::NodeHandle node_handles[20];
     ros::Subscriber sub_handles[5];
 
     //============================================================================================
@@ -592,20 +1005,41 @@ int main(int argc, char **argv)
     sub_handles[2] = node_handles[2].subscribe("/move_base/goal", 10, GetGoal);
     //============================================================================================
     mycmd_vel_pub = node_handles[4].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
+    pub_slam_origin = node_handles[8].advertise<geometry_msgs::PoseWithCovarianceStamped>("/slam_origin", 1);
+    pub_slam_reset = node_handles[9].advertise<std_msgs::String>("syscommand", 1);
     //============================================================================================
- 
-   
+    ros::NodeHandle n_service;
+    ros::ServiceServer service_command = n_service.advertiseService("sepantamovebase/command", checkcommand);
+    //============================================================================================
+    pub_tts = node_handles[4].advertise<std_msgs::String>("/texttospeech/message", 10);
+    //============================================================================================
+    pub_current_goal = node_handles[5].advertise<geometry_msgs::PoseStamped>("current_goal", 0 );
+    //============================================================================================
+    //sub_handles[1] = node_handles[6].subscribe<geometry_msgs::PoseStamped>("goal",10,goalcb); //user goal
+    //============================================================================================
+    marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker", 10);
+
+    client_makeplan = node_handles[8].serviceClient<nav_msgs::GetPlanRequest>("move_base/make_plan");
+ 	client_resetcostmap = node_handles[9].serviceClient<std_srvs::EmptyRequest>("move_base/clear_costmaps");
+ 	client_map_save = node_handles[10].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/save");
+    client_map_load = node_handles[11].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/load");
 
     ros::Rate loop_rate(20);
 
+    read_file();
+
     while (ros::ok() && App_exit == false)
     {
+    	test_vis();
         ros::spinOnce();
         loop_rate.sleep();
     }
 
     _thread_PathFwr.interrupt();
     _thread_PathFwr.join();
+
+    _thread_Logic.interrupt();
+    _thread_Logic.join();
 
     return 0;
 }

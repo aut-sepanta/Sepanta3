@@ -110,12 +110,12 @@ class MapGenerator
 
     void mapCallback(const nav_msgs::OccupancyGridConstPtr& _map)
     {
-        if ( _map != NULL)
-        {
-          get_map = true;    
-          ROS_INFO("Received a %d X %d map @ %.3f m/pix",_map->info.width,_map->info.height,_map->info.resolution);
-          map = _map;
-        }
+      if ( _map != NULL)
+      {
+        get_map = true;    
+        ROS_INFO("Received a %d X %d map @ %.3f m/pix",_map->info.width,_map->info.height,_map->info.resolution);
+        map = _map;
+      }
     }
 
     std::string mapname_;

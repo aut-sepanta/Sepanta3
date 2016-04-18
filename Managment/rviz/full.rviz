@@ -62,14 +62,6 @@ Visualization Manager:
       Name: Map
       Topic: /move_base/global_costmap/costmap
       Value: true
-    - Alpha: 0.5
-      Class: rviz/Map
-      Color Scheme: costmap
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic: /move_base/local_costmap/costmap
-      Value: true
     - Alpha: 1
       Class: rviz/Polygon
       Color: 25; 255; 0
@@ -147,6 +139,14 @@ Visualization Manager:
         Z: 0
       Topic: /move_base/TrajectoryPlannerROS/global_plan
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization_marker
+      Name: Marker
+      Namespaces:
+        points_and_lines: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -171,22 +171,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.18869
+      Distance: 11.4021
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.182159
-        Y: 0.140869
-        Z: 0.83566
+        X: -0.425119
+        Y: 7.05129
+        Z: -1.20965
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.1648
+      Pitch: 0.524801
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.06627
+      Yaw: 3.99127
     Saved: ~
 Window Geometry:
   Displays:
