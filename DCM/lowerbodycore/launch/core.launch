@@ -1,10 +1,4 @@
 <launch>
      <node name="lowerbodycore" pkg="lowerbodycore" type="lowerbodycore" />
      <node name="odometry" pkg="odometry_base" type="odometry" />
-     <node name="soundplay_node" pkg="sound_play" type="soundplay_node.py"/>
-     <node name="map_server" pkg="map_server" type="map_server" />
-     <node name="slam" pkg="managment" type="slam" />
-     <node name="slam_client" pkg="managment" type="slam_client" />
-     <node name="texttospeech" pkg="texttospeech" type="texttospeech"/>
-     <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket"/>
 </launch>

@@ -91,17 +91,17 @@ using namespace ros;
 #define normal_max_linear_speedY  0.45
 #define normal_max_angular_speed  0.6
 //-
-#define goal_max_linear_speedX  0.15
-#define goal_max_linear_speedY  0.15
-#define goal_max_angular_speed  0.2
+#define goal_max_linear_speedX  0.4
+#define goal_max_linear_speedY  0.4
+#define goal_max_angular_speed  0.5
 //KP
 #define normal_kp_linearX 0.4
 #define normal_kp_linearY 0.4
 #define norma_kp_angular  1.5
 //-
-#define goal_kp_linearX  0.3
-#define goal_kp_linearY  0.3
-#define goal_kp_angular  0.6
+#define goal_kp_linearX  0.4
+#define goal_kp_linearY  0.4
+#define goal_kp_angular  0.8
 //Ki
 #define normal_ki_linearX 0
 #define normal_ki_linearY 0
@@ -115,9 +115,9 @@ using namespace ros;
 #define normal_desire_errorY 0.1
 #define normal_desire_errorTetha 0.18 // 10 degree
 //-
-#define goal_desire_errorX 0.035
-#define goal_desire_errorY 0.035
-#define goal_desire_errorTetha 0.04 // 2 degree
+#define goal_desire_errorX 0.05
+#define goal_desire_errorY 0.05
+#define goal_desire_errorTetha 0.09 // 5 degree
 
 //=============================================================
 
@@ -176,6 +176,8 @@ double WKi = normal_ki_angular;
 
 int step = 0;
 
+double start_position[2] = {0};
+double traveled_score = 0;
 double position[2] = {0};
 double orientation[4] = {0};
 double tetha = 0;
@@ -186,6 +188,8 @@ double tempGoalTetha = 0;
 double goalPos[2] = {0};
 double goalOri[4] = {0};
 double goalTetha = 0;
+
+double current_path_score = 0;
 
 struct goal_data
 {
@@ -227,6 +231,32 @@ inline double Rad2Deg(double rad)
     return rad * 180 / M_PI;
 }
 
+double calc_dist(double x1,double x2,double y1,double y2)
+{
+    double dist = (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+    dist = sqrt(dist);
+    return dist;
+}
+double calc_score(nav_msgs::Path item,int max)
+{
+    double sum =0;
+    double x1,y1,x2,y2;
+    x1 = item.poses[0].pose.position.x;
+    y1 = item.poses[1].pose.position.y;
+
+    for ( int i = 1 ; i < max ; i++ )
+    {
+         x2 = item.poses[i].pose.position.x;
+         y2 = item.poses[i].pose.position.y;
+         double item_dist = calc_dist(x1,x2,y1,y2);
+         sum += item_dist;
+
+         x1 = x2;
+         y1 = y2;
+    }
+
+    return sum;
+}
 
 void sepantamapengine_savemap()
 {
@@ -573,10 +603,10 @@ void controller_update(int x,bool y,bool theta)
 
 void say_message(string data)
 {
-	if ( say_enable == false ) return;
-    std_msgs::String _mes;
-    _mes.data = data;
-    pub_tts.publish(_mes);
+  if ( say_enable == false ) return;
+  std_msgs::String _mes;
+  _mes.data = data;
+  pub_tts.publish(_mes);
 }
 
 void publish_current_goal()
@@ -612,21 +642,14 @@ void PathFwr()
         if ( system_state == 0)
         {
 
-            if ( wait_flag == false)
-            {
-               say_message("I am waiting for new goal.");
-               cout<< coutcolor_green <<"Wait for goal ! ... "<< coutcolor0 <<endl;
-               wait_flag = true;
-            }
+            
           
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
 
             if ( IsGoalValid && get_goal)
             {
-            	    ResetLimits();
-                    IsGoalValid = false;
-                    get_goal = false;
-                    on_the_goal = false;
+            	 
+                     ResetLimits();
                     //get next point
                     //if next is mid point turn to it (State=1)
                     //id next is the goal go for it on path (State=3)
@@ -642,12 +665,22 @@ void PathFwr()
                     	cout<<"Next is step =>1"<<endl;
                         system_state = 1;
                     }
-                    
+            }
+            else
+            {
+            if ( wait_flag == false)
+            {
+               say_message("I am waiting for new goal.");
+               cout<< coutcolor_green <<"Wait for goal ! ... "<< coutcolor0 <<endl;
+               wait_flag = true;
+            }
             }
         }
         else
         if ( system_state == 1)
         {
+           //say_message("trajectory started");
+         
            cout<<"State = 1 -turn to target-"<<endl;
            system_state = 2;
         }
@@ -786,26 +819,65 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     if (tetha < 0) tetha += 2*M_PI;
 }
 
+void get_costmap(const nav_msgs::OccupancyGrid::ConstPtr &msg)
+{
+   std::cout<<"get costmap"<<std::endl;
+}
 void GetPath(const nav_msgs::Path::ConstPtr &msg)
 {
-       
-        if ( temp_path_size == 0 && get_goal && msg->poses.size() > 20)
+
+        if ( msg->poses.size() < 20 ) return;
+
+        if ( temp_path_size == 0 )
         {
         //this is a new path reset all states
-
         temp_path_size = msg->poses.size();
-        cout<<coutcolor_green<<"get a new PATH from GPLANNER Points : "<< temp_path_size <<coutcolor0<<endl;
         globalPath = *msg;
         globalPathSize = globalPath.poses.size();
         system_state = 0;
         IsGoalValid=true;
         on_the_goal = false;
         step=0;
+        current_path_score = calc_score(globalPath,globalPath.poses.size());
+        cout<<coutcolor_green<<"get a new PATH , GPLANNER Score : "<< current_path_score<< temp_path_size <<coutcolor0<<endl;
 
+        
         }
-        else
+        else  //if i am on the path check delta score for new path comming from planner and get it if it is new !
         {
-        	cout<<coutcolor_green<<"get path but ignored : "<< msg->poses.size() <<coutcolor0<<endl;
+            double new_score = calc_score(*msg,msg->poses.size());
+            double t_score = calc_score(globalPath,step);
+            t_score = t_score - (calc_dist(position[0], tempGoalPos[0],position[1], tempGoalPos[1]));
+            double old = current_path_score - t_score;
+            double delta = fabs(new_score-old);
+
+            //cout<<old<<endl;
+            //cout<<new_score<<endl;
+            //cout<<"Delta :"<<delta<<endl;
+            //cout<<"------------------"<<endl;
+
+            if ( delta >= 0.2)
+            {
+
+
+                 say_message("Path Changed");
+                 force_stop(); 
+
+                 cout<<coutcolor_red<<"Path Changed !"<<coutcolor0<<endl;
+              
+                    temp_path_size = msg->poses.size();
+                    globalPath = *msg;
+                    globalPathSize = globalPath.poses.size();
+                    IsGoalValid= true;
+                    on_the_goal = false;
+                    step=0;
+                    current_path_score = calc_score(globalPath,globalPath.poses.size());
+                    cout<<coutcolor_green<<"get a new PATH , GPLANNER Score : "<< current_path_score<< temp_path_size <<coutcolor0<<endl;
+                    system_state = 1;
+
+            }
+        	
+
         }
         //system_state = 0;
         //on_the_goal = false;
@@ -816,15 +888,7 @@ void GetPath(const nav_msgs::Path::ConstPtr &msg)
 void GetGoal(const move_base_msgs::MoveBaseActionGoal::ConstPtr &msg)
 {
     get_goal = true;
-    system_state = 0;
-    IsGoalValid=false;
-    on_the_goal = false;
-    step = 0;
-    force_stop();
-    temp_path_size = 0;
-    globalPathSize = 0;
    
-
     cout<<coutcolor_green<<"get a new GOAL from USER " <<coutcolor0<<endl;
     goalPos[0] = msg->goal.target_pose.pose.position.x;
     goalPos[1] = msg->goal.target_pose.pose.position.y;
@@ -1003,6 +1067,8 @@ int main(int argc, char **argv)
     sub_handles[1] = node_handles[1].subscribe("/move_base/NavfnROS/plan", 10, GetPath);
     //============================================================================================
     sub_handles[2] = node_handles[2].subscribe("/move_base/goal", 10, GetGoal);
+
+    sub_handles[3] = node_handles[10].subscribe("/move_base/global_costmap/costmap", 10, get_costmap);
     //============================================================================================
     mycmd_vel_pub = node_handles[4].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
     pub_slam_origin = node_handles[8].advertise<geometry_msgs::PoseWithCovarianceStamped>("/slam_origin", 1);
@@ -1034,6 +1100,8 @@ int main(int argc, char **argv)
         ros::spinOnce();
         loop_rate.sleep();
     }
+
+    force_stop();
 
     _thread_PathFwr.interrupt();
     _thread_PathFwr.join();

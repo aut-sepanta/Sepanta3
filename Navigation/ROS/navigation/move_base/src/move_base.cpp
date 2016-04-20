@@ -620,7 +620,7 @@ namespace move_base {
     boost::unique_lock<boost::mutex> lock(planner_mutex_);
     while(n.ok())
     {
-      boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
       //check if we should run the planner (the mutex is locked)
       while(wait_for_wake || !runPlanner_){
         //if we should not be running the planner then suspend this thread
