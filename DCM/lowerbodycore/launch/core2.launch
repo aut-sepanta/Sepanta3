@@ -4,4 +4,5 @@
      <node name="texttospeech" pkg="texttospeech" type="texttospeech"/>
      <node name="speechrecognition" pkg="speechrecognition" type="speechrecognition"/>
      <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket"/>
+     <node name="cmd_watchdog" pkg="odometry_base" type="cmd_watchdog"/>
 </launch>
