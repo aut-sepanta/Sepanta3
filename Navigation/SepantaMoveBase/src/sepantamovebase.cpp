@@ -1082,7 +1082,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "mymovebase");
 
-    ROS_INFO("SepantaMoveBase Version 2.0.0");
+    ROS_INFO("SepantaMoveBase Version 2.1.0");
 
     boost::thread _thread_PathFwr(&PathFwr);
     boost::thread _thread_Logic(&logic_thread);
