@@ -104,7 +104,7 @@ void set_omni(int x,int y,int w)
  chatter_pub[2].publish(msg);
 }
 
-bool isvirtual = true;
+bool isvirtual = false;
 void set_omni_cmd_vel(float x,float y,float w)
 {
         geometry_msgs::Twist myTwist;

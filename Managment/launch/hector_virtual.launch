@@ -1,9 +1,9 @@
 <launch>
-    <arg name="base_frame_name" default="base_link"/>
-    <arg name="map_frame_name" default="map"/>
-    <arg name="odom_frame_name" default="base_link"/>
-    <arg name="laser_frame_name" default="laser_link"/>
-    <arg name="laser_topic_name" default=""/>
+<arg name="base_frame_name" default="base_footprint"/>
+<arg name="map_frame_name" default="map"/>
+<arg name="odom_frame_name" default="odom"/>
+<arg name="laser_frame_name" default="laser_link"/>
+<arg name="laser_topic_name" default=""/>
 
     <node pkg="hector_mapping" type="hector_mapping" name="hector_slam" output="screen">
         <remap from="map_metadata"                          to="$(arg laser_topic_name)map_metadata"/>

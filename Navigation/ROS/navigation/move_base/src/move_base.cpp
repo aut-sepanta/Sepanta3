@@ -114,7 +114,7 @@ namespace move_base {
     //create the ros wrapper for the planner's costmap... and initializer a pointer we'll use with the underlying map
     planner_costmap_ros_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
     planner_costmap_ros_->pause();
-
+    //planner_costmap_ros_->start();
 
     //initialize the global planner
     try {
@@ -408,17 +408,18 @@ namespace move_base {
       ROS_ERROR("move_base cannot make a plan for you because it doesn't have a costmap");
       return false;
     }
-    tf::Stamped<tf::Pose> global_pose;
-    if(!planner_costmap_ros_->getRobotPose(global_pose)){
-      ROS_ERROR("move_base cannot make a plan for you because it could not get the start pose of the robot");
-      return false;
-    }
-    geometry_msgs::PoseStamped start;
+    //tf::Stamped<tf::Pose> global_pose;
+
+    //if(!planner_costmap_ros_->getRobotPose(global_pose)){
+    //  ROS_ERROR("move_base cannot make a plan for you because it could not get the start pose of the robot");
+     // return false;
+    //}
+   
     //if the user does not specify a start pose, identified by an empty frame id, then use the robot's pose
-    if(req.start.header.frame_id == "")
-      tf::poseStampedTFToMsg(global_pose, start);
-    else
-      start = req.start;
+    //if(req.start.header.frame_id == "")
+    //tf::poseStampedTFToMsg(global_pose, start);
+    //else
+    start = req.start;
 
     req.goal.header.frame_id = start.header.frame_id;
     //update the copy of the costmap the planner uses
@@ -548,14 +549,14 @@ namespace move_base {
     }
 
     //get the starting pose of the robot
-    tf::Stamped<tf::Pose> global_pose;
-    if(!planner_costmap_ros_->getRobotPose(global_pose)) {
-      ROS_WARN("Unable to get starting pose of robot, unable to create global plan");
-      return false;
-    }
+    //tf::Stamped<tf::Pose> global_pose;
+    //if(!planner_costmap_ros_->getRobotPose(global_pose)) {
+    //  ROS_WARN("1 Unable to get starting pose of robot, unable to create global plan");
+    //  return false;
+    //}
 
-    geometry_msgs::PoseStamped start;
-    tf::poseStampedTFToMsg(global_pose, start);
+    
+    //tf::poseStampedTFToMsg(global_pose, start);
 
     //if the planner fails or returns a zero length plan, planning failed
     if(!planner_->makePlan(start, goal, plan) || plan.empty()){
@@ -652,7 +653,9 @@ namespace move_base {
 
       ros::Time start_time = ros::Time::now();
       geometry_msgs::PoseStamped temp_goal = planner_goal_;
-  
+       //string a = temp_goal.header.frame_id;
+
+      //cout<<"GOAL FRAM "<<temp_goal.header.frame_id<<endl;
       //run planner
       planner_plan_->clear();
       bool gotPlan = n.ok() && makePlan(temp_goal, *planner_plan_);

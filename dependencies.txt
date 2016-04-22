@@ -10,5 +10,5 @@
 9 ) sudo apt-get install mono-complete 
 10 ) sudo apt-get install ros-indigo-depth-image-proc
 11 ) sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers ros-indigo-gazebo-ros-control
-12 ) 
+12 ) sudo apt-get install ros-indigo-youbot-*
 
