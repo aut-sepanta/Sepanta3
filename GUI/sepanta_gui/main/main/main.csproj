@@ -47,6 +47,12 @@
     <Compile Include="frmMain.Designer.cs">
       <DependentUpon>frmMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmpoint.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmpoint.Designer.cs">
+      <DependentUpon>frmpoint.cs</DependentUpon>
+    </Compile>
     <Compile Include="MapTool.cs" />
     <Compile Include="PGM.cs" />
     <Compile Include="Program.cs" />
@@ -54,6 +60,9 @@
     <Compile Include="Statics.cs" />
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmpoint.resx">
+      <DependentUpon>frmpoint.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

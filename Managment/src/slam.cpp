@@ -140,7 +140,7 @@ void chatterCallback_pose(const geometry_msgs::PoseStamped::ConstPtr &msg)
 void read_file()
 {
 
-        std::string path_points =  ros::package::getPath("managment") + "maps/points.txt";
+        std::string path_points =  ros::package::getPath("managment") + "/maps/points.txt";
         cout<<path_points<<endl;
         std::string line;
         std::ifstream text;

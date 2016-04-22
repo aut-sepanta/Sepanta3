@@ -39,6 +39,11 @@ namespace main
 
         }
 
+        void load_points()
+        {
+            
+        }
+
         private void button4_Click(object sender, EventArgs e)
         {
             statics.global_send("COMMAND,right");
@@ -58,13 +63,39 @@ namespace main
         {
             statics.main_config = new config();
             statics.loadXML_config();
+            statics.init();
+            statics.load_points();
+
+            txt_ip.Text = statics.main_config.ip;
+            txt_port.Text = statics.main_config.port.ToString();
+
+            update_list_point();
+            txt_map.Text = track_size.Value.ToString();
+            txt_path.Text = statics.main_config.linux_path;
+
+            if (statics.main_config.mode == 0)
+                rad_linux.Checked = true;
+            else
+                rad_windows.Checked = true;
         }
 
         private void btn_connect_Click(object sender, EventArgs e)
         {
-            statics.main_tcp = new client.my_client("GUI");
-            statics.main_tcp.get_message += main_tcp_get_message;
-            statics.main_tcp.Connect();
+            try
+            {
+                statics.main_tcp = new client.my_client("GUI");
+                statics.main_config.ip = txt_ip.Text;
+                statics.main_config.port = int.Parse(txt_port.Text);
+                statics.main_tcp.ip = statics.main_config.ip;
+                statics.main_tcp.port = statics.main_config.port;
+                statics.main_tcp.get_message += main_tcp_get_message;
+                statics.main_tcp.Connect();
+                statics.saveXML_config();
+            }
+            catch
+            {
+
+            }
         }
 
 
@@ -78,6 +109,13 @@ namespace main
                     odom1_x.Text = array[2];
                     odom1_y.Text = array[3];
                     odom1_t.Text = array[4];
+                }
+
+                if (array[1] == "ODOM2")
+                {
+                    odom2_x.Text = array[2];
+                    odom2_y.Text = array[3];
+                    odom2_t.Text = array[4];
                 }
             }
         }
@@ -94,7 +132,7 @@ namespace main
         private void button1_Click(object sender, EventArgs e)
         {
             if ( statics.main_tcp != null)
-            statics.main_tcp.write_send(txt_message.Text);
+            statics.main_tcp.write_send(txt_ip.Text);
         }
 
         private void btn_stop_Click(object sender, EventArgs e)
@@ -172,7 +210,7 @@ namespace main
         {
             try
             {
-                objMap.SetMap(@"/home/user1/catkin_ws/src/Sepanta3/Managment/maps/map.pgm", img_map.Size);
+                objMap.SetMap(statics._path +  "map.pgm", img_map.Size);
                 img_map.Image = objMap.ThumbnailMap;
                 btn_save_map.Enabled = true;
                 btn_add_current.Enabled = true;
@@ -186,7 +224,7 @@ namespace main
             }
             catch(Exception ex)
             {
-                MessageBox.Show("There was an error opening the map.\n" +ex.Message);
+                MessageBox.Show("There was an error opening the map.\n" + ex.Message);
             }
         }
 
@@ -222,7 +260,7 @@ namespace main
         {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "PGM Files (*.pgm)|*.pgm";
-            dialog.InitialDirectory = @"/home/user1/catkin_ws/src/Sepanta3/Managment/maps";
+            dialog.InitialDirectory = statics._path;
             dialog.Title = "Please select map";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
@@ -252,7 +290,7 @@ namespace main
                     case Item.Hand:
                         break;
                     case Item.Pencil:
-                        short pencilSize = Convert.ToInt16(pencilSize_textBox.Text);
+                        short pencilSize = Convert.ToInt16(track_size.Value.ToString());
                         Graphics g = Graphics.FromImage(objMap.Map);
                         g.FillRectangle(new SolidBrush(paintColor), ((e.X - mapPosX) / objMap.Scale) - pencilSize / 2, ((e.Y - mapPosY) / objMap.Scale) - pencilSize / 2, pencilSize, pencilSize);
                         g = img_map.CreateGraphics();
@@ -280,15 +318,15 @@ namespace main
                     case Item.Hand:
                         if(img_map.Image.Width > img_map.Width || img_map.Image.Height > img_map.Height)
                         {
-                            int tempPosX = mapPosX + mouseX - e.X;
-                            int tempPosY = mapPosY + mouseY - e.Y;
+                            int tempPosX = mapPosX - mouseX + e.X;
+                            int tempPosY = mapPosY - mouseY + e.Y;
                             if (tempPosX <= 0 && objMap.ThumbnailMap.Width + tempPosX >= img_map.Width) mapPosX = tempPosX;
                             if (tempPosY <= 0 && objMap.ThumbnailMap.Height + tempPosY >= img_map.Height) mapPosY = tempPosY;
                             g.DrawImage(objMap.ThumbnailMap,new Point(mapPosX,mapPosY));
                         }
                         break;
                     case Item.Pencil:
-                        short pencilSize = Convert.ToInt16(pencilSize_textBox.Text);
+                        short pencilSize = Convert.ToInt16(track_size.Value.ToString());
                         g = Graphics.FromImage(objMap.Map);
                         g.FillRectangle(new SolidBrush(paintColor), ((e.X - mapPosX) / objMap.Scale) - pencilSize / 2, ((e.Y - mapPosY) / objMap.Scale) - pencilSize / 2, pencilSize, pencilSize);
                         g = img_map.CreateGraphics();
@@ -343,12 +381,154 @@ namespace main
         {
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Filter = "PGM Files (*.pgm)|*.pgm";
-            dialog.InitialDirectory = @"/home/user1/catkin_ws/src/Sepanta3/Managment/maps";
+            dialog.InitialDirectory = statics._path;
             dialog.Title = "Saving map ...";
             if(dialog.ShowDialog() == DialogResult.OK)
             {
                 objMap.SaveMap(dialog.FileName);
             }
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabPage4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+    
+        public void update_list_point()
+        {
+            lst_points.Items.Clear();
+            for ( int i = 0 ; i < statics.list_points.Count ; i++)
+            {
+                lst_points.Items.Add(statics.list_points[i].labe_name);
+            }
+            
+        }
+
+        private void btn_edit_selected_Click(object sender, EventArgs e)
+        {
+            int index = lst_points.SelectedIndex;
+            if (index == -1) return;
+            map_data d = statics.list_points[index];
+
+            frmpoint p = new frmpoint();
+            p.p_edit(d.x, d.y, d.yaw, d.heigth, d.labe_name,index);
+            
+            p.ShowDialog();
+        }
+
+        private void btn_add_current_Click(object sender, EventArgs e)
+        {
+            frmpoint p = new frmpoint();
+            p.p_current(statics.odom_hector.x, statics.odom_hector.y, statics.odom_hector.yaw, "100", "");
+            p.ShowDialog();
+            update_list_point();
+        }
+
+        private void button4_Click_1(object sender, EventArgs e)
+        {
+            frmpoint p = new frmpoint();
+            p.ShowDialog();
+            update_list_point();
+        }
+
+        private void btn_delete_selected_Click(object sender, EventArgs e)
+        {
+            int index = lst_points.SelectedIndex;
+            if (index == -1) return;
+
+            DialogResult dialogResult = MessageBox.Show("Sure ?", "Sepanta GUI", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                //do something
+                statics.list_points.RemoveAt(index);
+                update_list_point();
+                statics.save_points();
+          
+            }
+            else if (dialogResult == DialogResult.No)
+            {
+                //do something else
+            }
+
+
+        }
+
+        private void btn_disconnect_Click(object sender, EventArgs e)
+        {
+            if (statics.main_tcp != null)
+            {
+                statics.main_tcp.Disconnect();
+                statics.main_tcp = null;
+                chk_coonect.Checked = false;
+            }
+            
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (statics.main_tcp == null ||  statics.main_tcp.active == false)
+            {
+                if ( chk_coonect.Checked )
+                btn_connect_Click(null, null);
+            }
+        }
+
+        private void frmMain_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if ( statics.main_tcp != null)
+            {
+                statics.main_tcp.Disconnect();
+                statics.main_tcp = null;
+            }
+        }
+
+        private void lst_points_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            btn_edit_selected_Click(null, null);
+        }
+
+        private void track_size_Scroll(object sender, EventArgs e)
+        {
+            txt_map.Text = track_size.Value.ToString();
+        }
+
+        private void rad_windows_CheckedChanged(object sender, EventArgs e)
+        {
+            statics.main_config.mode = 1;
+            statics.saveXML_config();
+            statics.init();
+
+            txt_path.Text = statics.main_config.test_path;
+        }
+
+        private void rad_linux_CheckedChanged(object sender, EventArgs e)
+        {
+            statics.main_config.mode = 0;
+            statics.saveXML_config();
+            statics.init();
+
+            txt_path.Text = statics.main_config.linux_path;
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            statics.global_send("COMMAND,reset_costmap");
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            statics.global_send("COMMAND,reset_hector");
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            statics.global_send("COMMAND,offset_hector," + txt_offsetx.Text + "," + txt_offsety.Text);
         }
     }
 }

@@ -30,7 +30,6 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMain));
-            this.btn_up = new System.Windows.Forms.Button();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tab = new System.Windows.Forms.TabPage();
@@ -79,6 +78,7 @@
             this.btn_right = new System.Windows.Forms.Button();
             this.btn_down = new System.Windows.Forms.Button();
             this.btn_left = new System.Windows.Forms.Button();
+            this.btn_up = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.numericUpDown19 = new System.Windows.Forms.NumericUpDown();
             this.numericUpDown20 = new System.Windows.Forms.NumericUpDown();
@@ -116,12 +116,12 @@
             this.arm_left_2 = new System.Windows.Forms.TrackBar();
             this.arm_left_1 = new System.Windows.Forms.TrackBar();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.button4 = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
             this.btn_selectHand = new System.Windows.Forms.Button();
             this.btn_selectPencil = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.PencilSize_label = new System.Windows.Forms.Label();
-            this.pencilSize_textBox = new System.Windows.Forms.TextBox();
             this.btn_paint_g = new System.Windows.Forms.Button();
             this.btn_paint_w = new System.Windows.Forms.Button();
             this.btn_paint_b = new System.Windows.Forms.Button();
@@ -138,6 +138,9 @@
             this.btn_zoom_in = new System.Windows.Forms.Button();
             this.img_map = new System.Windows.Forms.PictureBox();
             this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.btn_navigation = new System.Windows.Forms.Button();
             this.btn_upperbody = new System.Windows.Forms.Button();
             this.btn_lowerbody = new System.Windows.Forms.Button();
@@ -145,11 +148,26 @@
             this.btn_laser = new System.Windows.Forms.Button();
             this.btn_kinect2 = new System.Windows.Forms.Button();
             this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.button1 = new System.Windows.Forms.Button();
-            this.txt_message = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txt_port = new System.Windows.Forms.TextBox();
+            this.txt_ip = new System.Windows.Forms.TextBox();
             this.btn_disconnect = new System.Windows.Forms.Button();
             this.btn_connect = new System.Windows.Forms.Button();
             this.lst_tcp = new System.Windows.Forms.ListBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.chk_coonect = new System.Windows.Forms.CheckBox();
+            this.track_size = new System.Windows.Forms.TrackBar();
+            this.label11 = new System.Windows.Forms.Label();
+            this.rad_windows = new System.Windows.Forms.RadioButton();
+            this.rad_linux = new System.Windows.Forms.RadioButton();
+            this.txt_path = new System.Windows.Forms.TextBox();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.button6 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
+            this.button7 = new System.Windows.Forms.Button();
+            this.txt_offsetx = new System.Windows.Forms.TextBox();
+            this.txt_offsety = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tab.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -190,19 +208,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.img_map)).BeginInit();
             this.tabPage4.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.track_size)).BeginInit();
+            this.tabPage5.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // btn_up
-            // 
-            this.btn_up.BackColor = System.Drawing.Color.White;
-            this.btn_up.ImageIndex = 5;
-            this.btn_up.ImageList = this.imageList1;
-            this.btn_up.Location = new System.Drawing.Point(125, 32);
-            this.btn_up.Name = "btn_up";
-            this.btn_up.Size = new System.Drawing.Size(106, 81);
-            this.btn_up.TabIndex = 0;
-            this.btn_up.UseVisualStyleBackColor = false;
-            this.btn_up.Click += new System.EventHandler(this.btn_up_Click);
             // 
             // imageList1
             // 
@@ -222,6 +230,7 @@
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -696,6 +705,18 @@
             this.btn_left.UseVisualStyleBackColor = false;
             this.btn_left.Click += new System.EventHandler(this.btn_left_Click);
             // 
+            // btn_up
+            // 
+            this.btn_up.BackColor = System.Drawing.Color.White;
+            this.btn_up.ImageIndex = 5;
+            this.btn_up.ImageList = this.imageList1;
+            this.btn_up.Location = new System.Drawing.Point(125, 32);
+            this.btn_up.Name = "btn_up";
+            this.btn_up.Size = new System.Drawing.Size(106, 81);
+            this.btn_up.TabIndex = 0;
+            this.btn_up.UseVisualStyleBackColor = false;
+            this.btn_up.Click += new System.EventHandler(this.btn_up_Click);
+            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.numericUpDown19);
@@ -998,6 +1019,9 @@
             // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.PencilSize_label);
+            this.tabPage3.Controls.Add(this.track_size);
+            this.tabPage3.Controls.Add(this.button4);
             this.tabPage3.Controls.Add(this.panel2);
             this.tabPage3.Controls.Add(this.panel1);
             this.tabPage3.Controls.Add(this.btn_show_lables);
@@ -1009,8 +1033,6 @@
             this.tabPage3.Controls.Add(this.btn_save_map);
             this.tabPage3.Controls.Add(this.btn_get_current_map);
             this.tabPage3.Controls.Add(this.txt_map);
-            this.tabPage3.Controls.Add(this.btn_zoom_out);
-            this.tabPage3.Controls.Add(this.btn_zoom_in);
             this.tabPage3.Controls.Add(this.img_map);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
@@ -1019,6 +1041,16 @@
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Maptools";
             this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(600, 210);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(114, 37);
+            this.button4.TabIndex = 20;
+            this.button4.Text = "Add New";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click_1);
             // 
             // panel2
             // 
@@ -1052,11 +1084,12 @@
             // 
             // panel1
             // 
-            this.panel1.Controls.Add(this.PencilSize_label);
-            this.panel1.Controls.Add(this.pencilSize_textBox);
+            this.panel1.Controls.Add(this.label11);
             this.panel1.Controls.Add(this.btn_paint_g);
             this.panel1.Controls.Add(this.btn_paint_w);
             this.panel1.Controls.Add(this.btn_paint_b);
+            this.panel1.Controls.Add(this.btn_zoom_out);
+            this.panel1.Controls.Add(this.btn_zoom_in);
             this.panel1.Location = new System.Drawing.Point(54, 6);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(350, 43);
@@ -1065,26 +1098,17 @@
             // PencilSize_label
             // 
             this.PencilSize_label.AutoSize = true;
-            this.PencilSize_label.Location = new System.Drawing.Point(3, 10);
+            this.PencilSize_label.Location = new System.Drawing.Point(55, 414);
             this.PencilSize_label.Name = "PencilSize_label";
             this.PencilSize_label.Size = new System.Drawing.Size(65, 13);
             this.PencilSize_label.TabIndex = 16;
             this.PencilSize_label.Text = "Pencil Size: ";
             // 
-            // pencilSize_textBox
-            // 
-            this.pencilSize_textBox.Location = new System.Drawing.Point(64, 7);
-            this.pencilSize_textBox.Name = "pencilSize_textBox";
-            this.pencilSize_textBox.Size = new System.Drawing.Size(43, 20);
-            this.pencilSize_textBox.TabIndex = 17;
-            this.pencilSize_textBox.Text = "4";
-            this.pencilSize_textBox.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            // 
             // btn_paint_g
             // 
-            this.btn_paint_g.Location = new System.Drawing.Point(322, 4);
+            this.btn_paint_g.Location = new System.Drawing.Point(306, 4);
             this.btn_paint_g.Name = "btn_paint_g";
-            this.btn_paint_g.Size = new System.Drawing.Size(25, 25);
+            this.btn_paint_g.Size = new System.Drawing.Size(38, 35);
             this.btn_paint_g.TabIndex = 9;
             this.btn_paint_g.Text = "G";
             this.btn_paint_g.UseVisualStyleBackColor = true;
@@ -1093,9 +1117,9 @@
             // btn_paint_w
             // 
             this.btn_paint_w.Enabled = false;
-            this.btn_paint_w.Location = new System.Drawing.Point(260, 4);
+            this.btn_paint_w.Location = new System.Drawing.Point(215, 3);
             this.btn_paint_w.Name = "btn_paint_w";
-            this.btn_paint_w.Size = new System.Drawing.Size(25, 25);
+            this.btn_paint_w.Size = new System.Drawing.Size(41, 36);
             this.btn_paint_w.TabIndex = 7;
             this.btn_paint_w.Text = "W";
             this.btn_paint_w.UseVisualStyleBackColor = true;
@@ -1103,9 +1127,9 @@
             // 
             // btn_paint_b
             // 
-            this.btn_paint_b.Location = new System.Drawing.Point(291, 4);
+            this.btn_paint_b.Location = new System.Drawing.Point(263, 4);
             this.btn_paint_b.Name = "btn_paint_b";
-            this.btn_paint_b.Size = new System.Drawing.Size(25, 25);
+            this.btn_paint_b.Size = new System.Drawing.Size(37, 35);
             this.btn_paint_b.TabIndex = 8;
             this.btn_paint_b.Text = "B";
             this.btn_paint_b.UseVisualStyleBackColor = true;
@@ -1113,7 +1137,6 @@
             // 
             // btn_show_lables
             // 
-            this.btn_show_lables.Enabled = false;
             this.btn_show_lables.Location = new System.Drawing.Point(600, 397);
             this.btn_show_lables.Name = "btn_show_lables";
             this.btn_show_lables.Size = new System.Drawing.Size(114, 37);
@@ -1123,33 +1146,33 @@
             // 
             // btn_edit_selected
             // 
-            this.btn_edit_selected.Enabled = false;
-            this.btn_edit_selected.Location = new System.Drawing.Point(600, 211);
+            this.btn_edit_selected.Location = new System.Drawing.Point(600, 253);
             this.btn_edit_selected.Name = "btn_edit_selected";
             this.btn_edit_selected.Size = new System.Drawing.Size(114, 37);
             this.btn_edit_selected.TabIndex = 14;
             this.btn_edit_selected.Text = "Edit Selected";
             this.btn_edit_selected.UseVisualStyleBackColor = true;
+            this.btn_edit_selected.Click += new System.EventHandler(this.btn_edit_selected_Click);
             // 
             // btn_delete_selected
             // 
-            this.btn_delete_selected.Enabled = false;
-            this.btn_delete_selected.Location = new System.Drawing.Point(600, 254);
+            this.btn_delete_selected.Location = new System.Drawing.Point(600, 296);
             this.btn_delete_selected.Name = "btn_delete_selected";
             this.btn_delete_selected.Size = new System.Drawing.Size(114, 37);
             this.btn_delete_selected.TabIndex = 13;
             this.btn_delete_selected.Text = "Delete Selected";
             this.btn_delete_selected.UseVisualStyleBackColor = true;
+            this.btn_delete_selected.Click += new System.EventHandler(this.btn_delete_selected_Click);
             // 
             // btn_add_current
             // 
-            this.btn_add_current.Enabled = false;
             this.btn_add_current.Location = new System.Drawing.Point(600, 167);
             this.btn_add_current.Name = "btn_add_current";
             this.btn_add_current.Size = new System.Drawing.Size(114, 37);
             this.btn_add_current.TabIndex = 11;
             this.btn_add_current.Text = "Add Current";
             this.btn_add_current.UseVisualStyleBackColor = true;
+            this.btn_add_current.Click += new System.EventHandler(this.btn_add_current_Click);
             // 
             // lst_points
             // 
@@ -1158,6 +1181,7 @@
             this.lst_points.Name = "lst_points";
             this.lst_points.Size = new System.Drawing.Size(167, 264);
             this.lst_points.TabIndex = 10;
+            this.lst_points.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lst_points_MouseDoubleClick);
             // 
             // btn_load_map
             // 
@@ -1184,7 +1208,7 @@
             // 
             this.btn_get_current_map.Location = new System.Drawing.Point(427, 16);
             this.btn_get_current_map.Name = "btn_get_current_map";
-            this.btn_get_current_map.Size = new System.Drawing.Size(290, 45);
+            this.btn_get_current_map.Size = new System.Drawing.Size(287, 45);
             this.btn_get_current_map.TabIndex = 4;
             this.btn_get_current_map.Text = "Get Current Map";
             this.btn_get_current_map.UseVisualStyleBackColor = true;
@@ -1200,9 +1224,9 @@
             // btn_zoom_out
             // 
             this.btn_zoom_out.Enabled = false;
-            this.btn_zoom_out.Location = new System.Drawing.Point(90, 411);
+            this.btn_zoom_out.Location = new System.Drawing.Point(104, 4);
             this.btn_zoom_out.Name = "btn_zoom_out";
-            this.btn_zoom_out.Size = new System.Drawing.Size(30, 23);
+            this.btn_zoom_out.Size = new System.Drawing.Size(40, 35);
             this.btn_zoom_out.TabIndex = 2;
             this.btn_zoom_out.Text = "-";
             this.btn_zoom_out.UseVisualStyleBackColor = true;
@@ -1211,9 +1235,9 @@
             // btn_zoom_in
             // 
             this.btn_zoom_in.Enabled = false;
-            this.btn_zoom_in.Location = new System.Drawing.Point(54, 411);
+            this.btn_zoom_in.Location = new System.Drawing.Point(58, 4);
             this.btn_zoom_in.Name = "btn_zoom_in";
-            this.btn_zoom_in.Size = new System.Drawing.Size(30, 23);
+            this.btn_zoom_in.Size = new System.Drawing.Size(40, 35);
             this.btn_zoom_in.TabIndex = 1;
             this.btn_zoom_in.Text = "+";
             this.btn_zoom_in.UseVisualStyleBackColor = true;
@@ -1232,6 +1256,9 @@
             // 
             // tabPage4
             // 
+            this.tabPage4.Controls.Add(this.button3);
+            this.tabPage4.Controls.Add(this.button2);
+            this.tabPage4.Controls.Add(this.button1);
             this.tabPage4.Controls.Add(this.btn_navigation);
             this.tabPage4.Controls.Add(this.btn_upperbody);
             this.tabPage4.Controls.Add(this.btn_lowerbody);
@@ -1245,14 +1272,42 @@
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Managment";
             this.tabPage4.UseVisualStyleBackColor = true;
+            this.tabPage4.Click += new System.EventHandler(this.tabPage4_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(24, 205);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(194, 37);
+            this.button3.TabIndex = 8;
+            this.button3.Text = "Sepanta Map Engine";
+            this.button3.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(224, 162);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(194, 37);
+            this.button2.TabIndex = 7;
+            this.button2.Text = "Move Base";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(24, 162);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(194, 37);
+            this.button1.TabIndex = 6;
+            this.button1.Text = "Hector SLAM";
+            this.button1.UseVisualStyleBackColor = true;
             // 
             // btn_navigation
             // 
-            this.btn_navigation.Location = new System.Drawing.Point(24, 119);
+            this.btn_navigation.Location = new System.Drawing.Point(424, 162);
             this.btn_navigation.Name = "btn_navigation";
             this.btn_navigation.Size = new System.Drawing.Size(194, 37);
             this.btn_navigation.TabIndex = 5;
-            this.btn_navigation.Text = "Navigation";
+            this.btn_navigation.Text = "Sepanta Move";
             this.btn_navigation.UseVisualStyleBackColor = true;
             // 
             // btn_upperbody
@@ -1302,8 +1357,14 @@
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.button1);
-            this.tabPage1.Controls.Add(this.txt_message);
+            this.tabPage1.Controls.Add(this.txt_path);
+            this.tabPage1.Controls.Add(this.rad_linux);
+            this.tabPage1.Controls.Add(this.rad_windows);
+            this.tabPage1.Controls.Add(this.chk_coonect);
+            this.tabPage1.Controls.Add(this.label10);
+            this.tabPage1.Controls.Add(this.label3);
+            this.tabPage1.Controls.Add(this.txt_port);
+            this.tabPage1.Controls.Add(this.txt_ip);
             this.tabPage1.Controls.Add(this.btn_disconnect);
             this.tabPage1.Controls.Add(this.btn_connect);
             this.tabPage1.Controls.Add(this.lst_tcp);
@@ -1315,23 +1376,42 @@
             this.tabPage1.Text = "TCP_Client";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
-            // button1
+            // label10
             // 
-            this.button1.Location = new System.Drawing.Point(252, 18);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(203, 23);
-            this.button1.TabIndex = 5;
-            this.button1.Text = "Send Test Command";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(6, 128);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(96, 13);
+            this.label10.TabIndex = 8;
+            this.label10.Text = "TCP Remote Port :";
             // 
-            // txt_message
+            // label3
             // 
-            this.txt_message.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txt_message.Location = new System.Drawing.Point(252, 47);
-            this.txt_message.Name = "txt_message";
-            this.txt_message.Size = new System.Drawing.Size(382, 29);
-            this.txt_message.TabIndex = 4;
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 76);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(87, 13);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "TCP Remote IP :";
+            this.label3.Click += new System.EventHandler(this.label3_Click);
+            // 
+            // txt_port
+            // 
+            this.txt_port.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_port.Location = new System.Drawing.Point(6, 144);
+            this.txt_port.Name = "txt_port";
+            this.txt_port.Size = new System.Drawing.Size(203, 29);
+            this.txt_port.TabIndex = 6;
+            this.txt_port.Text = "3000";
+            // 
+            // txt_ip
+            // 
+            this.txt_ip.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_ip.Location = new System.Drawing.Point(6, 92);
+            this.txt_ip.Name = "txt_ip";
+            this.txt_ip.Size = new System.Drawing.Size(203, 29);
+            this.txt_ip.TabIndex = 4;
+            this.txt_ip.Text = "127.0.0.1";
             // 
             // btn_disconnect
             // 
@@ -1341,6 +1421,7 @@
             this.btn_disconnect.TabIndex = 2;
             this.btn_disconnect.Text = "Disconnect";
             this.btn_disconnect.UseVisualStyleBackColor = true;
+            this.btn_disconnect.Click += new System.EventHandler(this.btn_disconnect_Click);
             // 
             // btn_connect
             // 
@@ -1355,10 +1436,140 @@
             // lst_tcp
             // 
             this.lst_tcp.FormattingEnabled = true;
-            this.lst_tcp.Location = new System.Drawing.Point(6, 88);
+            this.lst_tcp.Location = new System.Drawing.Point(6, 179);
             this.lst_tcp.Name = "lst_tcp";
-            this.lst_tcp.Size = new System.Drawing.Size(717, 368);
+            this.lst_tcp.Size = new System.Drawing.Size(717, 277);
             this.lst_tcp.TabIndex = 0;
+            // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Interval = 3000;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // chk_coonect
+            // 
+            this.chk_coonect.AutoSize = true;
+            this.chk_coonect.Checked = true;
+            this.chk_coonect.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chk_coonect.Location = new System.Drawing.Point(227, 22);
+            this.chk_coonect.Name = "chk_coonect";
+            this.chk_coonect.Size = new System.Drawing.Size(105, 17);
+            this.chk_coonect.TabIndex = 9;
+            this.chk_coonect.Text = "Auto Connection";
+            this.chk_coonect.UseVisualStyleBackColor = true;
+            // 
+            // track_size
+            // 
+            this.track_size.Location = new System.Drawing.Point(126, 411);
+            this.track_size.Minimum = 1;
+            this.track_size.Name = "track_size";
+            this.track_size.Size = new System.Drawing.Size(207, 45);
+            this.track_size.TabIndex = 18;
+            this.track_size.Value = 4;
+            this.track_size.Scroll += new System.EventHandler(this.track_size_Scroll);
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(12, 14);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(40, 13);
+            this.label11.TabIndex = 21;
+            this.label11.Text = "Zoom :";
+            // 
+            // rad_windows
+            // 
+            this.rad_windows.AutoSize = true;
+            this.rad_windows.Location = new System.Drawing.Point(352, 21);
+            this.rad_windows.Name = "rad_windows";
+            this.rad_windows.Size = new System.Drawing.Size(93, 17);
+            this.rad_windows.TabIndex = 10;
+            this.rad_windows.TabStop = true;
+            this.rad_windows.Text = "Windows path";
+            this.rad_windows.UseVisualStyleBackColor = true;
+            this.rad_windows.CheckedChanged += new System.EventHandler(this.rad_windows_CheckedChanged);
+            // 
+            // rad_linux
+            // 
+            this.rad_linux.AutoSize = true;
+            this.rad_linux.Location = new System.Drawing.Point(352, 43);
+            this.rad_linux.Name = "rad_linux";
+            this.rad_linux.Size = new System.Drawing.Size(74, 17);
+            this.rad_linux.TabIndex = 11;
+            this.rad_linux.TabStop = true;
+            this.rad_linux.Text = "Linux path";
+            this.rad_linux.UseVisualStyleBackColor = true;
+            this.rad_linux.CheckedChanged += new System.EventHandler(this.rad_linux_CheckedChanged);
+            // 
+            // txt_path
+            // 
+            this.txt_path.Location = new System.Drawing.Point(460, 22);
+            this.txt_path.Name = "txt_path";
+            this.txt_path.ReadOnly = true;
+            this.txt_path.Size = new System.Drawing.Size(244, 20);
+            this.txt_path.TabIndex = 12;
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.txt_offsety);
+            this.tabPage5.Controls.Add(this.txt_offsetx);
+            this.tabPage5.Controls.Add(this.button7);
+            this.tabPage5.Controls.Add(this.button6);
+            this.tabPage5.Controls.Add(this.button5);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(729, 462);
+            this.tabPage5.TabIndex = 5;
+            this.tabPage5.Text = "Navigation";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(233, 47);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(194, 37);
+            this.button6.TabIndex = 12;
+            this.button6.Text = "Reset Hector";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(33, 47);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(194, 37);
+            this.button5.TabIndex = 11;
+            this.button5.Text = "Clear CostMaps";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(433, 47);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(194, 37);
+            this.button7.TabIndex = 13;
+            this.button7.Text = "Set Hector Offset";
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
+            // 
+            // txt_offsetx
+            // 
+            this.txt_offsetx.Location = new System.Drawing.Point(433, 103);
+            this.txt_offsetx.Name = "txt_offsetx";
+            this.txt_offsetx.Size = new System.Drawing.Size(194, 20);
+            this.txt_offsetx.TabIndex = 14;
+            this.txt_offsetx.Text = "0";
+            // 
+            // txt_offsety
+            // 
+            this.txt_offsety.Location = new System.Drawing.Point(433, 140);
+            this.txt_offsety.Name = "txt_offsety";
+            this.txt_offsety.Size = new System.Drawing.Size(194, 20);
+            this.txt_offsety.TabIndex = 15;
+            this.txt_offsety.Text = "0";
             // 
             // frmMain
             // 
@@ -1372,6 +1583,7 @@
             this.Name = "frmMain";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Main";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.frmMain_FormClosed);
             this.Load += new System.EventHandler(this.frmMain_Load);
             this.tabControl1.ResumeLayout(false);
             this.tab.ResumeLayout(false);
@@ -1418,6 +1630,9 @@
             this.tabPage4.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.track_size)).EndInit();
+            this.tabPage5.ResumeLayout(false);
+            this.tabPage5.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1534,16 +1749,34 @@
         private System.Windows.Forms.ListBox lst_tcp;
         private System.Windows.Forms.Button btn_disconnect;
         private System.Windows.Forms.Button btn_connect;
-        private System.Windows.Forms.TextBox txt_message;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TextBox txt_ip;
         private System.Windows.Forms.Button btn_es;
-        private System.Windows.Forms.TextBox pencilSize_textBox;
         private System.Windows.Forms.Label PencilSize_label;
         private System.Windows.Forms.PictureBox img_map;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Button btn_selectHand;
         private System.Windows.Forms.Button btn_selectPencil;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox txt_port;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.CheckBox chk_coonect;
+        private System.Windows.Forms.TrackBar track_size;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.RadioButton rad_linux;
+        private System.Windows.Forms.RadioButton rad_windows;
+        private System.Windows.Forms.TextBox txt_path;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.TextBox txt_offsety;
+        private System.Windows.Forms.TextBox txt_offsetx;
+        private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.Button button5;
     }
 }
 
