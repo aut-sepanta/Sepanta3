@@ -67,15 +67,15 @@ using namespace ros;
 //MAX SPEED
 #define normal_max_linear_speedX  0.4
 #define normal_max_linear_speedY  0.33
-#define normal_max_angular_speed  0.45
+#define normal_max_angular_speed  0.35
 //-
 #define goal_max_linear_speedX  0.15
 #define goal_max_linear_speedY  0.15
 #define goal_max_angular_speed  0.2
 //KP
-#define normal_kp_linearX 1
+#define normal_kp_linearX 1.0
 #define normal_kp_linearY 0.7
-#define norma_kp_angular  1
+#define norma_kp_angular  2.0
 //-
 #define goal_kp_linearX  0.5
 #define goal_kp_linearY  0.3
@@ -211,6 +211,8 @@ void ResetLimits()
     maxTethaSpeed = normal_max_angular_speed;
 }
 
+bool goal_mode = false;
+
 void ReduceLimits()
 {
     desireErrorX = goal_desire_errorX;
@@ -260,6 +262,7 @@ void PathFwr()
             IsGoalValid=false;
             cout<<"Goal reached ..."<<endl;
 
+            goal_mode = false;
             //return max limitations
 
             ResetLimits();
@@ -291,31 +294,55 @@ void PathFwr()
 
         iErrorX += errorX_R;
         iErrorY += errorY_R;
-        if(abs(errorTetha)<=0.78) iErrorTetha += errorTetha;
+        if(fabs(errorTetha)<=0.78) iErrorTetha += errorTetha;
 
-        if(abs(errorX_R)>desireErrorX)
-            xSpeed = (abs(errorX_R*LKpX+iErrorX*LKiX)<=maxLinSpeedX)?(errorX_R*LKpX+iErrorX*LKiX):sign(errorX_R)*maxLinSpeedX;
+        if (goal_mode )
+        {
+            if(fabs(errorX_R)>desireErrorX)
+                xSpeed = (fabs(errorX_R*LKpX+iErrorX*LKiX)<=maxLinSpeedX)?(errorX_R*LKpX+iErrorX*LKiX):sign(errorX_R)*maxLinSpeedX;
+            else
+            {
+                if (goal_mode) {
+                    xSpeed = 0;
+                    iErrorX = 0;
+                }
+                else
+                {
+                    xSpeed = 0.2;
+                }
+            }
+
+            if(fabs(errorY_R)>desireErrorY)
+                ySpeed = (fabs(errorY_R*LKpY+iErrorY*LKiY)<=maxLinSpeedY)?(errorY_R*LKpY+iErrorY*LKiY):sign(errorY_R)*maxLinSpeedY;
+            else
+            {
+                
+                ySpeed = 0;
+                iErrorY = 0;
+                
+            }
+        }
         else
         {
-            xSpeed = 0;
             iErrorX = 0;
+
+            if(fabs(errorTetha)< 0.57)
+            {
+                xSpeed = 0.2;
+                //WKp = 3.0;
+            }
+            else
+                xSpeed = 0;         
+
         }
 
-        if(abs(errorY_R)>desireErrorY)
-            ySpeed = (abs(errorY_R*LKpY+iErrorY*LKiY)<=maxLinSpeedY)?(errorY_R*LKpY+iErrorY*LKiY):sign(errorY_R)*maxLinSpeedY;
-        else
-        {
-            ySpeed = 0;
-            iErrorY = 0;
-        }
-
-        if(abs(errorTetha)>desireErrorTetha)
-            tethaSpeed = (abs(errorTetha*WKp+iErrorTetha*WKi)<=maxTethaSpeed)?(errorTetha*WKp+iErrorTetha*WKi):sign(errorTetha)*maxTethaSpeed;
-        else
-        {
-            tethaSpeed = 0;
-            iErrorTetha = 0;
-        }
+        //if(fabs(errorTetha)>desireErrorTetha)
+            tethaSpeed = (fabs(errorTetha*WKp+iErrorTetha*WKi)<=maxTethaSpeed)?(errorTetha*WKp+iErrorTetha*WKi):sign(errorTetha)*maxTethaSpeed;
+        // else
+        // {
+        //     tethaSpeed = 0;
+        //     iErrorTetha = 0;
+        // }
 
 
         send_omni(xSpeed,ySpeed,tethaSpeed);
@@ -324,12 +351,12 @@ void PathFwr()
         if ( info_counter>50)
         {
             info_counter= 0;
-            cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << errorX << "\t" << errorY << "\t" << errorTetha << endl;
+            cout << xSpeed << "\t" << ySpeed << "\t" << tethaSpeed << "\t" << step << "\t" << endl;
         }
        
         boost::this_thread::sleep(boost::posix_time::milliseconds(5));
 
-        if(abs(errorX_R)<=desireErrorX && abs(errorY_R)<=desireErrorY && abs(errorTetha)<=desireErrorTetha)
+        if(fabs(errorX_R)<=desireErrorX && fabs(errorY_R)<=desireErrorY && fabs(errorTetha)<=desireErrorTetha)
         {
             iErrorX = 0;
             iErrorY = 0;
@@ -342,13 +369,13 @@ void PathFwr()
                 tempGoalTetha = goalTetha;
 
                 //reduce limita
-
+                  goal_mode = true;
                  ReduceLimits();
             }
             else
             {
                 step +=20;
-
+                goal_mode = false;
                 tempGoalTetha = GetToPointsAngle(position[0], position[1], globalPath.poses[step].pose.position.x, globalPath.poses[step].pose.position.y);
 
                 if (tempGoalTetha < 0) tempGoalTetha += 2*M_PI;
