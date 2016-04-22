@@ -505,7 +505,7 @@ int main(int argc, char** argv)
   chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
   chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odometry_hector/odometry", 10);
 
-  chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
+  //chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
   chatter_pub[4] = node_handles[4].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
   chatter_pub[5] = node_handles[5].advertise<geometry_msgs::Pose>("odometry_base/pose", 10);
 
@@ -529,9 +529,9 @@ int main(int argc, char** argv)
     //======================================================
     IK_solver(0.05);
 
-    std_msgs::Int32 mes;
-    mes.data = isrobotmove;
-    chatter_pub[3].publish(mes);
+    //std_msgs::Int32 mes;
+    //mes.data = isrobotmove;
+    //chatter_pub[3].publish(mes);
 
     // geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
 

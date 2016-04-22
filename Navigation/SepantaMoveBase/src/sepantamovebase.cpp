@@ -174,6 +174,7 @@ nav_msgs::OccupancyGrid costmap;
 ros::Publisher mycmd_vel_pub;
 ros::Publisher pub_tts;
 ros::Publisher pub_current_goal;
+ros::Publisher pub_move;
 
 double xSpeed=0;
 double ySpeed=0;
@@ -237,6 +238,7 @@ bool on_the_goal = false;
 int step_size  = 40;
 bool wait_flag = false;
 bool idle_flag = false;
+bool isrobotmove = false;
 
 inline double Deg2Rad(double deg)
 {
@@ -248,6 +250,12 @@ inline double Rad2Deg(double rad)
     return rad * 180 / M_PI;
 }
 
+void publish_isrobotmove()
+{
+    std_msgs::Bool _msg;
+    _msg.data = isrobotmove;
+    pub_move.publish(_msg);
+}
 
 void say_message(string data)
 {
@@ -815,9 +823,18 @@ void PathFwr()
 
     while (ros::ok() && !App_exit)
     {
+        if ( system_state == 0 )
+        {
+            isrobotmove = 0;
+        }
+        else
+        {
+            isrobotmove = 1;
+        }
 
         if ( system_state == -1) //wait state
         {
+
            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         }
         if ( system_state == 0)
@@ -1175,8 +1192,9 @@ int main(int argc, char **argv)
     pub_tts = node_handles[6].advertise<std_msgs::String>("/texttospeech/message", 10);
     //============================================================================================
     pub_current_goal = node_handles[7].advertise<geometry_msgs::PoseStamped>("current_goal", 0 );
+    pub_move = node_handles[7].advertise<std_msgs::Bool>("lowerbodycore/isrobotmove", 10);
     //============================================================================================
-       marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_steps", 10);
+    marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_steps", 10);
     marker_pub2 =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_goals", 10);
     marker_pub3 =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_goals_arrow", 10);
 
@@ -1191,6 +1209,7 @@ int main(int argc, char **argv)
 
     while (ros::ok() && App_exit == false)
     {
+        publish_isrobotmove();
     	test_vis();
         ros::spinOnce();
         loop_rate.sleep();
