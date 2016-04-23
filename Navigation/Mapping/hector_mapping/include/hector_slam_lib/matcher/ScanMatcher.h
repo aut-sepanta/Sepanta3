@@ -50,7 +50,13 @@ public:
   ScanMatcher(DrawInterface* drawInterfaceIn = 0, HectorDebugInfoInterface* debugInterfaceIn = 0)
     : drawInterface(drawInterfaceIn)
     , debugInterface(debugInterfaceIn)
-  {}
+  {
+
+     ros::NodeHandle node_handle;
+     hectorOk_Pub = node_handle.advertise<std_msgs::Bool>("HectorStatus", 0 );
+     std::cout<<"ScanMatcher constracted\n";
+
+  }
 
   ~ScanMatcher()
   {}
@@ -213,11 +219,11 @@ protected:
 
       if (searchDir[2] > 0.2f) {
         searchDir[2] = 0.2f;
-        std::cout << "SearchDir angle change too large\n";
+        std::cout << "SearchDir angle change too large :<\n";
         IsHectorOk = false;
       } else if (searchDir[2] < -0.2f) {
         searchDir[2] = -0.2f;
-        std::cout << "SearchDir angle change too large\n";
+        std::cout << "SearchDir angle change too large :>\n";
         IsHectorOk = false;
       }
 
@@ -225,13 +231,10 @@ protected:
       
       if(!IsHectorOk)
       {
-        ros::NodeHandle node_handle;
-
-        hectorOk_Pub = node_handle.advertise<std_msgs::Bool>("HectorStatus", 0 );
-
         std_msgs::Bool status;
         status.data = IsHectorOk;
         hectorOk_Pub.publish(status);
+        std::cout << "Error Published to Movebas\n";
       }
 
       return true;

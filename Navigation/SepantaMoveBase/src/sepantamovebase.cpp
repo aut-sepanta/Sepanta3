@@ -87,7 +87,8 @@ using namespace ros;
 
 
 //#define VIRTUALMODE
-
+ int tempLogicState;
+ int tempSystemState;
 
 
 #ifdef VIRTUALMODE
@@ -200,8 +201,10 @@ double WKi = normal_ki_angular;
 int step = 0;
 
 double position[2] = {0};
+double oldposition[2] = {0};
 double orientation[4] = {0};
 double tetha = 0;
+double oldtetha = 0;
 
 double tempGoalPos[2] = {0};
 double tempGoalTetha = 0;
@@ -436,6 +439,21 @@ void logic_thread()
          boost::this_thread::sleep(boost::posix_time::milliseconds(500));
 
 
+         if ( logic_state == -1)
+         {
+            cout<<"Get Error With Hector Status"<<endl;
+            say_message("There is a problem with my laser");
+           
+            reset_hector_slam();
+            update_hector_origin(position[0],position[1],tetha);
+            boost::this_thread::sleep(boost::posix_time::milliseconds(7000));   
+            clean_costmaps();     
+            say_message("My laser recovered successfuly");
+            boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
+            system_state = tempSystemState;
+            logic_state = tempLogicState;
+
+         }
          if ( logic_state == 0 )
          {
             IsGoalReached = false;
@@ -507,6 +525,8 @@ void logic_thread()
             		reset_hector_slam();
             		update_hector_origin(position[0],position[1],tetha);
                     boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+                    clean_costmaps();   
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             		logic_state = 1;
 	            }
 
@@ -1008,35 +1028,101 @@ void GetCostmap(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 	}
 }
 
+
+
+bool calc_error(double x1,double y1,double t1,double x2,double y2,double t2,double delta_t)
+{
+   bool valid = true;
+   double v1 = fabs(x2-x1) / delta_t;
+   double v2 = fabs(y2-y1) / delta_t;
+
+   double dt = t2-t1;
+   if (dt >= M_PI) dt =  dt - 2*M_PI;
+   if (dt < -M_PI) dt =  dt + 2*M_PI;
+
+   double v3 = fabs(dt) / delta_t;
+
+   if ( v1 > maxLinSpeedX + 0.1 ) valid = false;
+   else if ( v2 > maxLinSpeedY + 0.1 ) valid = false;
+   else if ( v3 > maxTethaSpeed + 0.1 ) valid = false;
+
+   // cout<<v1<<" "<<v2<<" "<<v3<<" "<<delta_t<<endl;
+
+   return valid;
+}
+
+void hector_problem_detected()
+{
+    if ( logic_state != -1)
+    {
+        
+            tempLogicState = logic_state;
+            logic_state = -1;
+
+            tempSystemState = system_state;
+            system_state = -1;
+
+            force_stop();
+        }
+}
+
+ros::Time old_time;
+
 void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-    position[0] = msg->pose.position.x;
-    position[1] = msg->pose.position.y;
+    oldposition[0] = msg->pose.position.x;
+    oldposition[1] = msg->pose.position.y;
     orientation[0] = msg->pose.orientation.x;
     orientation[1] = msg->pose.orientation.y;
     orientation[2] = msg->pose.orientation.z;
     orientation[3] = msg->pose.orientation.w;
-    tetha = Quat2Rad(orientation);
-    if (tetha < 0) tetha += 2*M_PI;
+    oldtetha = Quat2Rad(orientation);
+    if (oldtetha < 0) oldtetha += 2*M_PI;
+
+    ros::Duration _delta_t = msg->header.stamp - old_time; //delta t in sec
+    double delta_t = _delta_t.toSec();
+
+    //cout<<"Temp POSE : "<<oldposition[0]<<" "<<oldposition[1]<<" "<<oldtetha<<endl;
+    cout<<"POSITION"<<oldposition[0]*100<<" | "<<oldposition[1]*100<<" | "<<Rad2Deg(oldtetha)<<endl;
+    bool valid = calc_error(oldposition[0],oldposition[1],oldtetha,position[0],position[1],tetha,delta_t);
+    if ( valid )
+    {
+        position[0] = oldposition[0];
+        position[1] = oldposition[1];
+        tetha = oldtetha;
+    }
+    else
+    {
+        cout<<"Keeped POSE : "<<position[0]<<" "<<position[1]<<" "<<tetha<<endl;
+        if( logic_state != 3) //if we are not in revcovery state and this is not caused by out request or hector reseting
+        {
+            cout<<coutcolor_red<<"problem with position"<<coutcolor0<<endl;
+            //hector_problem_detected();
+        }
+
+       
+    }
+
+    old_time = msg->header.stamp;
+    //=====================================
+
+
+       
+    
+    
 }
+
+
+
 
 void CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
 {
-    bool IsHectorOk;
-    IsHectorOk = msg->data;
-    if(!IsHectorOk)
+   
+    if(msg->data == false)
     {
-        int tempSystemState = system_state;
-        system_state = -1;
-        force_stop();
-        say_message("There is a problem with my laser");
-        clean_costmaps();
-        reset_hector_slam();
-        update_hector_origin(position[0],position[1],tetha);
-        boost::this_thread::sleep(boost::posix_time::milliseconds(2000));        
-        say_message("My laser recovered successfuly");
-        boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
-        system_state = tempSystemState;
+       
+        hector_problem_detected();
+        
     }
 }
 
@@ -1163,16 +1249,16 @@ void test_vis()
     for ( int i = 0 ; i < goal_list.size() ; i++)
     {
      
-     points2.pose.position.x =  goal_list[i].x / 100;
-     points2.pose.position.y =  goal_list[i].y / 100;
+     points2.pose.position.x =  (float)goal_list[i].x / 100;
+     points2.pose.position.y =  (float)goal_list[i].y / 100;
      points2.pose.position.z = 0;
      points2.text = goal_list[i].id;
      points2.ns = "text " + goal_list[i].id;
      marker_pub2.publish(points2);
 
 
-     points3.pose.position.x =  goal_list[i].x / 100;
-     points3.pose.position.y =  goal_list[i].y / 100;
+     points3.pose.position.x =  (float)goal_list[i].x / 100;
+     points3.pose.position.y =  (float)goal_list[i].y / 100;
      points3.pose.position.z = 0; 
      points3.pose.orientation = tf::createQuaternionMsgFromYaw(Deg2Rad(goal_list[i].yaw));
      points3.ns = "arrow " + goal_list[i].id;
@@ -1189,7 +1275,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "mymovebase");
 
-    ROS_INFO("SepantaMoveBase Version 2.1.1 + Recovery");
+    ROS_INFO("SepantaMoveBase Version 2.1.1 + Recovery + laser");
 
     boost::thread _thread_PathFwr(&PathFwr);
     boost::thread _thread_Logic(&logic_thread);

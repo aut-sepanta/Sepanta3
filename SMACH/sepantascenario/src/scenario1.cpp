@@ -164,17 +164,265 @@ void chatterCallback_speech(const std_msgs::String::ConstPtr &msg)
   
 }
 
-void send_feedback_to_speech()
+void send_feedback_to_speech(string cmd)
 {
    std_msgs::String _msg;
-   _msg.data = "start";
+   _msg.data = cmd;
    pub_spr.publish(_msg);
 }
 
-void show_info()
+bool process_object(string name)
 {
+	//comming soon !
+}
 
-   cout<<coutcolor_magenta<<"isdooropened : "<<isdooropened<<coutcolor0<<endl;
+int Function_state = 0;
+
+//Function
+//1 Go to kitchen and do object recognition for something
+void Function_1()
+{
+   if ( Function_state == 0 )
+   {
+      say_message("I am going to kitchen and i should bring a glass of water for you");
+      Function_state = 1;
+   }
+   else if ( Function_state == 1)
+   {
+      navigation_go_to("kitchen");
+      Function_state = 2;
+   }
+   else if ( Function_state == 2)
+   {
+        cout<<coutcolor_blue<<"Function [1] STATE [2] : wait for navigation to kitchen"<<coutcolor0<<endl;
+
+	    if ( isrobotmove == false)
+	    {
+	    	Function_state = 3;
+	    }
+   }
+   else if ( Function_state == 3)
+   {
+   	    //call for object recognition
+       object_recognition_start();
+       Function_state = 4;
+   }
+   else if ( Function_state == 4)
+   {
+   	   cout<<coutcolor_blue<<"Function [1] STATE [4] : wait for object recognition"<<coutcolor0<<endl;
+
+   	   if ( isobjectready )
+   	   {
+   	   	  Function_state = 5;
+   	   }
+   }
+   else if ( Function_state == 5)
+   {
+      bool result = process_object("name");
+   }
+   else if ( Function_state == 6)
+   {
+      navigation_go_to("roomcenter");
+      Function_state = 7;
+   }
+   else if ( Function_state == 7)
+   {
+   	   cout<<coutcolor_blue<<"Function [1] STATE [7] : wait for navigation to roomcenter"<<coutcolor0<<endl;
+
+	    if ( isrobotmove == false)
+	    {
+	    	Function_state = 8;
+	    }
+   }
+   else if ( Function_state == 8 )
+   {
+   	   //report object recognition status
+
+
+   	   //========================================
+   	   say_message("operation Done");
+   	   Function_state = 0;
+   	   logic_state = 3;
+   }
+}
+
+//3 Do Speech Test (50 Questions)
+void Function_2()
+{
+   if ( Function_state == 0 )
+   {
+   	 say_message("It is my pleasure to answare your questions!");
+   	 Function_state = 1;
+   }
+   else if ( Function_state == 1)
+   {
+      send_feedback_to_speech("qmode");
+      Function_state = 2;
+   }
+   else if ( Function_state == 2)
+   {
+
+   }
+   else if ( Function_state == 3)
+   {
+
+   }
+}
+
+//3 Find a Object
+void Function_3()
+{
+   if ( Function_state == 0 )
+   {
+     say_message("I am going to find the coca for you");
+     Function_state = 1;
+   }
+   else if ( Function_state == 1)
+   {
+     navigation_go_to("bedroom");
+     Function_state = 2;
+   }
+   else if ( Function_state == 2)
+   {
+        cout<<coutcolor_blue<<"Function [3] STATE [2] : wait for navigation to bedroom"<<coutcolor0<<endl;
+
+	    if ( isrobotmove == false)
+	    {
+	    	Function_state = 3;
+	    }
+   }
+   else if ( Function_state == 3)
+   {
+   	   object_recognition_start();
+   	   Function_state = 4;
+   }
+   else if ( Function_state == 4)
+   {
+       cout<<coutcolor_blue<<"Function [3] STATE [4] : wait for object recognition"<<coutcolor0<<endl;
+
+   	   if ( isobjectready )
+   	   {
+   	   	  Function_state = 5;
+   	   }
+   }
+   else if ( Function_state == 5)
+   {
+      bool result = process_object("name");
+
+      if ( result )
+      {
+        //we find it
+        Function_state = 10;
+        say_message("I Find the object for you");
+      }
+      else 
+      {
+        //we cant find it
+        Function_state = 6;
+        say_message("I Could not find the desire object in bedroom ");
+      }
+   }
+   else if ( Function_state == 6)
+   {
+        cout<<coutcolor_blue<<"Function [3] STATE [6] : wait for navigation to shelf"<<coutcolor0<<endl;
+
+	    if ( isrobotmove == false)
+	    {
+	    	Function_state = 7;
+	    }
+   }
+   else if ( Function_state == 7)
+   {
+   	   object_recognition_start();
+   	   Function_state = 8;
+   }
+   else if ( Function_state == 8)
+   {
+       cout<<coutcolor_blue<<"Function [3] STATE [8] : wait for object recognition"<<coutcolor0<<endl;
+
+   	   if ( isobjectready )
+   	   {
+   	   	  Function_state = 9;
+   	   }
+   }
+   else if ( Function_state == 9)
+   {
+      bool result = process_object("name");
+
+      if ( result )
+      {
+        //we find it
+        Function_state = 10;
+        say_message("I Find the object for you");
+      }
+      else 
+      {
+        //we cant find it
+        Function_state = 10;
+        say_message("I Could not find the desire object in the shelf");
+      }
+   }
+  else if ( Function_state == 10)
+   {
+   	   cout<<coutcolor_blue<<"Function [3] STATE [10] : wait for navigation to roomcenter"<<coutcolor0<<endl;
+
+	    if ( isrobotmove == false)
+	    {
+	    	Function_state = 11;
+	    }
+   }
+   else if ( Function_state == 11 )
+   {
+   	   //report object recognition status
+
+
+   	   //========================================
+   	   say_message("operation Done");
+   	   Function_state = 0;
+   	   logic_state = 3;
+   }
+
+
+} 
+
+void process_speech_command(string message)
+{
+   isspeechready = false;
+   speech_last_command = "";
+
+   if ( logic_state == 4 )
+   {
+	   	if ( message == "ready")
+	   	{
+		   	logic_state = 5;
+		   	cout<<coutcolor_green<<"Speech is ready !"<<coutcolor0<<endl;
+	    }
+	    else if ( message == "#error#" )
+	    {
+	    	logic_state = 3;
+	    	cout<<coutcolor_red<<"Speech has error :"<< message <<coutcolor0<<endl;
+	    }
+   }
+   else if ( logic_state == 5 )
+   {
+   	   if ( message == "1" ){logic_state = 6;}else
+   	   if ( message == "2" ){logic_state = 6;}else
+   	   if ( message == "3" ){logic_state = 6;}else
+   	   if ( message == "4" ){logic_state = 6;}else
+   	   if ( message == "5" ){logic_state = 7;}else
+   	   if ( message == "6" ){logic_state = 7;}else
+   	   if ( message == "7" ){logic_state = 7;}else
+   	   if ( message == "8" ){logic_state = 7;}else
+   	   if ( message == "9" ){logic_state = 8;}else
+   	   if ( message == "10" ){logic_state = 8;}else
+   	   if ( message == "11" ){logic_state = 8;}else
+   	   if ( message == "12" ){logic_state = 8;}
+   	   else
+   	   {
+       cout<<coutcolor_red<<"Invalid Speech Command for logic state 5 : "<< message <<coutcolor0<<endl;
+       logic_state = 3;
+   	   }
+   }
 }
 
 void logic_thread()
@@ -191,10 +439,9 @@ void logic_thread()
            cout<<coutcolor_green<<"idle"<<coutcolor0<<endl;
            isspeechready = false;
            isobjectready = false;
-           show_info();
            logic_state = 1;
          }
-
+         else
          if ( logic_state == 1 )
          {
             //init state
@@ -208,17 +455,57 @@ void logic_thread()
                 say_message("The door is opened!");
                 boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
                 navigation_go_to("roomcenter");
+                logic_state = 2; //wait for navigation
+                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
             }
            
          }
-
+         else
          if ( logic_state == 2 )
          {
             //wait for navigation
-            cout<<coutcolor_green<<"wait for navigation"<<coutcolor0<<endl;
+            cout<<coutcolor_green<<"STATE [2] : wait for navigation"<<coutcolor0<<endl;
+
+            if ( isrobotmove == false)
+            {
+            	boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+                say_message("Hello , I am Sepanta 3 the next generation of Amirkabir University of Technology Service Robot!");
+            	boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+            	logic_state = 3;
+            }
          }
-
-
+         else if ( logic_state == 3)
+         {
+            say_message("I am listening to your order");
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+         	cout<<coutcolor_green<<"STATE [3] : send start to speech"<<coutcolor0<<endl;
+         	send_feedback_to_speech("start");
+         	logic_state = 4;
+         }
+         else if ( logic_state == 4)
+         {
+         	if ( isspeechready ) process_speech_command(speech_last_command);
+         }
+         else if ( logic_state == 5)
+         {
+         	cout<<coutcolor_green<<"STATE [5] : wait for command !"<<coutcolor0<<endl;
+         	if ( isspeechready ) process_speech_command(speech_last_command);
+         }
+         else if ( logic_state == 6 )
+         {
+            cout<<coutcolor_green<<"STATE [6] : in operation"<<coutcolor0<<endl;
+            Function_1();
+         }
+         else if ( logic_state == 7 )
+         {
+            cout<<coutcolor_green<<"STATE [7] : in operation"<<coutcolor0<<endl;
+            Function_2();
+         }
+         else if ( logic_state == 8 )
+         {
+            cout<<coutcolor_green<<"STATE [8] : in operation"<<coutcolor0<<endl;
+            Function_3();
+         }
 
     }
 }

@@ -1,6 +1,6 @@
-image: /home/edwin/catkin_ws/src/Sepanta3.1/Managment/maps/map.pgm
+image: /home/sepanta/catkin_ws/src/Sepanta3/Managment/maps/map.pgm
 resolution: 0.025000
-origin: [-25.612499, -25.612499, 0.000000]
+origin: [-19.212500, -19.212500, 0.000000]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
