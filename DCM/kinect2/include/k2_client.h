@@ -65,7 +65,8 @@ public:
 	int mBufferSize;
 	char *mBuffer;
 	Socket(const char address[],char portNum[],int bufferSize);
-	void readData();
+	Socket(const char address[],char portNum[],char* buffer, int bufferSize);
+	void readData(bool zero_out=true);
 private:
 
 };
@@ -95,9 +96,35 @@ Socket::Socket(const char address[],char portNum[],int bufferSize)
 	}
 }
 
-void Socket::readData()
+Socket::Socket(const char address[],char portNum[],char* buffer,int bufferSize)
 {
-	memset(this->mBuffer,0,this->mBufferSize);
+	memset(&(this->hints), 0, sizeof (this->hints));
+	this->hints.ai_family = AF_INET;
+	this->hints.ai_socktype = SOCK_STREAM;
+	this->mBufferSize = bufferSize;
+	this->mBuffer = buffer;
+	getaddrinfo(address,portNum,&(this->hints),&(this->response));
+	for(this->iterator = this->response;this->iterator!=NULL;this->iterator = this->iterator->ai_next)
+	{
+		if(iterator->ai_family != AF_INET)
+		{
+			std::cout<<"Please disable IPv6"<<std::endl;
+			return;
+		}
+		struct sockaddr_in *address = (struct sockaddr_in *)(iterator->ai_addr);
+		char ipString[INET_ADDRSTRLEN];
+		inet_ntop(iterator->ai_family,&(address->sin_addr),ipString,sizeof ipString);
+		this->mSocket = socket(this->response->ai_family,this->response->ai_socktype,this->response->ai_protocol);
+		if(this->mSocket !=-1)
+		connect(this->mSocket,this->response->ai_addr,this->response->ai_addrlen);
+	}
+}
+
+void Socket::readData(bool zero_out)
+{
+    if (zero_out) {
+    	memset(this->mBuffer,0,this->mBufferSize);
+    }
 	recv(this->mSocket,this->mBuffer,this->mBufferSize,MSG_WAITALL);
 }
 

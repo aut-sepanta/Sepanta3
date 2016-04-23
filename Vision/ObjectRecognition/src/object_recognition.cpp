@@ -12,6 +12,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
+#include <pcl/common/centroid.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 #include <sensor_msgs/PointCloud2.h>
@@ -23,16 +24,20 @@
 
 #include <object_recognition.hpp>
 #include <object_pipeline.hpp>
+#include <image_conversions.hpp>
 
 ObjectRecognition::ObjectRecognition(ros::NodeHandle node_handle) { 
     boost::shared_ptr<std::vector<Object>> trained_objects(new std::vector<Object>);
     this->loadModels(trained_objects);
     this->object_pipeline = boost::shared_ptr<ObjectPipeline>(new ObjectPipeline(trained_objects));
 
-    this->objects_publisher = node_handle.advertise<sepanta_msgs::Objects>("objects", 5);
+    this->objects_publisher = node_handle.advertise<sepanta_msgs::Objects>("/object_recognition/objects", 5);
 }
 
-void ObjectRecognition::rgbdImageCallback(const sensor_msgs::ImageConstPtr& input_image, const sensor_msgs::PointCloud2ConstPtr& input_cloud) {
+void ObjectRecognition::rgbdImageCallback(const sensor_msgs::ImageConstPtr& input_image, const sensor_msgs::PointCloud2ConstPtr& input_cloud,
+                                          const sensor_msgs::CameraInfoConstPtr& camera_info) {
+    camera_model.fromCameraInfo(camera_info);
+
     if (input_image->width == 0 || input_cloud->width == 0) {
         ROS_WARN("image or point cloud is empty");
         return;
@@ -60,11 +65,22 @@ void ObjectRecognition::publish(boost::shared_ptr<std::vector<Object>> objects) 
     sepanta_msgs::ObjectsPtr objects_msg(new sepanta_msgs::Objects);
 
     for (unsigned int i=0; i<objects->size(); i++) {
-        sensor_msgs::PointCloud2 object_points;
-        pcl::toROSMsg(*(objects->at(i).cloud), object_points);
-
         sepanta_msgs::Object object_msg;
-        object_msg.points = object_points;
+
+        Eigen::Vector4f centroid;
+        pcl::compute3DCentroid(*(objects->at(i).cloud), centroid);
+        geometry_msgs::Pose object_pose;
+        object_pose.position.x = centroid(0);
+        object_pose.position.y = centroid(1);
+        object_pose.position.z = centroid(2);
+        object_pose.orientation.x = 0.0;
+        object_pose.orientation.y = 0.0;
+        object_pose.orientation.z = 0.0;
+        object_pose.orientation.w = 1.0;
+        object_msg.pose = object_pose;
+
+        image_conversions::PointXYZtoCameraPointXY(object_pose.position, object_msg.center_2d, camera_model);
+
         object_msg.label = objects->at(i).label;
         object_msg.status = objects->at(i).label.compare("unknown") ? sepanta_msgs::Object::STATUS_UNKNOWN :
                                                                      sepanta_msgs::Object::STATUS_RECOGNIZED;

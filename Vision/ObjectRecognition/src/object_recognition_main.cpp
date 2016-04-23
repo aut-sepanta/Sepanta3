@@ -4,6 +4,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h>
 
@@ -24,12 +25,13 @@ int main(int argc, char** argv)
 
     message_filters::Subscriber<sensor_msgs::PointCloud2> point_cloud_subscriber(node_handle, "/camera/depth_registered/points", 1);
     message_filters::Subscriber<sensor_msgs::Image> rgb_image_subscriber(node_handle, "/camera/rgb/image_color", 1);
+    message_filters::Subscriber<sensor_msgs::CameraInfo> camera_info_subscriber(node_handle, "/camera/rgb/camera_info", 1);
 
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> RgbdImagePolicy;
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2, sensor_msgs::CameraInfo> RgbdImagePolicy;
 
-    message_filters::Synchronizer<RgbdImagePolicy> rgbd_image_synchronizer(RgbdImagePolicy(10), rgb_image_subscriber, point_cloud_subscriber);
+    message_filters::Synchronizer<RgbdImagePolicy> rgbd_image_synchronizer(RgbdImagePolicy(10), rgb_image_subscriber, point_cloud_subscriber, camera_info_subscriber);
     ObjectRecognition object_recognition(node_handle);
-    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognition::rgbdImageCallback, object_recognition, _1, _2));
+    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognition::rgbdImageCallback, object_recognition, _1, _2, _3));
     
     ros::spin();
 

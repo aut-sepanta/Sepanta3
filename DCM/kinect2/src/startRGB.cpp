@@ -27,8 +27,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 ***************************************************************************************/
 #include "k2_client.h"
 
-int imageSize = 8294400;
-int streamSize = imageSize + sizeof(double);
+int imageSize = 6220800;
+int streamSize = 6226560;// imageSize + sizeof(double);
 std::string cameraName = "rgb";
 std::string imageTopicSubName = "image_color";
 std::string cameraInfoSubName = "camera_info";
@@ -37,29 +37,32 @@ int main(int argC,char **argV)
 {
 	ros::init(argC,argV,"startRGB");
 	ros::NodeHandle n(cameraName);
-	image_transport::ImageTransport imT(n);
 	std::string serverAddress;
 	n.getParam("/serverNameOrIP",serverAddress);
-	Socket mySocket(serverAddress.c_str(),"9000",streamSize);
-	image_transport::Publisher imagePublisher = imT.advertise(imageTopicSubName,1);
+    std::vector<unsigned char> bufferVector(streamSize);
+    unsigned char *buffer = &bufferVector[0];
+	Socket mySocket(serverAddress.c_str(),"9000",(char*)buffer,imageSize+sizeof(double));
+	ros::Publisher imagePublisher = n.advertise<sensor_msgs::Image>(imageTopicSubName,1);
 	ros::Publisher cameraInfoPub = n.advertise<sensor_msgs::CameraInfo>(cameraInfoSubName,1);
 	camera_info_manager::CameraInfoManager camInfoMgr(n,cameraName);
 	camInfoMgr.loadCameraInfo("");
 	cv::Mat frame;
 	cv_bridge::CvImage cvImage;
 	sensor_msgs::Image rosImage;
+    int seq = 0;
 	while(ros::ok())
 	{
 		mySocket.readData();
-		frame = cv::Mat(cv::Size(1920,1080),CV_8UC4,mySocket.mBuffer);
-		cv::flip(frame,frame,1);
 		double utcTime;
 		memcpy(&utcTime,&mySocket.mBuffer[imageSize],sizeof(double));
-		cvImage.header.stamp = ros::Time(utcTime);
-		cvImage.header.frame_id =  ros::this_node::getNamespace() + "/colorFrame";
-		cvImage.encoding = "bgra8";
-		cvImage.image = frame;
-		cvImage.toImageMsg(rosImage);
+        rosImage.header.seq = seq++;
+        rosImage.header.stamp = ros::Time(utcTime);
+        rosImage.header.frame_id = ros::this_node::getNamespace() + "/colorFrame"; 
+		rosImage.encoding = "rgb8";
+        rosImage.width = 1920;
+        rosImage.height = 1081;
+        rosImage.step = 5760; // = 1920*3bytes
+        rosImage.data = bufferVector;
 		sensor_msgs::CameraInfo camInfo = camInfoMgr.getCameraInfo();
 		camInfo.header.stamp = cvImage.header.stamp;
 		camInfo.header.frame_id = cvImage.header.frame_id;
