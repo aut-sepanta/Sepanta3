@@ -102,6 +102,9 @@ namespace move_base {
        */
       bool executeCycle(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& global_plan);
 
+      geometry_msgs::PoseStamped start;
+      bool make_plan;
+
     private:
       /**
        * @brief  A service call that clears the costmaps of obstacles

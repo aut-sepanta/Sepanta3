@@ -27,14 +27,17 @@
 //=================================================================================================
 
 
+
 #include <ros/ros.h>
 
 #include "HectorMappingRos.h"
 
 int main(int argc, char** argv)
 {
+
   ros::init(argc, argv, "hector_slam");
 
+  ROS_INFO("HELLO SEPANTA... :)");
   HectorMappingRos sm;
 
   ros::spin();

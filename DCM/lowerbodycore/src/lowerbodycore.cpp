@@ -59,19 +59,20 @@ tbb::atomic<int> keypad_status;
 tbb::atomic<int> last_keypad_value;
 int serial_state = 1;
 
-float laser_IR[8];
+float laser_IR[10];
 int IR[5] = {0};
 int EMS_STOP = 0;
 int EMS_STOP2 = 0;
+bool isdooropened = true;
 
 ros::Publisher chatter_pub[20];
 ros::Publisher chatter_pub_motor[20];
 tbb::atomic<int> Compass;
 
 int key_pad_reset = 0;
-int robot_max_speedx = 300;
-int robot_max_speedy = 300;
-int robot_max_speedw = 250;
+int robot_max_speedx = 400;
+int robot_max_speedy = 350;
+int robot_max_speedw = 400;
 
 //Status
 int control_mode_old = 0;
@@ -84,6 +85,8 @@ bool btn_stop = false;
 int serial_read_hz = 0;
 int serial_rw_count = 0;
 const int baudrate = 1000000;
+bool isserialopen = false;
+
 const string port_name  = "/dev/serial/by-id/usb-ROBOTIS_CO._LTD._ROBOTIS_Virtual_COM_Port-if00";
 
 void chatterCallback_greenlight(const std_msgs::Bool::ConstPtr &msg)
@@ -100,36 +103,49 @@ void chatterCallback_redlight(const std_msgs::Bool::ConstPtr &msg)
 
 void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
 {
-    int val_count = msg->ranges.size(); //512
+    int val_count = msg->ranges.size(); //1080
+
+    //min 10 cm  (0.1 meter)
+    //max 500 cm (5 meters)
+    
+    std::cout<<val_count<<std::endl;
 
     float read = 0;
     int valid_count = 0;
 
-    for ( int i = 0 ; i < 8 ; i++)
+    for ( int i = 0 ; i < 10 ; i++)
     {
         read = 0;
         valid_count = 0;
-        laser_IR[7 - i] = 0;
+        laser_IR[9 - i] = 0;
 
-        for ( int j = 0 ; j < 64 ; j++)
+        for ( int j = 0 ; j < 108 ; j++)
         {
-            read = msg->ranges[i * 64 + j];
+            read = msg->ranges[i * 108 + j];
 
             if ( !std::isnan(read) && !isinf(read) )
             {
-                laser_IR[7 - i] += read;
+                laser_IR[9 - i] += read;
                 valid_count++;
             }
         }
 
         if ( valid_count > 0)
-            laser_IR[7 - i] = (laser_IR[7 - i] / valid_count) * 100;
+            laser_IR[9 - i] = (laser_IR[9 - i] / valid_count) * 100;
         else
-            laser_IR[7 - i] = 400; //all segment points are damaged ...
+            laser_IR[9 - i] = 500;
 
-        laser_IR[7 - i] = (int)laser_IR[7 - i];
+        laser_IR[9 - i] = (int)laser_IR[9 - i];
 
-        //cout<<i<<" "<<valid_count<<endl;
+    }
+
+    if ( laser_IR[3] < 50 || laser_IR[4] < 50 || laser_IR[5] < 50 )
+    {
+    	isdooropened = false;
+    }
+    else
+    {
+    	isdooropened = true;
     }
 
 }
@@ -174,32 +190,36 @@ void logic()
 
 void smooth_drive()
 {
-     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+     Omnidrive(0,0,0);
+     boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
      while (App_exit == false)
      {
+        
          Omnidrive(omnidrive_x,omnidrive_y,omnidrive_w);
-         boost::this_thread::sleep(boost::posix_time::milliseconds(50)); //20 hz
+         
+         boost::this_thread::sleep(boost::posix_time::milliseconds(25)); //40 hz
      }
 }
 
-float w1_current = 0;
-float w2_current = 0;
-float w3_current = 0;
-float w4_current = 0;
+float w1_current = 128;
+float w2_current = 128;
+float w3_current = 128;
+float w4_current = 128;
 
 void Omnidrive(float vx, float vy, float vw)
 {
    
-    vw = -vw / 100;
-
+    vw = -vw / 100; 
+    //this is for scale only for better intraction of number
+    //this vw is scaled to match scale factor for vx,vy values
     //Speed Limits
     if ( vx > robot_max_speedx ) vx = robot_max_speedx;
     if ( vy > robot_max_speedy ) vy = robot_max_speedy;
     if ( vw > robot_max_speedw ) vw = robot_max_speedw;
 
-    if ( vw < -robot_max_speedx ) vw = -robot_max_speedx;
+    if ( vx < -robot_max_speedx ) vx = -robot_max_speedx;
     if ( vy < -robot_max_speedy ) vy = -robot_max_speedy;
-    if ( vx < -robot_max_speedw ) vx = -robot_max_speedw;
+    if ( vw < -robot_max_speedw ) vw = -robot_max_speedw;
 
     //FK
     float w1 = (vx - vy - vw * (L)) / 7.5;
@@ -295,6 +315,9 @@ void Update()
     sensor_info_laser.d5 = (int)laser_IR[5];
     sensor_info_laser.d6 = (int)laser_IR[6];
     sensor_info_laser.d7 = (int)laser_IR[7];
+    sensor_info_laser.d8 = (int)laser_IR[8];
+    sensor_info_laser.d9 = (int)laser_IR[9];
+
     chatter_pub[7].publish(sensor_info_laser);
 
     //Publisg Keypad
@@ -326,6 +349,10 @@ void Update()
     std_msgs::Int32 v2_msg;
     v2_msg.data = voltage_up;
     chatter_pub[14].publish(v2_msg); //voltage up
+
+    std_msgs::Bool bool_msg;
+    bool_msg.data = isdooropened;
+    chatter_pub[15].publish(bool_msg); //door status
 }
 
 
@@ -346,23 +373,23 @@ void serial_logic()
                 serial::Serial my_serial(port_name, baudrate, serial::Timeout::simpleTimeout(500));
 
                 //Config Serial
-                // my_serial.close();
-                // my_serial.setBaudrate(baudrate);
-                // serial::parity_t val1 = serial::parity_none;
-                // my_serial.setParity(val1);
-                // serial::stopbits_t val2 = serial::stopbits_one;
-                // my_serial.setStopbits(val2);
-                // serial::bytesize_t val3 = serial::eightbits;
-                // my_serial.setBytesize(val3);
-                // my_serial.open();
+                my_serial.close();
+                my_serial.setBaudrate(baudrate);
+                serial::parity_t val1 = serial::parity_none;
+                my_serial.setParity(val1);
+                serial::stopbits_t val2 = serial::stopbits_one;
+                my_serial.setStopbits(val2);
+                serial::bytesize_t val3 = serial::eightbits;
+                my_serial.setBytesize(val3);
+                my_serial.open();
 
                 //=======================================================
 
                 if (my_serial.isOpen())
                 {
                     ROS_INFO("USB Serial Port OK? : YES");
-                    //result_write[0] = 0;
-                    //my_serial.write(result_write, 1);
+                    result_write[0] = 0;
+                    my_serial.write(result_write, 1);
                 }
                 else
                 {
@@ -610,8 +637,9 @@ int main(int argc, char **argv)
     chatter_pub[12] = node_handles[6].advertise<std_msgs::Int32>("lowerbodycore/controlmode", 10); //1 down //2 up
     chatter_pub[13] = node_handles[7].advertise<std_msgs::Int32>("lowerbodycore/voltagedown", 10);
     chatter_pub[14] = node_handles[8].advertise<std_msgs::Int32>("lowerbodycore/voltageup", 10);
+    chatter_pub[15] = node_handles[14].advertise<std_msgs::Bool>("lowerbodycore/isdooropened", 10);
     sub_handles[1] = node_handles[9].subscribe("lowerbodycore/omnidrive", 10, chatterCallback_omnidrive);
-    sub_handles[2] = node_handles[10].subscribe("hokuyo/scan", 10, chatterCallback_laser);
+    sub_handles[2] = node_handles[10].subscribe("scan", 10, chatterCallback_laser);
     sub_handles[9] = node_handles[11].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
     sub_handles[10] = node_handles[12].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
     sub_handles[11] = node_handles[13].subscribe("tcpip/es", 10, chatterCallback_tcpes);

@@ -6,3 +6,5 @@ int16 d4
 int16 d5
 int16 d6
 int16 d7
+int16 d8
+int16 d9

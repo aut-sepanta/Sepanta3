@@ -27,19 +27,26 @@
 #include <sepanta_msgs/motortorques.h>
 #include <sepanta_msgs/speechkill.h>
 #include <sepanta_msgs/sound.h>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PolygonStamped.h>
+#include <move_base_msgs/MoveBaseActionGoal.h>
 
 int speedx = 150;
 int speedy = 150;
 int speedt = -150;
-//V3
-//#define USB_MODE
+
 using namespace std;
 string global_tcp;
 
 ros::Publisher chatter_pub[20];
 
-TCPStream* stream_tcp = NULL;
-TCPAcceptor* acceptor_tcp = NULL;
+TCPStream* stream_tcp1 = NULL;
+TCPAcceptor* acceptor_tcp1 = NULL;
+
+TCPStream* stream_tcp2 = NULL;
+TCPAcceptor* acceptor_tcp2 = NULL;
 
 bool App_exit = false;
 
@@ -75,8 +82,11 @@ void send_log(string msg)
 
 void kill_server()
 {
-   acceptor_tcp->~TCPAcceptor();
-   delete acceptor_tcp;
+   acceptor_tcp1->~TCPAcceptor();
+   delete acceptor_tcp1;
+
+   acceptor_tcp2->~TCPAcceptor();
+   delete acceptor_tcp2;
 }
 
 bool callkill_server(sepanta_msgs::speechkill::Request &req,sepanta_msgs::speechkill::Response &resp)
@@ -94,41 +104,111 @@ void set_omni(int x,int y,int w)
  chatter_pub[2].publish(msg);
 }
 
+bool isvirtual = false;
+void set_omni_cmd_vel(float x,float y,float w)
+{
+        geometry_msgs::Twist myTwist;
+
+        if ( isvirtual ) 
+        {
+            myTwist.linear.x = x;
+            myTwist.linear.y = y;
+            myTwist.angular.z = w; 
+        }
+        else
+        {
+            myTwist.linear.x = x;
+            myTwist.linear.y = -y;
+            myTwist.angular.z = -w;     
+        }
+
+        chatter_pub[4].publish(myTwist); 
+}
+
+
 void robot_forward()
 {
-set_omni(speedx,0,0);
+//set_omni(speedx,0,0);
+set_omni_cmd_vel(0.3,0,0);
 }
 
 void robot_backward()
 {
-   set_omni(-speedx,0,0);
+//set_omni(-speedx,0,0);
+set_omni_cmd_vel(-0.3,0,0);
 }
 
 void robot_left()
 {
-   set_omni(0,-speedy,0);
+   //set_omni(0,-speedy,0);
+   set_omni_cmd_vel(0,0.3,0);
 }
 
 void robot_right()
 {
-    set_omni(0,speedy,0);
+    //set_omni(0,speedy,0);
+    set_omni_cmd_vel(0,-0.3,0);
 }
 
 void robot_turn_left()
 {
-   set_omni(0,0,-speedt);
+  //set_omni(0,0,-speedt);
+   set_omni_cmd_vel(0,0,0.2);
 }
 
 void robot_turn_right()
 {
-   set_omni(0,0,speedt);
+   //set_omni(0,0,speedt);
+   set_omni_cmd_vel(0,0,-0.2);
 }
 
 void robot_stop()
 {
-   set_omni(0,0,0);
+   //set_omni(0,0,0);
+   set_omni_cmd_vel(0,0,0);
 }
 bool es = false;
+
+
+void reset_costmap()
+{
+cout<<"get reset costmap "<<endl;
+}
+
+void reset_hector()
+{
+cout<<"get reset hector "<<endl;
+}
+
+void offset_hector(string x,string y)
+{
+cout<<"get offset_hector "<<endl;
+}
+
+void move_x(string value)
+{
+cout<<"get move x"<<endl;
+}
+
+void move_y(string value)
+{
+cout<<"get move y "<<endl;
+}
+
+void turngl(string value)
+{
+cout<<"get turngl "<<endl;
+}
+
+void turnlocal(string value)
+{
+   cout<<"get turnlocal "<<endl;
+}
+
+void move_cancle()
+{
+   cout<<"get move cancle "<<endl;
+}
 
 void process_command(string input)
 {
@@ -155,6 +235,18 @@ void process_command(string input)
           if ( plugin_list[1] == "turnright") robot_turn_right();
           if ( plugin_list[1] == "es0") es = false;
           if ( plugin_list[1] == "es1") es = true;
+
+          if ( plugin_list[1] == "reset_costmap")  reset_costmap();
+          if ( plugin_list[1] == "reset_hector")  reset_hector();
+          if ( plugin_list[1] == "offset_hector")  offset_hector(plugin_list[2],plugin_list[3]);
+
+          if ( plugin_list[1] == "move_x")  move_x(plugin_list[2]);
+          if ( plugin_list[1] == "move_y")  move_y(plugin_list[2]);
+          if ( plugin_list[1] == "move_turnlocal")  turnlocal(plugin_list[2]);
+          if ( plugin_list[1] == "move_turnto")  turngl(plugin_list[2]);
+          if ( plugin_list[1] == "cancle")  move_cancle();
+          
+
        }
 
 }
@@ -175,9 +267,9 @@ void tcp_write_tcp(std::string msg,string mode)
 {
     int len = msg.length();
     string data =  msg.c_str() ;
-    if ( stream_tcp != NULL )
+    if ( stream_tcp1 != NULL )
     {
-        stream_tcp->send(data.c_str(), len);
+        stream_tcp1->send(data.c_str(), len);
         cout<<"write : "<<data<<endl;
         send_log("write : " + data);
     }
@@ -217,26 +309,26 @@ void serial_write(string  msg,string mode)
 
 std::vector<char> tcp_data;
 
-void tcp_read_tcp() //9898
+void tcp_read_tcp1() //3000
 {
-    stream_tcp = NULL;
-    acceptor_tcp = NULL;
-    acceptor_tcp = new TCPAcceptor(3000);
+    stream_tcp1 = NULL;
+    acceptor_tcp1 = NULL;
+    acceptor_tcp1 = new TCPAcceptor(3000);
 
-    if (acceptor_tcp->start() == 0) {
+    if (acceptor_tcp1->start() == 0) {
         while (App_exit == false) {
             cout<<"wait for tcp..."<<endl;
-            stream_tcp = acceptor_tcp->accept();
+            stream_tcp1 = acceptor_tcp1->accept();
             cout<<"tcp connected..."<<endl;
             send_log("tcp connected");
-            if (stream_tcp != NULL) {
+            if (stream_tcp1 != NULL) {
                 ssize_t len;
                 char line[1000];
 
                 int header = 0;
                 string valid_data = "";
                 isconnected = true;
-                while ((len = stream_tcp->receive(line, sizeof(line))) > 0 && App_exit ==false)
+                while ((len = stream_tcp1->receive(line, sizeof(line))) > 0 && App_exit ==false)
                 {
                     //cout<<line<<endl;
 
@@ -264,7 +356,62 @@ void tcp_read_tcp() //9898
                                     }
                     }
                 }
-                delete stream_tcp;
+                delete stream_tcp1;
+                cout<<"tcp disconnected..."<<endl;
+                send_log("tcp disconnected");
+                isconnected = false;
+            }
+        }
+    }
+}
+void tcp_read_tcp2() //3100
+{
+    stream_tcp2 = NULL;
+    acceptor_tcp2 = NULL;
+    acceptor_tcp2 = new TCPAcceptor(3100);
+
+    if (acceptor_tcp2->start() == 0) {
+        while (App_exit == false) {
+            cout<<"wait for tcp..."<<endl;
+            stream_tcp2 = acceptor_tcp2->accept();
+            cout<<"tcp connected..."<<endl;
+            send_log("tcp connected");
+            if (stream_tcp2 != NULL) {
+                ssize_t len;
+                char line[1000];
+
+                int header = 0;
+                string valid_data = "";
+                isconnected = true;
+                while ((len = stream_tcp2->receive(line, sizeof(line))) > 0 && App_exit ==false)
+                {
+                    //cout<<line<<endl;
+
+                    for ( int i = 0 ; i < len ; i++)
+                    {
+                        if ( line[i] == '%' && header == 0)
+                        {
+                            header++;
+                        }
+                        else
+                            if ( header == 1)
+                                 {
+                                        if ( line[i] != '$')
+                                            valid_data += line[i];
+                                        else
+                                        {
+                                            // cout<<valid_data<<endl;
+                                            //=================================
+                                            string temp = valid_data;
+                                            process_command(temp);
+                                            //==================================
+                                            valid_data = "";
+                                            header = 0;
+                                        }
+                                    }
+                    }
+                }
+                delete stream_tcp2;
                 cout<<"tcp disconnected..."<<endl;
                 send_log("tcp disconnected");
                 isconnected = false;
@@ -299,7 +446,8 @@ int main(int argc, char** argv)
 
     cout << "WINDOWS COMMUNICATION TCP STARTED" << endl;
 
-    boost::thread _threadsp(&tcp_read_tcp);
+    boost::thread _threadsp1(&tcp_read_tcp1);
+    boost::thread _threadsp2(&tcp_read_tcp2);
     boost::thread _threadsend(&sendd);
 
     ros::Rate ros_rate(20);
@@ -309,6 +457,7 @@ int main(int argc, char** argv)
 
     chatter_pub[1] = node_handles[1].advertise<std_msgs::String>("tcpip/out", 1); 
     chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
+    chatter_pub[4] = node_handles[5].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 1);
     chatter_pub[3] = node_handles[3].advertise<std_msgs::String>("tcpip/es", 1);
     //==========================================================================================
     sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
@@ -334,24 +483,30 @@ int main(int argc, char** argv)
 
     App_exit = true;
 
-  #ifdef USB_MODE
-    _thread.interrupt();
-    _thread.join();
-  #else
-    _threadsp.interrupt();
-    _threadsp.join();
-    _threadsp.~thread();
 
+
+    _threadsp1.interrupt();
+    _threadsp1.join();
+    _threadsp1.~thread();
+
+    _threadsp2.interrupt();
+    _threadsp2.join();
+    _threadsp2.~thread();
 
     _threadsend.interrupt();
     _threadsend.join();
     _threadsend.~thread();
 
-    acceptor_tcp->~TCPAcceptor();
+    acceptor_tcp1->~TCPAcceptor();
+    acceptor_tcp2->~TCPAcceptor();
     
-    delete acceptor_tcp;
-    delete stream_tcp;
-  #endif;
+    delete acceptor_tcp1;
+    delete stream_tcp1;
+
+    delete acceptor_tcp2;
+    delete stream_tcp2;
+
+ 
 
     return 0;
 }

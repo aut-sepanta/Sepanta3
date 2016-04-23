@@ -30,8 +30,6 @@
 #include <move_base/move_base.h>
 
 int main(int argc, char** argv){
-
-  std::cout<<"SEPANTA MOVE BASE"<<std::endl;
   ros::init(argc, argv, "move_base_node");
   tf::TransformListener tf(ros::Duration(10));
 

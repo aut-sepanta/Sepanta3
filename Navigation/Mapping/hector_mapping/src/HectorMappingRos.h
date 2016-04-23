@@ -89,6 +89,7 @@ public:
 
   void staticMapCallback(const nav_msgs::OccupancyGrid& map);
   void initialPoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
+  void initialPoseCallback_topic(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
 
   /*
   void setStaticMapData(const nav_msgs::OccupancyGrid& map);
@@ -104,6 +105,7 @@ protected:
 
   ros::Subscriber scanSubscriber_;
   ros::Subscriber sysMsgSubscriber_;
+  ros::Subscriber sub;
 
   ros::Subscriber mapSubscriber_;
   message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped>* initial_pose_sub_;

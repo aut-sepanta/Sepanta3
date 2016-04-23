@@ -157,7 +157,7 @@ Costmap2DROS::Costmap2DROS(std::string name, tf::TransformListener& tf) :
 
   // Create a time r to check if the robot is moving
   robot_stopped_ = false;
-  timer_ = private_nh.createTimer(ros::Duration(.1), &Costmap2DROS::movementCB, this);
+  timer_ = private_nh.createTimer(ros::Duration(.5), &Costmap2DROS::movementCB, this);
 
   dsrv_ = new dynamic_reconfigure::Server<Costmap2DConfig>(ros::NodeHandle("~/" + name));
   dynamic_reconfigure::Server<Costmap2DConfig>::CallbackType cb = boost::bind(&Costmap2DROS::reconfigureCB, this, _1,
@@ -531,13 +531,13 @@ bool Costmap2DROS::getRobotPose(tf::Stamped<tf::Pose>& global_pose) const
     return false;
   }
   // check global_pose timeout
-  if (current_time.toSec() - global_pose.stamp_.toSec() > transform_tolerance_)
-  {
-    ROS_WARN_THROTTLE(1.0,
-                      "Costmap2DROS transform timeout. Current time: %.4f, global_pose stamp: %.4f, tolerance: %.4f",
-                      current_time.toSec(), global_pose.stamp_.toSec(), transform_tolerance_);
-    return false;
-  }
+  // if (current_time.toSec() - global_pose.stamp_.toSec() > transform_tolerance_)
+  // {
+  //   ROS_WARN_THROTTLE(1.0,
+  //                     "Costmap2DROS transform timeout. Current time: %.4f, global_pose stamp: %.4f, tolerance: %.4f",
+  //                     current_time.toSec(), global_pose.stamp_.toSec(), transform_tolerance_);
+  //   return false;
+  // }
 
   return true;
 }
