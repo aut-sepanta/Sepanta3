@@ -1,5 +1,5 @@
 <launch>
-	<param name="serverNameOrIP" value="192.168.2.113" />
+	<param name="serverNameOrIP" value="192.168.2.134" />
 		<group ns="/head/kinect2">
 		<node name="startRGB" pkg="k2_client" type="startRGB"/>
 		<node name="startDepth" pkg="k2_client" type="startDepth"/>

@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS genmsg actionlib
     sensor_msgs
     std_msgs
     image_transport
+    image_geometry
     cv_bridge
     pcl_conversions
     pcl_ros
@@ -57,3 +58,7 @@ target_link_libraries (train_objects ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boo
 add_executable (object_recognition src/object_recognition_main.cpp src/object_recognition.cpp src/object_pipeline.cpp src/object.cpp)
 add_dependencies(object_recognition sepanta_msgs_generate_messages_cpp)
 target_link_libraries(object_recognition ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
+
+add_executable (visualize_objects src/visualize_objects.cpp)
+add_dependencies(visualize_objects sepanta_msgs_generate_messages_cpp)
+target_link_libraries(visualize_objects ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boost_LIBRARIES})
