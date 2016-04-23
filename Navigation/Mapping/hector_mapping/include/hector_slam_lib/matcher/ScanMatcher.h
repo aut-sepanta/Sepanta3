@@ -36,12 +36,16 @@
 #include "../util/DrawInterface.h"
 #include "../util/HectorDebugInfoInterface.h"
 
+#include "std_msgs/Bool.h"
+
 namespace hectorslam{
 
 template<typename ConcreteOccGridMapUtil>
 class ScanMatcher
 {
 public:
+
+  ros::Publisher hectorOk_Pub;
 
   ScanMatcher(DrawInterface* drawInterfaceIn = 0, HectorDebugInfoInterface* debugInterfaceIn = 0)
     : drawInterface(drawInterfaceIn)
@@ -193,6 +197,7 @@ protected:
 
   bool estimateTransformationLogLh(Eigen::Vector3f& estimate, ConcreteOccGridMapUtil& gridMapUtil, const DataContainer& dataPoints)
   {
+    bool IsHectorOk = true;
     gridMapUtil.getCompleteHessianDerivs(estimate, dataPoints, H, dTr);
     //std::cout << "\nH\n" << H  << "\n";
     //std::cout << "\ndTr\n" << dTr  << "\n";
@@ -209,12 +214,26 @@ protected:
       if (searchDir[2] > 0.2f) {
         searchDir[2] = 0.2f;
         std::cout << "SearchDir angle change too large\n";
+        IsHectorOk = false;
       } else if (searchDir[2] < -0.2f) {
         searchDir[2] = -0.2f;
         std::cout << "SearchDir angle change too large\n";
+        IsHectorOk = false;
       }
 
       updateEstimatedPose(estimate, searchDir);
+      
+      if(!IsHectorOk)
+      {
+        ros::NodeHandle node_handle;
+
+        hectorOk_Pub = node_handle.advertise<std_msgs::Bool>("HectorStatus", 0 );
+
+        std_msgs::Bool status;
+        status.data = IsHectorOk;
+        hectorOk_Pub.publish(status);
+      }
+
       return true;
     }
     return false;

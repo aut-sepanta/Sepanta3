@@ -465,7 +465,7 @@ void logic_thread()
             {
                     cout<<coutcolor_red<<"Error in PATH ! "<<coutcolor0<<endl;
                     if(!IsRecoveryState)
-                    	say_message("Error in path generation");
+                    say_message("Error in path generation");
                     logic_state = 3;   //recovery
                     system_state = -1; //wait
                     force_stop();
@@ -1020,6 +1020,26 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     if (tetha < 0) tetha += 2*M_PI;
 }
 
+void CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
+{
+    bool IsHectorOk;
+    IsHectorOk = msg->data;
+    if(!IsHectorOk)
+    {
+        int tempSystemState = system_state;
+        system_state = -1;
+        force_stop();
+        say_message("There is a problem with my laser");
+        clean_costmaps();
+        reset_hector_slam();
+        update_hector_origin(position[0],position[1],tetha);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(2000));        
+        say_message("My laser recovered successfuly");
+        boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+        system_state = tempSystemState;
+    }
+}
+
 bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Response &res)
 {
 
@@ -1181,6 +1201,8 @@ int main(int argc, char **argv)
     sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, GetPos);
     //============================================================================================
     sub_handles[1] = node_handles[1].subscribe("/move_base/global_costmap/costmap", 10, GetCostmap);
+    //============================================================================================
+    sub_handles[2] = node_handles[2].subscribe("/HectorStatus", 10, CheckHectorStatus);
     //============================================================================================
     mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
     pub_slam_origin = node_handles[4].advertise<geometry_msgs::PoseWithCovarianceStamped>("/slam_origin", 1);
