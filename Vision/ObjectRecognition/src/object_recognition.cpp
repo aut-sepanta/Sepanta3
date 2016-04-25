@@ -18,6 +18,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
 #include <sepanta_msgs/Objects.h>
+#include <std_srvs/Empty.h>
 
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
@@ -26,12 +27,37 @@
 #include <object_pipeline.hpp>
 #include <image_conversions.hpp>
 
-ObjectRecognition::ObjectRecognition(ros::NodeHandle node_handle) { 
+ObjectRecognition::ObjectRecognition(ros::NodeHandle node_handle) :
+    node_handle(node_handle),
+    point_cloud_subscriber(node_handle, "/camera/depth_registered/points", 1),
+    rgb_image_subscriber(node_handle, "/camera/rgb/image_color", 1),
+    camera_info_subscriber(node_handle, "/camera/rgb/camera_info", 1),
+    rgbd_image_synchronizer(RgbdImagePolicy(10), rgb_image_subscriber, point_cloud_subscriber, camera_info_subscriber)
+{
+
     boost::shared_ptr<std::vector<Object>> trained_objects(new std::vector<Object>);
     this->loadModels(trained_objects);
     this->object_pipeline = boost::shared_ptr<ObjectPipeline>(new ObjectPipeline(trained_objects));
 
     this->objects_publisher = node_handle.advertise<sepanta_msgs::Objects>("/object_recognition/objects", 5);
+    this->turnOnService = node_handle.advertiseService("/object_recognition/turn_on", &ObjectRecognition::turnOn, this);
+    this->turnOffService = node_handle.advertiseService("/object_recognition/turn_off", &ObjectRecognition::turnOff, this);
+}
+
+bool ObjectRecognition::turnOff(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) {
+    point_cloud_subscriber.unsubscribe();
+    rgb_image_subscriber.unsubscribe();
+    camera_info_subscriber.unsubscribe();
+    return true;
+}
+
+
+bool ObjectRecognition::turnOn(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) {
+    point_cloud_subscriber.subscribe(node_handle, "/camera/depth_registered/points", 1);
+    rgb_image_subscriber.subscribe(node_handle, "/camera/rgb/image_color", 1);
+    camera_info_subscriber.subscribe(node_handle, "/camera/rgb/camera_info", 1);
+    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognition::rgbdImageCallback, this, _1, _2, _3));
+    return true;
 }
 
 void ObjectRecognition::rgbdImageCallback(const sensor_msgs::ImageConstPtr& input_image, const sensor_msgs::PointCloud2ConstPtr& input_cloud,
