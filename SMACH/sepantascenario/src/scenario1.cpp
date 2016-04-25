@@ -60,6 +60,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <sepanta_msgs/Objects.h>
+#include <sepanta_msgs/Object.h>
 
 using std::string;
 using std::exception;
@@ -73,6 +75,16 @@ using namespace ros;
 
 //=============================================================
 
+struct object_data
+{
+  public:
+    string name;
+    geometry_msgs::Pose _3dlocation;
+    geometry_msgs::Point _2dlocation;
+
+};
+
+std::vector<object_data> object_list;
 std::string coutcolor0 = "\033[0;0m";
 std::string coutcolor_red = "\033[0;31m";
 std::string coutcolor_green = "\033[0;32m";
@@ -84,45 +96,80 @@ ros::Publisher pub_tts;
 ros::Publisher pub_spr;
 bool say_enable = true;
 
-int logic_state = 2;
+int logic_state = 0;
 bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
-bool object_started = false;
 bool isobjectready = false;
 
 string speech_last_command = "";
 string temp_speech_last_command = "";
 ros::ServiceClient client_navigation;
-ros::ServiceClient client_startobject;
-ros::ServiceClient client_stopobject;
+ros::ServiceClient client_object_on;
+ros::ServiceClient client_object_off;
+
+string desire_object_name = "";
 
 void object_recognition_start()
 {
+   isobjectready = false;
     std_srvs::Empty _srv;
-    client_startobject.call(_srv);
-    object_started = true;
+    client_object_on.call(_srv);
+   
+
 }
 
 void object_recognition_stop()
 {
     std_srvs::Empty _srv;
-    client_stopobject.call(_srv);
-    object_started = false;
+    client_object_off.call(_srv);
+    
 }
 
-void chatterCallback_object(const std_msgs::Bool::ConstPtr &msg)
+
+
+void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
 {
-   isobjectready = true;
+  
+   if ( isobjectready == false)
+   {
+    
+     string out_report = "";
+     object_list.clear();
+     for ( int i = 0 ; i < msg->objects.size() ; i++)
+      {
+         object_data d;
+         d.name = msg->objects.at(i).label;
+         d._3dlocation = msg->objects.at(i).pose;
+         d._2dlocation = msg->objects.at(i).center_2d;
+         object_list.push_back(d);
+         if ( i != msg->objects.size() - 1)
+         out_report += d.name + " | ";
+         else
+        out_report += d.name;
+
+      }
+
+      cout<<coutcolor_magenta<<"GET objects :"<<" "<<out_report<<coutcolor0<<endl;
+      isobjectready = true;
+      cout<<coutcolor_brown<<"isobjectready : "<<isobjectready<<out_report<<coutcolor0<<endl;
+       object_recognition_stop();
+      
+  }
+ 
 }
 
 void navigation_go_to(string location)
 {
    if ( isrobotmove ) return;
+
+
    sepanta_msgs::command _msg;
    _msg.request.id = location;
    _msg.request.command = "exe";
    client_navigation.call(_msg);
+
+     boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
 }
 
 void navigation_cancel()
@@ -171,21 +218,35 @@ void send_feedback_to_speech(string cmd)
    pub_spr.publish(_msg);
 }
 
+
+
+
 bool process_object(string name)
 {
 	//comming soon !
+  for ( int i = 0 ; i < object_list.size() ; i++)
+  {
+     if ( name == object_list.at(i).name)
+     {
+      return true;
+     }
+  }
 
+  return false;
 }
 
 int Function_state = 0;
-
+bool Function1_result = false;
+bool Function2_result = false; //dummy
+bool Function3_result = false;
 //Function
 //1 Go to kitchen and do object recognition for something
 void Function_1()
 {
    if ( Function_state == 0 )
    {
-      say_message("I am going to kitchen and i should bring a glass of water for you");
+
+      say_message("I am going to kitchen and i should bring a coca for you!");
       Function_state = 1;
    }
    else if ( Function_state == 1)
@@ -205,7 +266,9 @@ void Function_1()
    else if ( Function_state == 3)
    {
    	    //call for object recognition
+      Function1_result = false;
        object_recognition_start();
+        cout<<coutcolor_blue<<"Function [1] STATE [3] : Send Start for object"<<coutcolor0<<endl;
        Function_state = 4;
    }
    else if ( Function_state == 4)
@@ -219,16 +282,38 @@ void Function_1()
    }
    else if ( Function_state == 5)
    {
-      bool result = process_object("name");
+       Function1_result = process_object("coca");
+      if ( Function1_result )
+      {
+             say_message("well done ! , i found the coca !");
+             boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+
+             say_message("i wonder, if i had my arms could i pick up the coca? Oh money ! money is the problem");
+             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
+
+      }
+      else
+      {
+             say_message("I cant find the coca.");
+              boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+
+             say_message("i want to have 2 arms like my other friends and humans !");
+             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
+            
+      }
+
+
+      Function_state = 6;
    }
    else if ( Function_state == 6)
    {
+      say_message("i am goint to room center to report my perception");
       navigation_go_to("roomcenter");
       Function_state = 7;
    }
    else if ( Function_state == 7)
    {
-   	   cout<<coutcolor_blue<<"Function [1] STATE [7] : wait for navigation to roomcenter"<<coutcolor0<<endl;
+   	   cout<<coutcolor_blue<<"Function [1] STATE [7] : wait for navigation to room center"<<coutcolor0<<endl;
 
 	    if ( isrobotmove == false)
 	    {
@@ -238,10 +323,27 @@ void Function_1()
    else if ( Function_state == 8 )
    {
    	   //report object recognition status
+   if ( Function1_result )
+      {
+             say_message("well done ! , i found the coca !");
+             boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
 
+             say_message("i wonder, if i had my arms could i pick up the coca? Oh money ! money is the problem");
+             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
 
+      }
+      else
+      {
+             say_message("I cant find the coca.");
+              boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+
+             say_message("i want to have 2 arms like my other friends and humans !");
+             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
+            
+      }
    	   //========================================
    	   say_message("operation Done");
+
    	   Function_state = 0;
    	   logic_state = 3;
    }
@@ -285,21 +387,28 @@ void Function_2()
             //Ready 
             if ( isspeechready )
             {
-               isobjectready = false;
-               say_message(speech_last_command);
-               boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
-               if ( question_counter < 5)
+               isspeechready = false;
+               if ( speech_last_command != "0")
                {
+                 say_message(speech_last_command);
+                 boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
+                 if ( question_counter < 4)
+                 {
 
-               say_message("Next");
-              
-               question_counter++;
-               Function_state = 1;
+                 say_message("Next");
+                
+                 question_counter++;
+                 Function_state = 1;
+                 }
+                 else
+                 {
+                    say_message("Finished");
+                    Function_state = 4;
+                 }
                }
                else
                {
-                  say_message("Finished");
-                  Function_state = 4;
+                   Function_state = 1;
                }
             }
             else
@@ -309,6 +418,7 @@ void Function_2()
    }
    else if ( Function_state == 4)
    {
+       Function_state = 0;
        logic_state = 3;
    }
 }
@@ -318,7 +428,12 @@ void Function_3()
 {
    if ( Function_state == 0 )
    {
-     say_message("I am going to find the coca for you");
+   
+
+      string cmd = "I am going to find the " + desire_object_name + " for you";
+        say_message(cmd);
+          boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+
      Function_state = 1;
    }
    else if ( Function_state == 1)
@@ -337,6 +452,7 @@ void Function_3()
    }
    else if ( Function_state == 3)
    {
+     Function3_result = false;
    	   object_recognition_start();
    	   Function_state = 4;
    }
@@ -351,19 +467,32 @@ void Function_3()
    }
    else if ( Function_state == 5)
    {
-      bool result = process_object("name");
+      bool result = process_object(desire_object_name);
 
       if ( result )
       {
         //we find it
-        Function_state = 10;
-        say_message("I Find the object for you");
+        string cmd = "I Find the " + desire_object_name + " for you";
+        say_message(cmd);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+          say_message("i am going to the room center");
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+         navigation_go_to("roomcenter");
+       
+          Function_state = 10;
+
       }
       else 
       {
         //we cant find it
+        string cmd = "I Could not find the " + desire_object_name + " in bedroom ";
+        say_message(cmd);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+         say_message("it is better to check the shelf , maybe i will find it there ");
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+        navigation_go_to("shelf");
+      
         Function_state = 6;
-        say_message("I Could not find the desire object in bedroom ");
       }
    }
    else if ( Function_state == 6)
@@ -377,6 +506,8 @@ void Function_3()
    }
    else if ( Function_state == 7)
    {
+      Function3_result = false;
+
    	   object_recognition_start();
    	   Function_state = 8;
    }
@@ -391,24 +522,35 @@ void Function_3()
    }
    else if ( Function_state == 9)
    {
-      bool result = process_object("name");
-
-      if ( result )
+      bool result = process_object(desire_object_name);
+ string cmd = "";
+     if ( result )
       {
         //we find it
-        Function_state = 10;
-        say_message("I Find the object for you");
+         cmd = "I Find the " + desire_object_name + " for you";
+       
+       
       }
       else 
       {
         //we cant find it
-        Function_state = 10;
-        say_message("I Could not find the desire object in the shelf");
+       cmd = "I Could not find the " + desire_object_name + " on the shelf ";
+       
+        
+       
       }
+
+        say_message(cmd);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+        say_message("i am going to the room center");
+        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+        navigation_go_to("roomcenter");
+      
+        Function_state = 10;
    }
   else if ( Function_state == 10)
    {
-   	   cout<<coutcolor_blue<<"Function [3] STATE [10] : wait for navigation to roomcenter"<<coutcolor0<<endl;
+   	   cout<<coutcolor_blue<<"Function [3] STATE [10] : wait for navigation to room center"<<coutcolor0<<endl;
 
 	    if ( isrobotmove == false)
 	    {
@@ -458,9 +600,9 @@ void process_speech_command(string message)
        cout<<coutcolor_green<<"SPEECH GET PROCESS : "<<message<<coutcolor0<<endl;
    	   if ( message == "1" ){logic_state = 6;}else
    	   if ( message == "2" ){logic_state = 7;}else
-   	   if ( message == "3" ){logic_state = 8;}else
-   	   if ( message == "4" ){logic_state = 8;}else
-   	   if ( message == "5" ){logic_state = 8;}else
+   	   if ( message == "3" ){logic_state = 8; desire_object_name = "coffee";}else
+   	   if ( message == "4" ){logic_state = 8; desire_object_name = "spray";}else
+   	   if ( message == "5" ){logic_state = 8; desire_object_name = "coca";}else
        if ( message == "6" ){logic_state = 9;}
    	 
    	   else
@@ -502,7 +644,7 @@ void logic_thread()
                 boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
                 navigation_go_to("roomcenter");
                 logic_state = 2; //wait for navigation
-                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+              
             }
            
          }
@@ -561,20 +703,37 @@ void logic_thread()
          }
           else if ( logic_state == 9 )
          {
-            cout<<coutcolor_green<<"STATE [9] : Goodbye"<<coutcolor0<<endl;
+            cout<<coutcolor_green<<"STATE [9] : going to charger"<<coutcolor0<<endl;
             say_message("Ok! ,  My Battery is low . i am going to charge my selft");
             boost::this_thread::sleep(boost::posix_time::milliseconds(7000));
+
+            navigation_go_to("charger");
+
             logic_state = 10;
          }
          else if ( logic_state == 10 )
           {
-               cout<<coutcolor_green<<"STATE [10] : finshed :)"<<coutcolor0<<endl;
-               break;
+               //cout<<coutcolor_green<<"STATE [10] : finshed :)"<<coutcolor0<<endl;
+                cout<<coutcolor_blue<<"STATE [10] : wait for navigation to charger"<<coutcolor0<<endl;
+
+                if ( isrobotmove == false)
+                {
+                  Function_state = 11;
+                }
+
+            
+          }
+          else if ( logic_state == 11 )
+          {
+              cout<<coutcolor_blue<<"STATE [11] : say goodbye"<<coutcolor0<<endl;
+            say_message("well done ! , hope to see you again ! . goodbye.");
+            boost::this_thread::sleep(boost::posix_time::milliseconds(7000));
+            break;
           }
 
     }
 
-     cout<<coutcolor_green<<"Terminated"<<coutcolor0<<endl;
+     cout<<coutcolor_green<<"Terminated :)"<<coutcolor0<<endl;
 }
 
 int main(int argc, char **argv)
@@ -594,8 +753,10 @@ int main(int argc, char **argv)
     sub_handles[1] = node_handles[2].subscribe("/speechRec/cmd_spch", 10, chatterCallback_speech);
     pub_spr = node_handles[3].advertise<std_msgs::String>("/speechRec/feedback_spch", 10);
     client_navigation = node_handles[4].serviceClient<sepanta_msgs::command>("sepantamovebase/command");
+    client_object_on  = node_handles[4].serviceClient<std_srvs::Empty>("object_recognition/turn_on");
+    client_object_off = node_handles[4].serviceClient<std_srvs::Empty>("object_recognition/turn_off");
     sub_handles[2] = node_handles[5].subscribe("lowerbodycore/isrobotmove",10,chatterCallback_move);
-    sub_handles[4] = node_handles[6].subscribe("objectrecognition/feedback",10,chatterCallback_object);
+    sub_handles[3] = node_handles[6].subscribe("object_recognition/objects",10,chatterCallback_object);
 
     ros::Rate loop_rate(20);
 

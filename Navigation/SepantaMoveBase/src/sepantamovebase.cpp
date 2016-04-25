@@ -113,8 +113,8 @@ using namespace ros;
 #endif
 
 //-
-#define goal_max_linear_speedX 0.2
-#define goal_max_linear_speedY 0.2
+#define goal_max_linear_speedX 0.25
+#define goal_max_linear_speedY 0.25
 #define goal_max_angular_speed 0.2
 //-
 #define goal_kp_linearX 0.3
@@ -726,7 +726,7 @@ int calc_next_point()
             if ( step == globalPathSize-1)
             {
                 on_the_goal = true;
-                return true;
+               
             }
                 
             if(step+step_size >= globalPathSize)
@@ -1085,7 +1085,7 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     double delta_t = _delta_t.toSec();
 
     //cout<<"Temp POSE : "<<oldposition[0]<<" "<<oldposition[1]<<" "<<oldtetha<<endl;
-    //cout<<"POSITION"<<oldposition[0]*100<<" | "<<oldposition[1]*100<<" | "<<Rad2Deg(oldtetha)<<endl;
+    cout<<"POSITION"<<oldposition[0]*100<<" | "<<oldposition[1]*100<<" | "<<Rad2Deg(oldtetha)<<endl;
     bool valid = calc_error(oldposition[0],oldposition[1],oldtetha,position[0],position[1],tetha,delta_t);
     if ( true )
     {
