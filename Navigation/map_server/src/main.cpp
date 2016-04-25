@@ -19,6 +19,9 @@
 #include "geometry_msgs/Quaternion.h"
 #include "std_srvs/Empty.h"
 
+
+//#define HAVE_NEW_YAMLCPP
+
 #ifdef HAVE_NEW_YAMLCPP
 
 template<typename T>
@@ -167,14 +170,21 @@ class MapServer
           ROS_ERROR("Map_server could not open %s.", fname.c_str());
           exit(-1);
         }
+
+        ROS_INFO("1");
 #ifdef HAVE_NEW_YAMLCPP
         // The document loading process changed in yaml-cpp 0.5.
+        ROS_INFO("2");
         YAML::Node doc = YAML::Load(fin);
+        ROS_INFO("3");
 #else
+        ROS_INFO("4");
         YAML::Parser parser(fin);
         YAML::Node doc;
         parser.GetNextDocument(doc);
+        ROS_INFO("5");
 #endif
+        ROS_INFO("6");
         try { 
           doc["resolution"] >> res; 
         } catch (YAML::InvalidScalar) { 
@@ -209,6 +219,7 @@ class MapServer
           doc["origin"][0] >> origin[0];
           doc["origin"][1] >> origin[1]; 
           doc["origin"][2] >> origin[2]; 
+           ROS_INFO("Origin read");
         } catch (YAML::InvalidScalar) { 
           ROS_ERROR("The map does not contain an origin tag or it is invalid.");
           exit(-1);
@@ -247,8 +258,8 @@ class MapServer
       map_resp_.map.header.stamp = ros::Time::now();
       geometry_msgs::Pose mpos;
       //EDWINTODO IF MAP CHANGED CHANGE THIS ORIGIN TO VALID VALUE , SORRY FOR HARDCODING :)
-      mpos.position.x = -12.812499;
-      mpos.position.y = -12.812499;
+      mpos.position.x = origin[0];
+      mpos.position.y = origin[1];
       std::cout<<"map origin: "<<origin[0]<<" "<<origin[1]<<std::endl;
       map_resp_.map.info.origin = mpos;
       metadata_pub.publish( meta_data_message_ );
@@ -297,6 +308,7 @@ int main(int argc, char **argv)
   ROS_INFO("sepantamapengenine Started");
 
   std::string fname = ros::package::getPath("managment") + "/maps/map.pgm";
+  std::string fname2 = ros::package::getPath("managment") + "/maps/map.yaml";
   std::string mapname = ros::package::getPath("managment") + "/maps/map";
 
   try
@@ -304,7 +316,7 @@ int main(int argc, char **argv)
     //THE map Saver
     MapGenerator mg(mapname);
     //THE map Server
-    MapServer ms(fname,0.025);
+    MapServer ms(fname2,0);
     ros::spin();
   }
   catch(std::runtime_error& e)

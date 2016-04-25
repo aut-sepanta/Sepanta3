@@ -1,11 +1,16 @@
 <launch>
-    <arg name="base_frame_name" default="base_link"/>
+
+   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find managment)/rviz/calib.rviz" />
+
+ <arg name="base_frame_name" default="base_link"/>
     <arg name="map_frame_name" default="map"/>
     <arg name="odom_frame_name" default="base_link"/>
     <arg name="laser_frame_name" default="laser_link"/>
     <arg name="laser_topic_name" default=""/>
 
-<node name="staticmapcaller" pkg="map_server" type="staticmapcaller" />
+   <node name="staticmapcaller" pkg="map_server" type="staticmapcaller" />
+
+   <node name="hectorreseter" pkg="map_server" type="hectorreseter" />
 
     <node pkg="hector_mapping" type="hector_mapping" name="hector_slam" output="screen">
         <remap from="map_metadata"                          to="$(arg laser_topic_name)map_metadata"/>
@@ -32,6 +37,5 @@
   </node>
     
 
-    
 </launch>
 

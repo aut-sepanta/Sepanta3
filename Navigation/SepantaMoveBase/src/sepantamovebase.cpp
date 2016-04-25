@@ -843,6 +843,8 @@ void PathFwr()
 
     while (ros::ok() && !App_exit)
     {
+        errors_update();
+
         if ( system_state == 0 )
         {
             isrobotmove = 0;
@@ -981,7 +983,7 @@ void PathFwr()
            
             if(fabs(errorTetha)<=desireErrorTetha)
             {
-                
+                cout<<"DONE ! "<<tetha<<" "<<tempGoalTetha<<" "<<errorTetha<<endl;
                 system_state = 7;
                 force_stop();
                 
@@ -1011,7 +1013,7 @@ void PathFwr()
             system_state = 0;
         }
 
-        errors_update();
+       
         //publish_info();
         boost::this_thread::sleep(boost::posix_time::milliseconds(5));
     }
@@ -1083,9 +1085,9 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     double delta_t = _delta_t.toSec();
 
     //cout<<"Temp POSE : "<<oldposition[0]<<" "<<oldposition[1]<<" "<<oldtetha<<endl;
-    cout<<"POSITION"<<oldposition[0]*100<<" | "<<oldposition[1]*100<<" | "<<Rad2Deg(oldtetha)<<endl;
+    //cout<<"POSITION"<<oldposition[0]*100<<" | "<<oldposition[1]*100<<" | "<<Rad2Deg(oldtetha)<<endl;
     bool valid = calc_error(oldposition[0],oldposition[1],oldtetha,position[0],position[1],tetha,delta_t);
-    if ( valid )
+    if ( true )
     {
         position[0] = oldposition[0];
         position[1] = oldposition[1];

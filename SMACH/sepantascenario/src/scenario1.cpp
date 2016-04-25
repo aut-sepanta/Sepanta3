@@ -84,7 +84,7 @@ ros::Publisher pub_tts;
 ros::Publisher pub_spr;
 bool say_enable = true;
 
-int logic_state = 0;
+int logic_state = 2;
 bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
@@ -174,6 +174,7 @@ void send_feedback_to_speech(string cmd)
 bool process_object(string name)
 {
 	//comming soon !
+
 }
 
 int Function_state = 0;
@@ -246,26 +247,69 @@ void Function_1()
    }
 }
 
+int question_counter = 0;
 //3 Do Speech Test (50 Questions)
 void Function_2()
 {
+   cout<<"Header :"<<Function_state<<endl;
    if ( Function_state == 0 )
    {
+     question_counter = 0;
    	 say_message("It is my pleasure to answare your questions!");
    	 Function_state = 1;
    }
    else if ( Function_state == 1)
    {
-      send_feedback_to_speech("qmode");
+      send_feedback_to_speech("qstart");
       Function_state = 2;
    }
    else if ( Function_state == 2)
    {
+      if ( isspeechready )
+      { 
+          isspeechready = false;
+          if ( speech_last_command == "qready")
+          {
+            //say_message("ask");
+            Function_state = 3;
+          }
+          else
+          {
 
+             send_feedback_to_speech("qstart");
+          }
+      }
    }
    else if ( Function_state == 3)
    {
+            //Ready 
+            if ( isspeechready )
+            {
+               isobjectready = false;
+               say_message(speech_last_command);
+               boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
+               if ( question_counter < 5)
+               {
 
+               say_message("Next");
+              
+               question_counter++;
+               Function_state = 1;
+               }
+               else
+               {
+                  say_message("Finished");
+                  Function_state = 4;
+               }
+            }
+            else
+            {
+                  cout<<coutcolor_blue<<"Function [2] STATE [3] : wait for user question"<<coutcolor0<<endl;
+            }
+   }
+   else if ( Function_state == 4)
+   {
+       logic_state = 3;
    }
 }
 
@@ -405,18 +449,20 @@ void process_speech_command(string message)
    }
    else if ( logic_state == 5 )
    {
+      //6 kitchen
+      //7 questions
+      //8 object
+      //=================================================
+
+
+       cout<<coutcolor_green<<"SPEECH GET PROCESS : "<<message<<coutcolor0<<endl;
    	   if ( message == "1" ){logic_state = 6;}else
-   	   if ( message == "2" ){logic_state = 6;}else
-   	   if ( message == "3" ){logic_state = 6;}else
-   	   if ( message == "4" ){logic_state = 6;}else
-   	   if ( message == "5" ){logic_state = 7;}else
-   	   if ( message == "6" ){logic_state = 7;}else
-   	   if ( message == "7" ){logic_state = 7;}else
-   	   if ( message == "8" ){logic_state = 7;}else
-   	   if ( message == "9" ){logic_state = 8;}else
-   	   if ( message == "10" ){logic_state = 8;}else
-   	   if ( message == "11" ){logic_state = 8;}else
-   	   if ( message == "12" ){logic_state = 8;}
+   	   if ( message == "2" ){logic_state = 7;}else
+   	   if ( message == "3" ){logic_state = 8;}else
+   	   if ( message == "4" ){logic_state = 8;}else
+   	   if ( message == "5" ){logic_state = 8;}else
+       if ( message == "6" ){logic_state = 9;}
+   	 
    	   else
    	   {
        cout<<coutcolor_red<<"Invalid Speech Command for logic state 5 : "<< message <<coutcolor0<<endl;
@@ -469,8 +515,8 @@ void logic_thread()
             if ( isrobotmove == false)
             {
             	boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-                say_message("Hello , I am Sepanta 3 the next generation of Amirkabir University of Technology Service Robot!");
-            	boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+                say_message("Hello , I am Sepanta 3 the next generation of Amir kaa bir University of Technology Service Robot!");
+            	boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
             	logic_state = 3;
             }
          }
@@ -479,12 +525,19 @@ void logic_thread()
             say_message("I am listening to your order");
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
          	cout<<coutcolor_green<<"STATE [3] : send start to speech"<<coutcolor0<<endl;
+          logic_state = 4;
          	send_feedback_to_speech("start");
-         	logic_state = 4;
+
+         	
          }
          else if ( logic_state == 4)
          {
          	if ( isspeechready ) process_speech_command(speech_last_command);
+          else 
+          {
+            cout<<coutcolor_green<<"STATE [4] : send start to speech Again !"<<coutcolor0<<endl;
+            send_feedback_to_speech("start");
+          }
          }
          else if ( logic_state == 5)
          {
@@ -506,8 +559,22 @@ void logic_thread()
             cout<<coutcolor_green<<"STATE [8] : in operation"<<coutcolor0<<endl;
             Function_3();
          }
+          else if ( logic_state == 9 )
+         {
+            cout<<coutcolor_green<<"STATE [9] : Goodbye"<<coutcolor0<<endl;
+            say_message("Ok! ,  My Battery is low . i am going to charge my selft");
+            boost::this_thread::sleep(boost::posix_time::milliseconds(7000));
+            logic_state = 10;
+         }
+         else if ( logic_state == 10 )
+          {
+               cout<<coutcolor_green<<"STATE [10] : finshed :)"<<coutcolor0<<endl;
+               break;
+          }
 
     }
+
+     cout<<coutcolor_green<<"Terminated"<<coutcolor0<<endl;
 }
 
 int main(int argc, char **argv)

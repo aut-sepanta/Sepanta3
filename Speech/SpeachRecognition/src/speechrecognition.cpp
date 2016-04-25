@@ -95,41 +95,7 @@ void chatterCallback_redlight(const std_msgs::Bool::ConstPtr &msg)
     red_light = msg->data;
 }
 
-void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
-{
-    int val_count = msg->ranges.size(); //512
 
-    float read = 0;
-    int valid_count = 0;
-
-    for ( int i = 0 ; i < 8 ; i++)
-    {
-        read = 0;
-        valid_count = 0;
-        laser_IR[7 - i] = 0;
-
-        for ( int j = 0 ; j < 64 ; j++)
-        {
-            read = msg->ranges[i * 64 + j];
-
-            if ( !std::isnan(read) && !isinf(read) )
-            {
-                laser_IR[7 - i] += read;
-                valid_count++;
-            }
-        }
-
-        if ( valid_count > 0)
-            laser_IR[7 - i] = (laser_IR[7 - i] / valid_count) * 100;
-        else
-            laser_IR[7 - i] = 400; //all segment points are damaged ...
-
-        laser_IR[7 - i] = (int)laser_IR[7 - i];
-
-        //cout<<i<<" "<<valid_count<<endl;
-    }
-
-}
 
 float omnidrive_x = 0;
 float omnidrive_y = 0;
@@ -141,74 +107,14 @@ void chatterCallback_speech(const std_msgs::String::ConstPtr &msg)
 
    std_msgs::String data;
    data.data = msg->data;
-   chatter_pub[0].publish(data);
+   //chatter_pub[0].publish(data);
    
 }
 
 
 
 
-void Update()
-{
-    //Publisg Omni Speed
-    sepanta_msgs::omnidata omni_info;
-    omni_info.d0 = mobileplatform_motors_read[0];
-    omni_info.d1 = mobileplatform_motors_read[1];
-    omni_info.d2 = mobileplatform_motors_read[2];
-    omni_info.d3 = mobileplatform_motors_read[3];
-    chatter_pub[4].publish(omni_info);
 
-    //Publisg IR Sensors
-    sepanta_msgs::irsensor sensor_info;
-    sensor_info.d0 = IR[0];
-    sensor_info.d1 = IR[1];
-    sensor_info.d2 = IR[2];
-    sensor_info.d3 = IR[3];
-    sensor_info.d4 = IR[4];
-    chatter_pub[6].publish(sensor_info);
-
-    //Publish Laser Sensors
-    sepanta_msgs::irsensor sensor_info_laser;
-    sensor_info_laser.d0 = (int)laser_IR[0];
-    sensor_info_laser.d1 = (int)laser_IR[1];
-    sensor_info_laser.d2 = (int)laser_IR[2];
-    sensor_info_laser.d3 = (int)laser_IR[3];
-    sensor_info_laser.d4 = (int)laser_IR[4];
-    sensor_info_laser.d5 = (int)laser_IR[5];
-    sensor_info_laser.d6 = (int)laser_IR[6];
-    sensor_info_laser.d7 = (int)laser_IR[7];
-    chatter_pub[7].publish(sensor_info_laser);
-
-    //Publisg Keypad
-    std_msgs::Int32 key_msg;
-    key_msg.data = keypad_status;
-    chatter_pub[8].publish(key_msg); //keypad
-
-    //Publish EMS_Stop
-    std_msgs::Int32 ems_msg;
-    ems_msg.data = EMS_STOP;
-    chatter_pub[9].publish(ems_msg); //ems stop
-
-    //Publisg Btn_Start
-    std_msgs::Bool btn_msg;
-    btn_msg.data = btn_start;
-    chatter_pub[11].publish(btn_msg);// btn_start
-
-    //Publisg Mode
-    std_msgs::Int32 mode_msg;
-    mode_msg.data = control_mode;
-    chatter_pub[12].publish(mode_msg); //Mode
-
-    //Publish Voltage Down
-    std_msgs::Int32 v1_msg;
-    v1_msg.data = voltage_down;
-    chatter_pub[13].publish(v1_msg); //voltage down
-
-    //Publish Voltage Up
-    std_msgs::Int32 v2_msg;
-    v2_msg.data = voltage_up;
-    chatter_pub[14].publish(v2_msg); //voltage up
-}
 
 int main(int argc, char **argv)
 {
