@@ -3,6 +3,7 @@ uint8 STATUS_RECOGNIZED = 1
 
 float32 width
 float32 height
+float32 validity
 geometry_msgs/Pose pose
 geometry_msgs/Point center_2d
 
