@@ -718,7 +718,7 @@ void logic_thread()
 
                 if ( isrobotmove == false)
                 {
-                  Function_state = 11;
+                  logic_state = 11;
                 }
 
             

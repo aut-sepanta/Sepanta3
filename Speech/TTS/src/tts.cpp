@@ -28,6 +28,11 @@ void chatterCallback_speech(const std_msgs::String::ConstPtr &msg)
     temp_message = msg->data;
 }
 
+void chatterCallback_speech2(const std_msgs::String::ConstPtr &msg)
+{
+   std::cout<<"GET NEW TTS"<<msg->data<<std::endl;
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "texttospeech");
@@ -36,7 +41,8 @@ int main(int argc, char **argv)
     ros::Subscriber sub_handles[5];
 
     //===========================================================================================
-    sub_handles[0] = node_handles[0].subscribe("/texttospeech/message", 10, chatterCallback_speech);
+    //sub_handles[0] = node_handles[0].subscribe("/texttospeech/message", 10, chatterCallback_speech);
+      sub_handles[0] = node_handles[0].subscribe("/texttospeech/feedback", 10, chatterCallback_speech2);
     //============================================================================================
 
     ros::Rate loop_rate(20);
