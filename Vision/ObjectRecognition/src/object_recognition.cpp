@@ -107,6 +107,7 @@ void ObjectRecognition::publish(boost::shared_ptr<std::vector<Object>> objects) 
 
         image_conversions::PointXYZtoCameraPointXY(object_pose.position, object_msg.center_2d, camera_model);
 
+        object_msg.validity = objects->at(i).validity;
         object_msg.label = objects->at(i).label;
         object_msg.status = objects->at(i).label.compare("unknown") ? sepanta_msgs::Object::STATUS_UNKNOWN :
                                                                      sepanta_msgs::Object::STATUS_RECOGNIZED;
@@ -141,7 +142,7 @@ void ObjectRecognition::pipeline(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cl
 
 void ObjectRecognition::loadModels(boost::shared_ptr<std::vector<Object>> objects) {
     boost::filesystem::path models_path(ros::package::getPath("object_recognition") + "/trained_objects");
-    boost::regex modelfile_pattern("^model_(.+)[.]pcd$");
+    boost::regex modelfile_pattern("^model_(\D+)\d*[.]pcd$");
     for (boost::filesystem::recursive_directory_iterator iter(models_path), end; iter!=end; iter++) {
         boost::match_results<std::string::const_iterator> results;
         std::string file_path = iter->path().string(); 

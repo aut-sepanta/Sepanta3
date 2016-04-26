@@ -16,6 +16,7 @@ public:
     pcl::PointCloud<pcl::SHOT1344>::Ptr descriptors;
     pcl::CorrespondencesPtr correspondences;
     std::string label;
+    float validity;
     double cloud_resolution;
 };
 

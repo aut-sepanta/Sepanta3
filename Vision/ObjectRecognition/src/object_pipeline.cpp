@@ -287,6 +287,7 @@ void ObjectPipeline::objectMatching(boost::shared_ptr<std::vector<Object>> scene
                 max_correspondences = correspondences->size();
                 scene_objects->at(i).label = trained_objects->at(j).label;
                 scene_objects->at(i).correspondences = correspondences;
+                scene_objects->at(i).validity = correspondences/trained_objects->at(j).descriptors.size();
             }
         }
         ROS_INFO_STREAM("Object \"" << scene_objects->at(i).label << "\" found.(correspondences: " << max_correspondences << ")");
