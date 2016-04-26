@@ -657,7 +657,7 @@ void logic_thread()
             if ( isrobotmove == false)
             {
             	boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-                say_message("Hello , I am Sepanta 3 the next generation of Amir kaa bir University of Technology Service Robot!");
+                say_message("Hello , I am Sepanta 3 the next generation of A U T Service Robot!");
             	boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
             	logic_state = 3;
             }
