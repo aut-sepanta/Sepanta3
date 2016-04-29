@@ -152,11 +152,15 @@ bool IsCmValid = false;
 bool IsGoalReached = false;
 bool IsRecoveryState = false;
 bool IsHectorReset = false;
+bool isttsready = true;
+
+string sayMessageId;
 
 ros::ServiceClient client_makeplan;
 ros::ServiceClient client_resetcostmap;
 ros::ServiceClient client_map_save;
 ros::ServiceClient client_map_load;
+ros::ServiceClient say_service;
 
 double maxLinSpeedX = normal_max_linear_speedX;
 double maxLinSpeedY = normal_max_linear_speedY;
@@ -263,9 +267,15 @@ void publish_isrobotmove()
 void say_message(string data)
 {
     if ( say_enable == false ) return;
-    std_msgs::String _mes;
-    _mes.data = data;
-    pub_tts.publish(_mes);
+    isttsready = false;
+    sepanta_msgs::command _msg;
+   _msg.request.command = data;
+    say_service.call(_msg);
+    sayMessageId = _msg.response.result;
+    while(!isttsready)
+    {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    }
 }
 
 void send_omni(double x,double y ,double w)
@@ -446,10 +456,10 @@ void logic_thread()
            
             reset_hector_slam();
             update_hector_origin(position[0],position[1],tetha);
-            boost::this_thread::sleep(boost::posix_time::milliseconds(7000));   
+            boost::this_thread::sleep(boost::posix_time::milliseconds(2000));   
             clean_costmaps();     
             say_message("My laser recovered successfuly");
-            boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             system_state = tempSystemState;
             logic_state = tempLogicState;
 
@@ -482,11 +492,12 @@ void logic_thread()
             if( result.poses.size() == 0 )
             {
                     cout<<coutcolor_red<<"Error in PATH ! "<<coutcolor0<<endl;
-                    if(!IsRecoveryState)
-                    say_message("Error in path generation");
+                    
                     logic_state = 3;   //recovery
                     system_state = -1; //wait
                     force_stop();
+                    if(!IsRecoveryState)
+                        say_message("Error in path generation");
             }
             else
             {
@@ -503,7 +514,6 @@ void logic_thread()
         if ( logic_state == 3 )
         {
         	say_message("Let me think");
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             cout<<coutcolor_red<<" Recovery state " <<coutcolor0<<endl;
             //path error handler 
             //revocery state
@@ -536,7 +546,7 @@ void logic_thread()
             	IsRecoveryState = true;
             	say_message("reseting cost map");
             	clean_costmaps();
-                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+                boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             	logic_state = 1;
          	}
              
@@ -864,9 +874,9 @@ void PathFwr()
 
             if ( wait_flag == false)
             {
-               say_message("I am waiting for new goal");
-               cout<< coutcolor_green <<"Wait for goal ! ... "<< coutcolor0 <<endl;
                wait_flag = true;
+               cout<< coutcolor_green <<"Wait for goal ! ... "<< coutcolor0 <<endl;
+               say_message("I am waiting for new goal");
             }
           
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -1003,7 +1013,7 @@ void PathFwr()
         if ( system_state == 8)
         {
             cout<<"Finished !"<<endl;
-            say_message("Goal reached");
+            
             IsGoalReached = true;
 
             on_the_goal = false;
@@ -1011,6 +1021,7 @@ void PathFwr()
             force_stop();
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
             system_state = 0;
+            say_message("Goal reached");
         }
 
        
@@ -1114,9 +1125,6 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     
 }
 
-
-
-
 void CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
 {
    
@@ -1125,6 +1133,15 @@ void CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
        
         hector_problem_detected();
         
+    }
+}
+
+void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
+{
+    if(!isttsready && msg->data==sayMessageId)
+    {
+        // cout<<coutcolor_brown<<"text to speech is ready!"<<coutcolor0<<endl;
+        isttsready = true;
     }
 }
 
@@ -1312,6 +1329,10 @@ int main(int argc, char **argv)
  	client_resetcostmap = node_handles[10].serviceClient<std_srvs::EmptyRequest>("move_base/clear_costmaps");
  	client_map_save = node_handles[11].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/save");
     client_map_load = node_handles[12].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/load");
+
+
+    sub_handles[3] = node_handles[3].subscribe("/texttospeech/queue", 10, chatterCallback_ttsfb);
+    say_service = node_handles[11].serviceClient<sepanta_msgs::command>("texttospeech/say");
 
     ros::Rate loop_rate(20);
 

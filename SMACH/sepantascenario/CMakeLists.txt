@@ -26,6 +26,9 @@ find_package(PkgConfig REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(EIGEN REQUIRED eigen3)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
 catkin_package(
       INCLUDE_DIRS include 
       CATKIN_DEPENDS message_runtime

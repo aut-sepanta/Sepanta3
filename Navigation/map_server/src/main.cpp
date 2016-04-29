@@ -184,6 +184,7 @@ class MapServer
         parser.GetNextDocument(doc);
         ROS_INFO("5");
 #endif
+        fin.close();
         ROS_INFO("6");
         try { 
           doc["resolution"] >> res; 

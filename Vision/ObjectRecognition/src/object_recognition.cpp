@@ -142,7 +142,7 @@ void ObjectRecognition::pipeline(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cl
 
 void ObjectRecognition::loadModels(boost::shared_ptr<std::vector<Object>> objects) {
     boost::filesystem::path models_path(ros::package::getPath("object_recognition") + "/trained_objects");
-    boost::regex modelfile_pattern("^model_(\D+)\d*[.]pcd$");
+    boost::regex modelfile_pattern("^model_([a-z]+)[0-9]*[.]pcd$");
     for (boost::filesystem::recursive_directory_iterator iter(models_path), end; iter!=end; iter++) {
         boost::match_results<std::string::const_iterator> results;
         std::string file_path = iter->path().string(); 

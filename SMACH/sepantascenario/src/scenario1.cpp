@@ -62,6 +62,26 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <sepanta_msgs/Objects.h>
 #include <sepanta_msgs/Object.h>
+///////////////////////////////////////////////////////////
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/highgui/highgui_c.h"
+#include <opencv2/core/core.hpp>
+#include "opencv/cv.h"
+#include "opencv2/calib3d/calib3d.hpp"
+//********************************************** cv_bridge
+#include <cv_bridge/cv_bridge.h>
+#include <ros/ros.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+#include <sensor_msgs/Image.h>
+#include <sepanta_msgs/Objects.h>
+#include <image_transport/image_transport.h>
+
+#include <boost/thread/mutex.hpp>
+
 
 using std::string;
 using std::exception;
@@ -74,6 +94,11 @@ using namespace boost;
 using namespace ros;
 
 //=============================================================
+boost::mutex mutex1;
+cv::Rect object_rect;
+cv::Mat img_rgb;
+cv_bridge::CvImagePtr cv_ptr;
+
 
 struct object_data
 {
@@ -81,6 +106,7 @@ struct object_data
     string name;
     geometry_msgs::Pose _3dlocation;
     geometry_msgs::Point _2dlocation;
+    float score;
 
 };
 
@@ -101,10 +127,15 @@ bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
 bool isobjectready = false;
+bool isttsready = true;
+bool firstImage = true;
+
+string sayMessageId;
 
 string speech_last_command = "";
 string temp_speech_last_command = "";
 ros::ServiceClient client_navigation;
+ros::ServiceClient say_service;
 ros::ServiceClient client_object_on;
 ros::ServiceClient client_object_off;
 
@@ -126,6 +157,48 @@ void object_recognition_stop()
     
 }
 
+void objectRectangle(geometry_msgs::Point point)
+{
+
+	//cv::Mat img_rect_test = img_rgb;
+
+	if(firstImage)
+	{
+		cv::imshow("rectangle", cv_ptr->image);
+		cv::waitKey(3);
+	}
+
+	object_rect.width = 60;
+	object_rect.height = 150;
+	object_rect.x = point.x-30;
+	object_rect.y = point.y-75;
+    mutex1.lock();
+	rectangle(cv_ptr->image, object_rect, cv::Scalar(0, 255, 0), 5);
+	mutex1.unlock();
+	cv::imshow("rectangle", cv_ptr->image);
+	cv::waitKey(3);
+	firstImage = false;
+}
+
+
+void rosImageCallBack(const sensor_msgs::ImageConstPtr &msg) 
+{
+	if (msg->width != 0 )
+	{
+		
+		try 
+		{
+			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+
+		}
+		catch (cv_bridge::Exception &e)
+		{
+			ROS_ERROR("cv_bridge exception: %s", e.what());
+			return;
+		}
+	}
+
+}
 
 
 void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
@@ -142,17 +215,20 @@ void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
          d.name = msg->objects.at(i).label;
          d._3dlocation = msg->objects.at(i).pose;
          d._2dlocation = msg->objects.at(i).center_2d;
-         object_list.push_back(d);
-         if ( i != msg->objects.size() - 1)
-         out_report += d.name + " | ";
-         else
-        out_report += d.name;
+         d.score = msg->objects.at(i).validity;
+
+	     object_list.push_back(d);
+	      if ( i != msg->objects.size() - 1)
+	      out_report += d.name + " " + to_string(d.score) + " | ";
+	      else
+	     out_report += d.name + " " + to_string(d.score);
+         
 
       }
 
       cout<<coutcolor_magenta<<"GET objects :"<<" "<<out_report<<coutcolor0<<endl;
       isobjectready = true;
-      cout<<coutcolor_brown<<"isobjectready : "<<isobjectready<<out_report<<coutcolor0<<endl;
+      cout<<coutcolor_brown<<"isobjectready : "<<isobjectready<<"\t"<<out_report<<coutcolor0<<endl;
        object_recognition_stop();
       
   }
@@ -183,9 +259,15 @@ void navigation_cancel()
 void say_message(string data)
 {
     if ( say_enable == false ) return;
-    std_msgs::String _mes;
-    _mes.data = data;
-    pub_tts.publish(_mes);
+	isttsready = false;
+    sepanta_msgs::command _msg;
+   _msg.request.command = data;
+    say_service.call(_msg);
+    sayMessageId = _msg.response.result;
+    while(!isttsready)
+    {
+    	boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    }
 }
 
 
@@ -211,6 +293,15 @@ void chatterCallback_speech(const std_msgs::String::ConstPtr &msg)
   
 }
 
+void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
+{
+	if(!isttsready && msg->data==sayMessageId)
+	{
+		// cout<<coutcolor_brown<<"text to speech is ready!"<<coutcolor0<<endl;
+		isttsready = true;
+	}
+}
+
 void send_feedback_to_speech(string cmd)
 {
    std_msgs::String _msg;
@@ -218,16 +309,17 @@ void send_feedback_to_speech(string cmd)
    pub_spr.publish(_msg);
 }
 
-
-
-
 bool process_object(string name)
 {
 	//comming soon !
   for ( int i = 0 ; i < object_list.size() ; i++)
   {
-     if ( name == object_list.at(i).name)
+     if ( name == object_list.at(i).name && object_list.at(i).score >= 0.1 ) 
      {
+      // add a list to compare scores and get best object
+     	objectRectangle(object_list.at(i)._2dlocation);
+     	firstImage = true;
+     	cout<<"objectrect"<<endl;
       return true;
      }
   }
@@ -286,19 +378,15 @@ void Function_1()
       if ( Function1_result )
       {
              say_message("well done ! , i found the coca !");
-             boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
 
              say_message("i wonder, if i had my arms could i pick up the coca? Oh money ! money is the problem");
-             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
 
       }
       else
       {
              say_message("I cant find the coca.");
-              boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
 
              say_message("i want to have 2 arms like my other friends and humans !");
-             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
             
       }
 
@@ -326,19 +414,15 @@ void Function_1()
    if ( Function1_result )
       {
              say_message("well done ! , i found the coca !");
-             boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
 
              say_message("i wonder, if i had my arms could i pick up the coca? Oh money ! money is the problem");
-             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
 
       }
       else
       {
              say_message("I cant find the coca.");
-              boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
 
              say_message("i want to have 2 arms like my other friends and humans !");
-             boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
             
       }
    	   //========================================
@@ -391,7 +475,6 @@ void Function_2()
                if ( speech_last_command != "0")
                {
                  say_message(speech_last_command);
-                 boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
                  if ( question_counter < 4)
                  {
 
@@ -431,8 +514,7 @@ void Function_3()
    
 
       string cmd = "I am going to find the " + desire_object_name + " for you";
-        say_message(cmd);
-          boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+      say_message(cmd);
 
      Function_state = 1;
    }
@@ -474,10 +556,8 @@ void Function_3()
         //we find it
         string cmd = "I Find the " + desire_object_name + " for you";
         say_message(cmd);
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
-          say_message("i am going to the room center");
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
-         navigation_go_to("roomcenter");
+        say_message("i am going to the room center");
+        navigation_go_to("roomcenter");
        
           Function_state = 10;
 
@@ -487,9 +567,7 @@ void Function_3()
         //we cant find it
         string cmd = "I Could not find the " + desire_object_name + " in bedroom ";
         say_message(cmd);
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
-         say_message("it is better to check the shelf , maybe i will find it there ");
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
+        say_message("it is better to check the shelf , maybe i will find it there ");
         navigation_go_to("shelf");
       
         Function_state = 6;
@@ -523,7 +601,7 @@ void Function_3()
    else if ( Function_state == 9)
    {
       bool result = process_object(desire_object_name);
- string cmd = "";
+ 	  string cmd = "";
      if ( result )
       {
         //we find it
@@ -541,9 +619,7 @@ void Function_3()
       }
 
         say_message(cmd);
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
         say_message("i am going to the room center");
-        boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
         navigation_go_to("roomcenter");
       
         Function_state = 10;
@@ -601,7 +677,7 @@ void process_speech_command(string message)
    	   if ( message == "1" ){logic_state = 6;}else
    	   if ( message == "2" ){logic_state = 7;}else
    	   if ( message == "3" ){logic_state = 8; desire_object_name = "coffee";}else
-   	   if ( message == "4" ){logic_state = 8; desire_object_name = "spray";}else
+   	   if ( message == "4" ){logic_state = 8; desire_object_name = "drill";}else
    	   if ( message == "5" ){logic_state = 8; desire_object_name = "coca";}else
        if ( message == "6" ){logic_state = 9;}
    	 
@@ -641,7 +717,6 @@ void logic_thread()
             {
                 cout<<coutcolor_green<<"The door is opened"<<coutcolor0<<endl;
                 say_message("The door is opened!");
-                boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
                 navigation_go_to("roomcenter");
                 logic_state = 2; //wait for navigation
               
@@ -656,16 +731,13 @@ void logic_thread()
 
             if ( isrobotmove == false)
             {
-            	boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
                 say_message("Hello , I am Sepanta 3 the next generation of A U T Service Robot!");
-            	boost::this_thread::sleep(boost::posix_time::milliseconds(10000));
             	logic_state = 3;
             }
          }
          else if ( logic_state == 3)
          {
             say_message("I am listening to your order");
-            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
          	cout<<coutcolor_green<<"STATE [3] : send start to speech"<<coutcolor0<<endl;
           logic_state = 4;
          	send_feedback_to_speech("start");
@@ -705,7 +777,6 @@ void logic_thread()
          {
             cout<<coutcolor_green<<"STATE [9] : going to charger"<<coutcolor0<<endl;
             say_message("Ok! ,  My Battery is low . i am going to charge my selft");
-            boost::this_thread::sleep(boost::posix_time::milliseconds(7000));
 
             navigation_go_to("charger");
 
@@ -727,7 +798,6 @@ void logic_thread()
           {
               cout<<coutcolor_blue<<"STATE [11] : say goodbye"<<coutcolor0<<endl;
             say_message("well done ! , hope to see you again ! . goodbye.");
-            boost::this_thread::sleep(boost::posix_time::milliseconds(7000));
             break;
           }
 
@@ -745,18 +815,22 @@ int main(int argc, char **argv)
     
     boost::thread _thread_Logic(&logic_thread);
 
-    ros::NodeHandle node_handles[10];
+    ros::NodeHandle node_handles[15];
     ros::Subscriber sub_handles[10];
 
     pub_tts = node_handles[0].advertise<std_msgs::String>("/texttospeech/message", 10);
     sub_handles[0] = node_handles[1].subscribe("lowerbodycore/isdooropened", 10, chatterCallback_door);
     sub_handles[1] = node_handles[2].subscribe("/speechRec/cmd_spch", 10, chatterCallback_speech);
-    pub_spr = node_handles[3].advertise<std_msgs::String>("/speechRec/feedback_spch", 10);
-    client_navigation = node_handles[4].serviceClient<sepanta_msgs::command>("sepantamovebase/command");
-    client_object_on  = node_handles[4].serviceClient<std_srvs::Empty>("object_recognition/turn_on");
-    client_object_off = node_handles[4].serviceClient<std_srvs::Empty>("object_recognition/turn_off");
-    sub_handles[2] = node_handles[5].subscribe("lowerbodycore/isrobotmove",10,chatterCallback_move);
-    sub_handles[3] = node_handles[6].subscribe("object_recognition/objects",10,chatterCallback_object);
+    sub_handles[2] = node_handles[3].subscribe("/texttospeech/queue", 10, chatterCallback_ttsfb);
+    pub_spr = node_handles[4].advertise<std_msgs::String>("/speechRec/feedback_spch", 10);
+    client_navigation = node_handles[5].serviceClient<sepanta_msgs::command>("sepantamovebase/command");
+    client_object_on  = node_handles[6].serviceClient<std_srvs::Empty>("object_recognition/turn_on");
+    client_object_off = node_handles[7].serviceClient<std_srvs::Empty>("object_recognition/turn_off");
+    sub_handles[3] = node_handles[8].subscribe("lowerbodycore/isrobotmove",10,chatterCallback_move);
+    sub_handles[4] = node_handles[9].subscribe("object_recognition/objects",10,chatterCallback_object);
+
+    sub_handles[5] = node_handles[10].subscribe("/camera/rgb/image_color", 1, rosImageCallBack);
+    say_service = node_handles[11].serviceClient<sepanta_msgs::command>("texttospeech/say");
 
     ros::Rate loop_rate(20);
 
