@@ -274,6 +274,7 @@ void say_message(string data)
     sayMessageId = _msg.response.result;
     while(!isttsready)
     {
+        cout<<"wait for tts id : "<<sayMessageId<<endl;
         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     }
 }
@@ -632,7 +633,7 @@ void exe_slam(goal_data g)
     if ( valid_point && logic_state == 0)
     {
        
-        say_message("Got a new goal");
+        // say_message("Got a new goal");
         logic_state = 1;
     }
 
@@ -643,7 +644,7 @@ void exe_slam(goal_data g)
 void exe_cancle()
 {
      force_stop();
-     say_message("cancel requested , operation canceled!");
+     // say_message("cancel requested , operation canceled!");
      logic_state = 0;
      system_state = 0;
 }
@@ -1138,9 +1139,9 @@ void CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
 
 void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
 {
-    if(!isttsready && msg->data==sayMessageId)
+    if(!isttsready && msg->data == sayMessageId)
     {
-        // cout<<coutcolor_brown<<"text to speech is ready!"<<coutcolor0<<endl;
+        cout<<coutcolor_brown<<"text to speech is ready!"<<coutcolor0<<endl;
         isttsready = true;
     }
 }

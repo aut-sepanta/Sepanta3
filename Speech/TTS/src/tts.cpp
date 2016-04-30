@@ -79,6 +79,8 @@ void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
 
        _msg.data =  boost::lexical_cast<string>(current_play_id);
        pub_spr.publish(_msg);
+      
+       cout<<"Published"<<" "<<_msg.data<<endl;
     }
 }
 

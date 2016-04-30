@@ -1,23 +1,22 @@
 Run this in terminal
 
 1) ros
-2) core1
+2) core
 3) core2
 4) tcp
 5) gui
 6) laser
+7) kinect
+8) object
 
 =================================== go to origin for calib
-
-7) hectorcalib
+9) hectorcalib
    close ctr+c
 ===================================
 
-7) hectormain
-8) move
-9) kinect
-10) object
-11) sepantamove
-12) scenario
+10) hectormain
+11) move
+12) sepantamove
+13) scenario
 
 

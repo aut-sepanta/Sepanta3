@@ -162,7 +162,7 @@ class MapServer
       ros::NodeHandle private_nh("~");
       private_nh.param("frame_id", frame_id, std::string("map"));
       deprecated = (res != 0);
-      if (!deprecated) {
+      if (true) {
         //mapfname = fname + ".pgm";
        
         std::ifstream fin(fname.c_str());
@@ -171,21 +171,15 @@ class MapServer
           exit(-1);
         }
 
-        ROS_INFO("1");
 #ifdef HAVE_NEW_YAMLCPP
         // The document loading process changed in yaml-cpp 0.5.
-        ROS_INFO("2");
         YAML::Node doc = YAML::Load(fin);
-        ROS_INFO("3");
 #else
-        ROS_INFO("4");
         YAML::Parser parser(fin);
         YAML::Node doc;
         parser.GetNextDocument(doc);
-        ROS_INFO("5");
 #endif
         fin.close();
-        ROS_INFO("6");
         try { 
           doc["resolution"] >> res; 
         } catch (YAML::InvalidScalar) { 
@@ -253,6 +247,8 @@ class MapServer
       }
 
       ROS_INFO("Loading map from image \"%s\"", mapfname.c_str());
+      std::cout<<res<<std::endl;
+      //////////////////////////////////////////////////////////
       map_server::loadMapFromFile(&map_resp_,mapfname.c_str(),res,negate,occ_th,free_th, origin, trinary);
       map_resp_.map.info.map_load_time = ros::Time::now();
       map_resp_.map.header.frame_id = frame_id;

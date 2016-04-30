@@ -94,7 +94,7 @@ using namespace boost;
 using namespace ros;
 
 //=============================================================
-boost::mutex mutex1;
+
 cv::Rect object_rect;
 cv::Mat img_rgb;
 cv_bridge::CvImagePtr cv_ptr;
@@ -117,18 +117,22 @@ std::string coutcolor_green = "\033[0;32m";
 std::string coutcolor_blue = "\033[0;34m";
 std::string coutcolor_magenta = "\033[0;35m";
 std::string coutcolor_brown = "\033[0;33m";
+
+ 
+int vis_state = 0;
+int vis_object_index = -1;
+
 bool App_exit = false;
 ros::Publisher pub_tts;
 ros::Publisher pub_spr;
 bool say_enable = true;
 
-int logic_state = 0;
+int logic_state = 3;
 bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
 bool isobjectready = false;
 bool isttsready = true;
-bool firstImage = true;
 
 string sayMessageId;
 
@@ -157,27 +161,51 @@ void object_recognition_stop()
     
 }
 
-void objectRectangle(geometry_msgs::Point point)
+void objectRectangle()
 {
 
-	//cv::Mat img_rect_test = img_rgb;
+   geometry_msgs::Point point; 
 
-	if(firstImage)
-	{
-		cv::imshow("rectangle", cv_ptr->image);
-		cv::waitKey(3);
-	}
+    if ( vis_object_index != -1)
+    {
 
-	object_rect.width = 60;
+    point = object_list.at(vis_object_index)._2dlocation;
+    object_rect.width = 60;
 	object_rect.height = 150;
 	object_rect.x = point.x-30;
 	object_rect.y = point.y-75;
-    mutex1.lock();
-	rectangle(cv_ptr->image, object_rect, cv::Scalar(0, 255, 0), 5);
-	mutex1.unlock();
-	cv::imshow("rectangle", cv_ptr->image);
-	cv::waitKey(3);
-	firstImage = false;
+
+	if ( object_rect.x < 0 ) object_rect.x = 0;
+	if ( object_rect.y < 0) object_rect.y = 0;
+	if ( (object_rect.x + object_rect.width) > 640 ) 
+	{
+      object_rect.x = 640 - object_rect.width - 10;
+	}
+	if ( (object_rect.y + object_rect.height) > 480 ) 
+	{
+      object_rect.y = 480 - object_rect.height - 10;
+	}
+
+    }
+    else
+    {
+    object_rect.width = 10;
+	object_rect.height = 10;
+	object_rect.x = 0;
+	object_rect.y = 0;
+    }
+
+        try 
+		{
+			rectangle(cv_ptr->image, object_rect, cv::Scalar(0, 255, 0), 5);
+			cv::imshow("rectangle", cv_ptr->image);
+			cv::waitKey(3);
+		}
+		catch (cv::Exception &e)
+		{
+			ROS_ERROR("cv::exception: %s", e.what());
+		}
+	
 }
 
 
@@ -189,6 +217,7 @@ void rosImageCallBack(const sensor_msgs::ImageConstPtr &msg)
 		try 
 		{
 			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+			vis_state = 1;
 
 		}
 		catch (cv_bridge::Exception &e)
@@ -229,8 +258,7 @@ void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
       cout<<coutcolor_magenta<<"GET objects :"<<" "<<out_report<<coutcolor0<<endl;
       isobjectready = true;
       cout<<coutcolor_brown<<"isobjectready : "<<isobjectready<<"\t"<<out_report<<coutcolor0<<endl;
-       object_recognition_stop();
-      
+       
   }
  
 }
@@ -309,17 +337,19 @@ void send_feedback_to_speech(string cmd)
    pub_spr.publish(_msg);
 }
 
+
 bool process_object(string name)
 {
+  object_recognition_stop();
 	//comming soon !
   for ( int i = 0 ; i < object_list.size() ; i++)
   {
-     if ( name == object_list.at(i).name && object_list.at(i).score >= 0.1 ) 
+  	cout<<"check: "<<object_list.at(i).name<<" "<<object_list.at(i).score<<" "<<"want"<< name <<endl;
+     if ( name == object_list.at(i).name && object_list.at(i).score >= 0.05 ) 
      {
       // add a list to compare scores and get best object
-     	objectRectangle(object_list.at(i)._2dlocation);
-     	firstImage = true;
-     	cout<<"objectrect"<<endl;
+      vis_object_index = i;
+     
       return true;
      }
   }
@@ -331,8 +361,40 @@ int Function_state = 0;
 bool Function1_result = false;
 bool Function2_result = false; //dummy
 bool Function3_result = false;
+
 //Function
 //1 Go to kitchen and do object recognition for something
+
+int viz_counter = 0;
+void vis_thread ()
+{
+	int vis_counter = 0;
+	while(ros::ok())
+    {
+    	
+    	if ( vis_state == 1)
+    	{
+             objectRectangle();
+             boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+             
+             if ( vis_object_index != -1)
+             {
+             	viz_counter++;
+             	if ( viz_counter > 100)//10sec
+             	{
+             		viz_counter = 0;
+             		vis_object_index = -1;
+             	}
+             }
+         }
+         else
+         {
+               boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+         }
+
+    
+    }
+}
 void Function_1()
 {
    if ( Function_state == 0 )
@@ -379,14 +441,14 @@ void Function_1()
       {
              say_message("well done ! , i found the coca !");
 
-             say_message("i wonder, if i had my arms could i pick up the coca? Oh money ! money is the problem");
+             say_message("i wonder, if i had my arms , could i pick up the coca? Oh money ! money is the problem");
 
       }
       else
       {
              say_message("I cant find the coca.");
 
-             say_message("i want to have 2 arms like my other friends and humans !");
+             say_message("i want to have 2 arms like my other friends and humans ! Oh money ! money is the problem");
             
       }
 
@@ -422,7 +484,7 @@ void Function_1()
       {
              say_message("I cant find the coca.");
 
-             say_message("i want to have 2 arms like my other friends and humans !");
+             say_message("i want to have 2 arms like my other friends and humans ! Oh money ! money is the problem");
             
       }
    	   //========================================
@@ -441,7 +503,7 @@ void Function_2()
    if ( Function_state == 0 )
    {
      question_counter = 0;
-   	 say_message("It is my pleasure to answare your questions!");
+   	 say_message("It is my pleasure to answer your questions!");
    	 Function_state = 1;
    }
    else if ( Function_state == 1)
@@ -556,6 +618,11 @@ void Function_3()
         //we find it
         string cmd = "I Find the " + desire_object_name + " for you";
         say_message(cmd);
+
+        cmd = "i wonder, if i had my arms could i pick up the  " +  desire_object_name + " ? Oh money ! money is the problem";
+        say_message(cmd);
+        
+            
         say_message("i am going to the room center");
         navigation_go_to("roomcenter");
        
@@ -567,6 +634,7 @@ void Function_3()
         //we cant find it
         string cmd = "I Could not find the " + desire_object_name + " in bedroom ";
         say_message(cmd);
+
         say_message("it is better to check the shelf , maybe i will find it there ");
         navigation_go_to("shelf");
       
@@ -606,19 +674,20 @@ void Function_3()
       {
         //we find it
          cmd = "I Find the " + desire_object_name + " for you";
-       
-       
+         say_message(cmd);
+         cmd = "i wonder, if i had my arms could i pick up the  " +  desire_object_name + " ? Oh money ! money is the problem";
+         say_message(cmd);
       }
       else 
       {
         //we cant find it
        cmd = "I Could not find the " + desire_object_name + " on the shelf ";
-       
-        
+       say_message(cmd);
+       cmd = "i want to have 2 arms like my other friends and humans ! Oh money ! money is the problem";
+       say_message(cmd);
        
       }
 
-        say_message(cmd);
         say_message("i am going to the room center");
         navigation_go_to("roomcenter");
       
@@ -636,8 +705,6 @@ void Function_3()
    else if ( Function_state == 11 )
    {
    	   //report object recognition status
-
-
    	   //========================================
    	   say_message("operation Done");
    	   Function_state = 0;
@@ -676,10 +743,9 @@ void process_speech_command(string message)
        cout<<coutcolor_green<<"SPEECH GET PROCESS : "<<message<<coutcolor0<<endl;
    	   if ( message == "1" ){logic_state = 6;}else
    	   if ( message == "2" ){logic_state = 7;}else
-   	   if ( message == "3" ){logic_state = 8; desire_object_name = "coffee";}else
-   	   if ( message == "4" ){logic_state = 8; desire_object_name = "drill";}else
-   	   if ( message == "5" ){logic_state = 8; desire_object_name = "coca";}else
-       if ( message == "6" ){logic_state = 9;}
+   	   if ( message == "3" ){logic_state = 8; desire_object_name = "drill";}else
+   	   if ( message == "4" ){logic_state = 8; desire_object_name = "coffee";}else
+   	   if ( message == "5" ){logic_state = 9;}
    	 
    	   else
    	   {
@@ -696,7 +762,7 @@ void logic_thread()
 
     while(ros::ok() && !App_exit)
     {
-         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+         boost::this_thread::sleep(boost::posix_time::milliseconds(500));
 
          if ( logic_state == 0 )
          {
@@ -814,6 +880,7 @@ int main(int argc, char **argv)
     ROS_INFO("Sepanta Scenario Started v 1.0");
     
     boost::thread _thread_Logic(&logic_thread);
+    boost::thread _thread_Logic2(&vis_thread);
 
     ros::NodeHandle node_handles[15];
     ros::Subscriber sub_handles[10];
@@ -843,6 +910,9 @@ int main(int argc, char **argv)
 
     _thread_Logic.interrupt();
     _thread_Logic.join();
+    
+    _thread_Logic2.interrupt();
+    _thread_Logic2.join();
 
     App_exit = true;
     return 0;
