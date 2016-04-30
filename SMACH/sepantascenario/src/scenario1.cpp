@@ -127,7 +127,7 @@ ros::Publisher pub_tts;
 ros::Publisher pub_spr;
 bool say_enable = true;
 
-int logic_state = 3;
+int logic_state = 0;
 bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
