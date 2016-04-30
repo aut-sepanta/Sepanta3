@@ -98,7 +98,7 @@ using namespace ros;
 cv::Rect object_rect;
 cv::Mat img_rgb;
 cv_bridge::CvImagePtr cv_ptr;
-
+int kill_state = 0;
 
 struct object_data
 {
@@ -145,11 +145,19 @@ ros::ServiceClient client_object_off;
 
 string desire_object_name = "";
 
+bool first_time = false;
 void object_recognition_start()
 {
    isobjectready = false;
+   object_list.clear();
+
+
+   if ( first_time == false )
+   {
+    first_time = true;
     std_srvs::Empty _srv;
     client_object_on.call(_srv);
+   }
    
 
 }
@@ -247,6 +255,8 @@ void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
          d.score = msg->objects.at(i).validity;
 
 	     object_list.push_back(d);
+
+
 	      if ( i != msg->objects.size() - 1)
 	      out_report += d.name + " " + to_string(d.score) + " | ";
 	      else
@@ -255,10 +265,14 @@ void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
 
       }
 
-      cout<<coutcolor_magenta<<"GET objects :"<<" "<<out_report<<coutcolor0<<endl;
+      //cout<<coutcolor_magenta<<"GET objects :"<<" "<<out_report<<coutcolor0<<endl;
       isobjectready = true;
-      cout<<coutcolor_brown<<"isobjectready : "<<isobjectready<<"\t"<<out_report<<coutcolor0<<endl;
+      cout<<coutcolor_brown<<"isobjectready & THE SIZE : "<<isobjectready<<" "<< object_list.size() <<"\t"<<out_report<<coutcolor0<<endl;
        
+  }
+  else
+  {
+  	 cout<<coutcolor_red<<"Ignore Object"<<coutcolor0<<endl;
   }
  
 }
@@ -340,21 +354,28 @@ void send_feedback_to_speech(string cmd)
 
 bool process_object(string name)
 {
-  object_recognition_stop();
+  cout<<"in process_object"<<endl;
+ 
+
+  kill_state = 1;
+  bool result = false;
+
 	//comming soon !
   for ( int i = 0 ; i < object_list.size() ; i++)
   {
-  	cout<<"check: "<<object_list.at(i).name<<" "<<object_list.at(i).score<<" "<<"want"<< name <<endl;
+  	 cout<<"check: "<<object_list.at(i).name<<" "<<object_list.at(i).score<<" "<<" want : "<< name <<endl;
      if ( name == object_list.at(i).name && object_list.at(i).score >= 0.05 ) 
      {
       // add a list to compare scores and get best object
       vis_object_index = i;
      
-      return true;
+      result = true;
+      break;
      }
   }
 
-  return false;
+
+  return result;
 }
 
 int Function_state = 0;
@@ -421,7 +442,7 @@ void Function_1()
    {
    	    //call for object recognition
       Function1_result = false;
-       object_recognition_start();
+      kill_state = 2;
         cout<<coutcolor_blue<<"Function [1] STATE [3] : Send Start for object"<<coutcolor0<<endl;
        Function_state = 4;
    }
@@ -508,6 +529,7 @@ void Function_2()
    }
    else if ( Function_state == 1)
    {
+   	  say_message("ask");
       send_feedback_to_speech("qstart");
       Function_state = 2;
    }
@@ -519,7 +541,9 @@ void Function_2()
           if ( speech_last_command == "qready")
           {
             //say_message("ask");
+          
             Function_state = 3;
+
           }
           else
           {
@@ -540,7 +564,7 @@ void Function_2()
                  if ( question_counter < 4)
                  {
 
-                 say_message("Next");
+                 //say_message("Next");
                 
                  question_counter++;
                  Function_state = 1;
@@ -597,7 +621,7 @@ void Function_3()
    else if ( Function_state == 3)
    {
      Function3_result = false;
-   	   object_recognition_start();
+   	  kill_state = 2;
    	   Function_state = 4;
    }
    else if ( Function_state == 4)
@@ -654,7 +678,7 @@ void Function_3()
    {
       Function3_result = false;
 
-   	   object_recognition_start();
+   	   kill_state = 2;
    	   Function_state = 8;
    }
    else if ( Function_state == 8)
@@ -743,7 +767,7 @@ void process_speech_command(string message)
        cout<<coutcolor_green<<"SPEECH GET PROCESS : "<<message<<coutcolor0<<endl;
    	   if ( message == "1" ){logic_state = 6;}else
    	   if ( message == "2" ){logic_state = 7;}else
-   	   if ( message == "3" ){logic_state = 8; desire_object_name = "drill";}else
+   	   if ( message == "3" ){logic_state = 8; desire_object_name = "soda";}else
    	   if ( message == "4" ){logic_state = 8; desire_object_name = "coffee";}else
    	   if ( message == "5" ){logic_state = 9;}
    	 
@@ -753,6 +777,29 @@ void process_speech_command(string message)
        logic_state = 3;
    	   }
    }
+}
+
+void object_kill()
+{
+    while(ros::ok())
+    {
+         if ( kill_state == 1 )
+         {
+         	 cout<<"send kill to object [1]"<<endl;
+         	  //object_recognition_stop();
+         	  cout<<"send kill to object [2]"<<endl;
+         	  kill_state = 0;
+         }
+         else if ( kill_state == 2)
+         {
+         	cout<<"send start to object [1]"<<endl;
+         	object_recognition_start();
+         	cout<<"send start to object [2]"<<endl;
+         	kill_state = 0;
+         }
+         boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
+    }
 }
 
 void logic_thread()
@@ -881,6 +928,7 @@ int main(int argc, char **argv)
     
     boost::thread _thread_Logic(&logic_thread);
     boost::thread _thread_Logic2(&vis_thread);
+    boost::thread _thread_Logic3(&object_kill);
 
     ros::NodeHandle node_handles[15];
     ros::Subscriber sub_handles[10];
@@ -913,6 +961,9 @@ int main(int argc, char **argv)
     
     _thread_Logic2.interrupt();
     _thread_Logic2.join();
+
+    _thread_Logic3.interrupt();
+    _thread_Logic3.join();
 
     App_exit = true;
     return 0;

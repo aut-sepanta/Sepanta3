@@ -72,6 +72,9 @@ void say_natural(string message)
 
 void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
 { 
+
+    cout<<"GET FROM TTS"<<" "<<msg->data<<endl;
+
     if(tts_state == 1 && msg->data=="stop")
     {
        tts_state = 0;
