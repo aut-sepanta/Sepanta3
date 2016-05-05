@@ -91,6 +91,7 @@ add_service_files(
 add_action_files(
     FILES 
 
+    LookForObjects.action
     avoidThat.action
     avoidthataction.action
     grip.action

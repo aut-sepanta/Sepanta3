@@ -462,14 +462,14 @@ void Function_1()
       {
              say_message("well done ! , i found the coca !");
 
-             say_message("i wonder, if i had my arms , could i pick up the coca? Oh money ! money is the problem");
+             say_message("i wonder, if i had my arms , could i pick up the coca? Money does not guarantee hapiness. But no money, no arms! ");
 
       }
       else
       {
              say_message("I cant find the coca.");
 
-             say_message("i want to have 2 arms like my other friends and humans ! Oh money ! money is the problem");
+             say_message("it does not matter. I could not grab it even if I found it. Money does not guarantee hapiness. But no money, no arms! ");
             
       }
 
@@ -498,14 +498,14 @@ void Function_1()
       {
              say_message("well done ! , i found the coca !");
 
-             say_message("i wonder, if i had my arms could i pick up the coca? Oh money ! money is the problem");
+             say_message("But if you expect me to bring it for you, prepare a set of arms for me!");
 
       }
       else
       {
              say_message("I cant find the coca.");
 
-             say_message("i want to have 2 arms like my other friends and humans ! Oh money ! money is the problem");
+             say_message("it does not matter. I could not grab it even if I found it.");
             
       }
    	   //========================================
@@ -699,7 +699,7 @@ void Function_3()
         //we find it
          cmd = "I Find the " + desire_object_name + " for you";
          say_message(cmd);
-         cmd = "i wonder, if i had my arms could i pick up the  " +  desire_object_name + " ? Oh money ! money is the problem";
+         cmd = "I have the  " +  desire_object_name + ". But wait! How on earth can I pick it up when I have no arms!?";
          say_message(cmd);
       }
       else 

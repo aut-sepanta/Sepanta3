@@ -13,7 +13,6 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
 #include <pcl/common/centroid.h>
-#include <pcl/visualization/pcl_visualizer.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/Image.h>
@@ -30,9 +29,8 @@
 ObjectRecognition::ObjectRecognition(ros::NodeHandle node_handle) :
     node_handle(node_handle),
     point_cloud_subscriber(node_handle, "/camera/depth_registered/points", 1),
-    rgb_image_subscriber(node_handle, "/camera/rgb/image_color", 1),
     camera_info_subscriber(node_handle, "/camera/rgb/camera_info", 1),
-    rgbd_image_synchronizer(RgbdImagePolicy(10), rgb_image_subscriber, point_cloud_subscriber, camera_info_subscriber)
+    rgbd_image_synchronizer(RgbdImagePolicy(10), point_cloud_subscriber, camera_info_subscriber)
 {
 
     boost::shared_ptr<std::vector<Object>> trained_objects(new std::vector<Object>);
@@ -54,33 +52,14 @@ bool ObjectRecognition::turnOff(std_srvs::Empty::Request &req, std_srvs::Empty::
 
 bool ObjectRecognition::turnOn(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) {
     point_cloud_subscriber.subscribe(node_handle, "/camera/depth_registered/points", 1);
-    rgb_image_subscriber.subscribe(node_handle, "/camera/rgb/image_color", 1);
     camera_info_subscriber.subscribe(node_handle, "/camera/rgb/camera_info", 1);
-    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognition::rgbdImageCallback, this, _1, _2, _3));
+//    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognition::rgbdImageCallback, this, _1, _2));
     return true;
 }
 
-void ObjectRecognition::rgbdImageCallback(const sensor_msgs::ImageConstPtr& input_image, const sensor_msgs::PointCloud2ConstPtr& input_cloud,
+void ObjectRecognition::rgbdImageCallback(const sensor_msgs::PointCloud2ConstPtr& input_cloud,
                                           const sensor_msgs::CameraInfoConstPtr& camera_info) {
     camera_model.fromCameraInfo(camera_info);
-
-    if (input_image->width == 0 || input_cloud->width == 0) {
-        ROS_WARN("image or point cloud is empty");
-        return;
-    }
-
-    cv::Mat rgb_image;
-    cv_bridge::CvImagePtr cv_bridge_image;
-    try {
-        cv_bridge_image = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
-        if (cv_bridge_image->image.size().width > 0) 
-        {
-            cv_bridge_image->image.copyTo(rgb_image);
-        }
-    } catch (cv_bridge::Exception &e) {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
     pcl::fromROSMsg(*input_cloud, *pcl_cloud);

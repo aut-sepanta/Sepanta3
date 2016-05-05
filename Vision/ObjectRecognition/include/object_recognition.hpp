@@ -17,19 +17,19 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <object_pipeline.hpp>
 
-typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2, sensor_msgs::CameraInfo> RgbdImagePolicy;
+typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::CameraInfo> RgbdImagePolicy;
 
 class ObjectRecognition {
 public:
     ObjectRecognition(ros::NodeHandle node_handle);
 
-    void rgbdImageCallback(const sensor_msgs::ImageConstPtr& input_image, const sensor_msgs::PointCloud2ConstPtr& input_cloud, const sensor_msgs::CameraInfoConstPtr& camera_info);
+    void rgbdImageCallback(const sensor_msgs::PointCloud2ConstPtr& input_cloud, const sensor_msgs::CameraInfoConstPtr& camera_info);
     void pipeline(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud);
     void loadModels(boost::shared_ptr<std::vector<Object>> objects);
     void publish(boost::shared_ptr<std::vector<Object>> objects);
     bool turnOff(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
     bool turnOn(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp);
-private:
+protected:
     boost::shared_ptr<ObjectPipeline> object_pipeline;
     ros::Publisher objects_publisher;
     ros::ServiceServer turnOffService;
