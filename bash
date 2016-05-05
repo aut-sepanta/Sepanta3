@@ -1,18 +1,23 @@
-alias kinect="roslaunch freenect_launch freenect.launch depth_registration:=true"
-alias cm="catkin_make"
-alias nkhVPN="sudo sshuttle -r sleptstar@ssh.alwaysdata.com 0/0"
-alias qt="sh /opt/qtcreator-2.7.2/bin/qtcreator.sh"
-alias st="rosrun icp_package tracker"
-alias kt="killall tracker"
-alias bash="sudo gedit .bashrc"
-alias core="roslaunch lowerbodycore core.launch"
-alias laser="roslaunch lowerbodycore laser.launch"
-alias ros="roscore"
-alias hectorrec="roslaunch managment hector_slamrec.launch"
-alias hectormain="roslaunch managment hector_slam.launch"
-alias move="roslaunch managment move_base.launch"
-alias sepantamove="rosrun sepantamovebase sepantamovebase"
-alias tcp="rosrun tcpip core_tcp"
-alias gui="mono ~/catkin_ws/src/Sepanta3.1/GUI/sepanta_gui/main/main/obj/Debug/main.exe"
-alias sim="roslaunch youbot_gazebo_robot youbot_base_only.launch"
+alias cw='cd ~/catkin_ws/'
+alias cmd='catkin_make'
+alias ros='roscore'
+alias qt='sudo qtcreator'
+alias bash='sudo gedit .bashrc'
+alias laser='roslaunch lowerbodycore laser.launch'
+alias hectorrec='roslaunch managment hector_slamrec.launch'
+alias core='roslaunch lowerbodycore core.launch'
+alias core2='roslaunch lowerbodycore core2.launch'
+alias hectormain='roslaunch managment hector_slam.launch'
+alias hectorcalib='roslaunch managment hector_calib.launch'
+alias move='roslaunch managment move_base.launch'
+alias sepantamove='rosrun sepantamovebase sepantamovebase'
+alias kinect='roslaunch freenect_launch freenect.launch'
+alias tcp='rosrun tcpip core_tcp'
+alias gui='mono catkin_ws/src/Sepanta3/GUI/sepanta_gui/main/main/obj/Debug/main.exe'
+alias sim='roslaunch youbot_gazebo_robot youbot_base_only.launch'
+alias objecttrain='rosrun object_recognition train_objects'
+alias object='rosrun object_recognition object_recognition'
+alias cmr='catkin_make -DCMAKE_BUILD_TYPE=Release'
+alias scenario='rosrun sepantascenario scenario1'
+alias objviz='rosrun object_recognition visualize_objects'
 
