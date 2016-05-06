@@ -4,11 +4,9 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/common/centroid.h>
 
-ObjectRecognitionAction::ObjectRecognitionAction(ros::NodeHandle nh, std::string name) : node_handle(nh),
+ObjectRecognitionAction::ObjectRecognitionAction(ros::NodeHandle nh, std::string name) : ObjectRecognition(nh),
     action_name_(name),
-    point_cloud_subscriber(node_handle, "/camera/depth_registered/points", 1),
-    camera_info_subscriber(node_handle, "/camera/rgb/camera_info", 1),
-    rgbd_image_synchronizer(RgbdImagePolicy(10), point_cloud_subscriber, camera_info_subscriber)
+    action_server_(nh, name, false)
 {
     boost::shared_ptr<std::vector<Object>> trained_objects(new std::vector<Object>);
     this->loadModels(trained_objects);
