@@ -13,6 +13,10 @@ ObjectRecognitionAction::ObjectRecognitionAction(ros::NodeHandle nh, std::string
     this->object_pipeline = boost::shared_ptr<ObjectPipeline>(new ObjectPipeline(trained_objects));
     this->objects_publisher = node_handle.advertise<sepanta_msgs::Objects>("/object_recognition/objects", 5);
 
+    point_cloud_subscriber.unsubscribe();
+    camera_info_subscriber.unsubscribe();
+    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognitionAction::rgbdImageCallback, this, _1, _2));
+
     action_server_.registerGoalCallback(boost::bind(&ObjectRecognitionAction::goalCallback, this));
     action_server_.registerPreemptCallback(boost::bind(&ObjectRecognitionAction::preemptCallback, this));
     action_server_.start();
@@ -85,4 +89,7 @@ void ObjectRecognitionAction::rgbdImageCallback(const sensor_msgs::PointCloud2Co
         result_.objects.push_back(object_msg);
     }
     action_server_.setSucceeded(result_);
+
+    point_cloud_subscriber.unsubscribe();
+    camera_info_subscriber.unsubscribe();
 }

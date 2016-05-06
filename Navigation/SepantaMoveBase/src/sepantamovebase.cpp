@@ -1108,7 +1108,7 @@ void GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
     amclOrientation[1] = msg->pose.pose.orientation.y;
     amclOrientation[2] = msg->pose.pose.orientation.z;
     amclOrientation[3] = msg->pose.pose.orientation.w;
-    if(abs(amclCovariance[0]) < 0.02)
+    if(abs(amclCovariance[0]) < 0.02 && amclCovariance[0] != 0 )
         IsamclReady = true;
     else
     	IsamclReady = false;

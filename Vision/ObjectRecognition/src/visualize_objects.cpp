@@ -23,28 +23,30 @@ void objectsCallback(const sepanta_msgs::ObjectsConstPtr& objs) {
 }
 
 void rgbImageCallback(const sensor_msgs::ImageConstPtr& input_image) {
-    if (first_run) return;
+   
 
     cv_bridge::CvImagePtr cv_ptr;
     cv_ptr = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
 
     geometry_msgs::Point position;
     cv::Scalar color;
-    mutex.lock();
-    for(size_t i=0; i<objects->objects.size(); i++) {
-        position = objects->objects[i].center_2d;
+    if (!first_run) {
+        mutex.lock();
+        for(size_t i=0; i<objects->objects.size(); i++) {
+            position = objects->objects[i].center_2d;
 
-        if (objects->objects[i].status) {
-            color = CV_RGB(255, 0, 0);
-        } else {
-            color = CV_RGB(0, 255, 0);
+            if (objects->objects[i].status) {
+                color = CV_RGB(255, 0, 0);
+            } else {
+                color = CV_RGB(0, 255, 0);
+            }
+
+            ROS_INFO_STREAM(cv::Point(int(position.x), int(position.y)));
+            cv::circle(cv_ptr->image, cv::Point(int(position.x), int(position.y)), 3, color);
+            cv::putText(cv_ptr->image, objects->objects[i].label, cv::Point(int(position.x+10), int(position.y+10)), cv::FONT_HERSHEY_PLAIN, 3, color);
         }
-
-        ROS_INFO_STREAM(cv::Point(int(position.x), int(position.y)));
-        cv::circle(cv_ptr->image, cv::Point(int(position.x), int(position.y)), 3, color);
-        cv::putText(cv_ptr->image, objects->objects[i].label, cv::Point(int(position.x+10), int(position.y+10)), cv::FONT_HERSHEY_PLAIN, 1, color);
+        mutex.unlock();
     }
-    mutex.unlock();
     cv::imshow("Objects Visualizer", cv_ptr->image);
     cv::waitKey(3);
 }
