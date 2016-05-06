@@ -82,9 +82,6 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include <actionlib/client/simple_action_client.h>
-#include <actionlib/client/terminal_state.h>
-#include <sepanta_msgs/LookForObjectsAction.h>
 
 using std::string;
 using std::exception;
@@ -97,6 +94,11 @@ using namespace boost;
 using namespace ros;
 
 //=============================================================
+
+cv::Rect object_rect;
+cv::Mat img_rgb;
+cv_bridge::CvImagePtr cv_ptr;
+int kill_state = 0;
 
 struct object_data
 {
@@ -116,22 +118,20 @@ std::string coutcolor_blue = "\033[0;34m";
 std::string coutcolor_magenta = "\033[0;35m";
 std::string coutcolor_brown = "\033[0;33m";
 
-int Function_state = 0;
-bool Function1_result = false;
-bool Function2_result = false; //dummy
-bool Function3_result = false;
-int question_counter = 0;
+ 
+int vis_state = 0;
+int vis_object_index = -1;
 
 bool App_exit = false;
 ros::Publisher pub_tts;
 ros::Publisher pub_spr;
-ros::Publisher pub_currnet_object;
 bool say_enable = true;
 
-int logic_state = 3;
+int logic_state = 0;
 bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
+bool isobjectready = false;
 bool isttsready = true;
 
 string sayMessageId;
@@ -140,17 +140,147 @@ string speech_last_command = "";
 string temp_speech_last_command = "";
 ros::ServiceClient client_navigation;
 ros::ServiceClient say_service;
+ros::ServiceClient client_object_on;
+ros::ServiceClient client_object_off;
 
 string desire_object_name = "";
 
-void publish_current_object(sepanta_msgs::Object desire)
+bool first_time = false;
+void object_recognition_start()
 {
-   pub_currnet_object.publish(desire);
+   isobjectready = false;
+   object_list.clear();
+
+
+   if ( first_time == false )
+   {
+    first_time = true;
+    std_srvs::Empty _srv;
+    client_object_on.call(_srv);
+   }
+   
+
+}
+
+void object_recognition_stop()
+{
+    std_srvs::Empty _srv;
+    client_object_off.call(_srv);
+    
+}
+
+void objectRectangle()
+{
+
+   geometry_msgs::Point point; 
+
+    if ( vis_object_index != -1)
+    {
+
+    point = object_list.at(vis_object_index)._2dlocation;
+    object_rect.width = 60;
+	object_rect.height = 150;
+	object_rect.x = point.x-30;
+	object_rect.y = point.y-75;
+
+	if ( object_rect.x < 0 ) object_rect.x = 0;
+	if ( object_rect.y < 0) object_rect.y = 0;
+	if ( (object_rect.x + object_rect.width) > 640 ) 
+	{
+      object_rect.x = 640 - object_rect.width - 10;
+	}
+	if ( (object_rect.y + object_rect.height) > 480 ) 
+	{
+      object_rect.y = 480 - object_rect.height - 10;
+	}
+
+    }
+    else
+    {
+    object_rect.width = 10;
+	object_rect.height = 10;
+	object_rect.x = 0;
+	object_rect.y = 0;
+    }
+
+        try 
+		{
+			rectangle(cv_ptr->image, object_rect, cv::Scalar(0, 255, 0), 5);
+			cv::imshow("rectangle", cv_ptr->image);
+			cv::waitKey(3);
+		}
+		catch (cv::Exception &e)
+		{
+			ROS_ERROR("cv::exception: %s", e.what());
+		}
+	
+}
+
+
+void rosImageCallBack(const sensor_msgs::ImageConstPtr &msg) 
+{
+	if (msg->width != 0 )
+	{
+		
+		try 
+		{
+			cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+			vis_state = 1;
+
+		}
+		catch (cv_bridge::Exception &e)
+		{
+			ROS_ERROR("cv_bridge exception: %s", e.what());
+			return;
+		}
+	}
+
+}
+
+
+void chatterCallback_object(const sepanta_msgs::Objects::ConstPtr &msg)
+{
+  
+   if ( isobjectready == false)
+   {
+    
+     string out_report = "";
+     object_list.clear();
+     for ( int i = 0 ; i < msg->objects.size() ; i++)
+      {
+         object_data d;
+         d.name = msg->objects.at(i).label;
+         d._3dlocation = msg->objects.at(i).pose;
+         d._2dlocation = msg->objects.at(i).center_2d;
+         d.score = msg->objects.at(i).validity;
+
+	     object_list.push_back(d);
+
+
+	      if ( i != msg->objects.size() - 1)
+	      out_report += d.name + " " + to_string(d.score) + " | ";
+	      else
+	     out_report += d.name + " " + to_string(d.score);
+         
+
+      }
+
+      //cout<<coutcolor_magenta<<"GET objects :"<<" "<<out_report<<coutcolor0<<endl;
+      isobjectready = true;
+      cout<<coutcolor_brown<<"isobjectready & THE SIZE : "<<isobjectready<<" "<< object_list.size() <<"\t"<<out_report<<coutcolor0<<endl;
+       
+  }
+  else
+  {
+  	 cout<<coutcolor_red<<"Ignore Object"<<coutcolor0<<endl;
+  }
+ 
 }
 
 void navigation_go_to(string location)
 {
    if ( isrobotmove ) return;
+
 
    sepanta_msgs::command _msg;
    _msg.request.id = location;
@@ -182,6 +312,7 @@ void say_message(string data)
     }
 }
 
+
 void chatterCallback_door(const std_msgs::Bool::ConstPtr &msg)
 {
    isdooropened = msg->data;
@@ -200,7 +331,8 @@ void chatterCallback_speech(const std_msgs::String::ConstPtr &msg)
       temp_speech_last_command = msg->data;
       speech_last_command = temp_speech_last_command;
       isspeechready = true;
-   }  
+   }
+  
 }
 
 void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
@@ -219,66 +351,71 @@ void send_feedback_to_speech(string cmd)
    pub_spr.publish(_msg);
 }
 
+
 bool process_object(string name)
 {
-  ROS_INFO("Send Goal to Action Server");
+  cout<<"in process_object"<<endl;
+ 
+
+  kill_state = 1;
   bool result = false;
 
-  actionlib::SimpleActionClient<sepanta_msgs::LookForObjectsAction> ac("look_for_objects", true);
-
-  ROS_INFO("Waiting for object recognition action server to start.");
-  // wait for the action server to start
-  ac.waitForServer(); //will wait for infinite time
-
-  sepanta_msgs::LookForObjectsGoal goal;
-  ac.sendGoal(goal);
-
-  bool finished_before_timeout = ac.waitForResult(ros::Duration(30.0));
-
-  if (finished_before_timeout)
+	//comming soon !
+  for ( int i = 0 ; i < object_list.size() ; i++)
   {
-    actionlib::SimpleClientGoalState state = ac.getState();
-    ROS_INFO("finished: %s",state.toString().c_str());
-
-    sepanta_msgs::LookForObjectsResult::ConstPtr msg = ac.getResult();
-   
-    string out_report = "";
-    object_list.clear();
-  
-     for ( int i = 0 ; i < msg->objects.size() ; i++)
+  	 cout<<"check: "<<object_list.at(i).name<<" "<<object_list.at(i).score<<" "<<" want : "<< name <<endl;
+     if ( name == object_list.at(i).name && object_list.at(i).score >= 0.05 ) 
      {
-         object_data d;
-         d.name = msg->objects.at(i).label;
-         d._3dlocation = msg->objects.at(i).pose;
-         d._2dlocation = msg->objects.at(i).center_2d;
-         d.score = msg->objects.at(i).validity;
-	     object_list.push_back(d);
-
-	     if ( i != msg->objects.size() - 1)
-	     out_report += d.name + " " + to_string(d.score) + " | ";
-	     else
-	     out_report += d.name + " " + to_string(d.score);
-
-         cout<<"check: "<<d.name<<" "<<d.score<<" "<<" target: "<< name <<endl;
-	     if ( name == d.name && d.score >= 0.05 && result == false) 
-	     {
-	      result = true;
-	      publish_current_object(msg->objects.at(i));
-	      //break;
-	     }
-
+      // add a list to compare scores and get best object
+      vis_object_index = i;
+     
+      result = true;
+      break;
      }
-
-      cout<<coutcolor_brown<<"OBJECTS : "<<object_list.size() <<"\t"<<out_report<<coutcolor0<<endl;
-       
-
   }
-  else
-  ROS_INFO("Object recognition finish before the time out.");
- 
+
+
   return result;
 }
 
+int Function_state = 0;
+bool Function1_result = false;
+bool Function2_result = false; //dummy
+bool Function3_result = false;
+
+//Function
+//1 Go to kitchen and do object recognition for something
+
+int viz_counter = 0;
+void vis_thread ()
+{
+	int vis_counter = 0;
+	while(ros::ok())
+    {
+    	
+    	if ( vis_state == 1)
+    	{
+             objectRectangle();
+             boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+             
+             if ( vis_object_index != -1)
+             {
+             	viz_counter++;
+             	if ( viz_counter > 100)//10sec
+             	{
+             		viz_counter = 0;
+             		vis_object_index = -1;
+             	}
+             }
+         }
+         else
+         {
+               boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+         }
+
+    
+    }
+}
 void Function_1()
 {
    if ( Function_state == 0 )
@@ -303,27 +440,37 @@ void Function_1()
    }
    else if ( Function_state == 3)
    {
-       Function1_result = false;
-       cout<<coutcolor_blue<<"Function [1] STATE [3] : Send Start for object"<<coutcolor0<<endl;
+   	    //call for object recognition
+      Function1_result = false;
+      kill_state = 2;
+        cout<<coutcolor_blue<<"Function [1] STATE [3] : Send Start for object"<<coutcolor0<<endl;
        Function_state = 4;
    }
    else if ( Function_state == 4)
    {
    	   cout<<coutcolor_blue<<"Function [1] STATE [4] : wait for object recognition"<<coutcolor0<<endl;
-   	   Function_state = 5;
+
+   	   if ( isobjectready )
+   	   {
+   	   	  Function_state = 5;
+   	   }
    }
    else if ( Function_state == 5)
    {
-      Function1_result = process_object("coca");
+       Function1_result = process_object("coca");
       if ( Function1_result )
       {
              say_message("well done ! , i found the coca !");
+
              say_message("i wonder, if i had my arms , could i pick up the coca? Money does not guarantee hapiness. But no money, no arms! ");
+
       }
       else
       {
              say_message("I cant find the coca.");
+
              say_message("it does not matter. I could not grab it even if I found it. Money does not guarantee hapiness. But no money, no arms! ");
+            
       }
 
 
@@ -346,16 +493,20 @@ void Function_1()
    }
    else if ( Function_state == 8 )
    {
-   	   
-      if ( Function1_result )
+   	   //report object recognition status
+   if ( Function1_result )
       {
-           say_message("well done ! , i found the coca !");
-           say_message("But if you expect me to bring it for you, prepare a set of arms for me!");
+             say_message("well done ! , i found the coca !");
+
+             say_message("But if you expect me to bring it for you, prepare a set of arms for me!");
+
       }
       else
       {
-           say_message("I cant find the coca.");
-           say_message("it does not matter. I could not grab it even if I found it.");
+             say_message("I cant find the coca.");
+
+             say_message("it does not matter. I could not grab it even if I found it.");
+            
       }
    	   //========================================
    	   say_message("operation Done");
@@ -365,6 +516,8 @@ void Function_1()
    }
 }
 
+int question_counter = 0;
+//3 Do Speech Test (50 Questions)
 void Function_2()
 {
    cout<<"Header :"<<Function_state<<endl;
@@ -439,6 +592,7 @@ void Function_2()
    }
 }
 
+//3 Find a Object
 void Function_3()
 {
    if ( Function_state == 0 )
@@ -466,13 +620,18 @@ void Function_3()
    }
    else if ( Function_state == 3)
    {
-       Function3_result = false;
+     Function3_result = false;
+   	  kill_state = 2;
    	   Function_state = 4;
    }
    else if ( Function_state == 4)
    {
        cout<<coutcolor_blue<<"Function [3] STATE [4] : wait for object recognition"<<coutcolor0<<endl;
-   	   Function_state = 5;
+
+   	   if ( isobjectready )
+   	   {
+   	   	  Function_state = 5;
+   	   }
    }
    else if ( Function_state == 5)
    {
@@ -518,12 +677,18 @@ void Function_3()
    else if ( Function_state == 7)
    {
       Function3_result = false;
-   	  Function_state = 8;
+
+   	   kill_state = 2;
+   	   Function_state = 8;
    }
    else if ( Function_state == 8)
    {
        cout<<coutcolor_blue<<"Function [3] STATE [8] : wait for object recognition"<<coutcolor0<<endl;
-   	   Function_state = 9;
+
+   	   if ( isobjectready )
+   	   {
+   	   	  Function_state = 9;
+   	   }
    }
    else if ( Function_state == 9)
    {
@@ -569,6 +734,8 @@ void Function_3()
    	   Function_state = 0;
    	   logic_state = 3;
    }
+
+
 } 
 
 void process_speech_command(string message)
@@ -612,6 +779,29 @@ void process_speech_command(string message)
    }
 }
 
+void object_kill()
+{
+    while(ros::ok())
+    {
+         if ( kill_state == 1 )
+         {
+         	 cout<<"send kill to object [1]"<<endl;
+         	  //object_recognition_stop();
+         	  cout<<"send kill to object [2]"<<endl;
+         	  kill_state = 0;
+         }
+         else if ( kill_state == 2)
+         {
+         	cout<<"send start to object [1]"<<endl;
+         	object_recognition_start();
+         	cout<<"send start to object [2]"<<endl;
+         	kill_state = 0;
+         }
+         boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
+    }
+}
+
 void logic_thread()
 {
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -625,6 +815,7 @@ void logic_thread()
          {
            cout<<coutcolor_green<<"idle"<<coutcolor0<<endl;
            isspeechready = false;
+           isobjectready = false;
            logic_state = 1;
          }
          else
@@ -733,10 +924,12 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "scenario1");
     ros::Time::init();
 
-    ROS_INFO("Sepanta Scenario Started v 1.2");
+    ROS_INFO("Sepanta Scenario Started v 1.0");
     
     boost::thread _thread_Logic(&logic_thread);
-   
+    boost::thread _thread_Logic2(&vis_thread);
+    boost::thread _thread_Logic3(&object_kill);
+
     ros::NodeHandle node_handles[15];
     ros::Subscriber sub_handles[10];
 
@@ -745,13 +938,14 @@ int main(int argc, char **argv)
     sub_handles[1] = node_handles[2].subscribe("/speechRec/cmd_spch", 10, chatterCallback_speech);
     sub_handles[2] = node_handles[3].subscribe("/texttospeech/queue", 10, chatterCallback_ttsfb);
     pub_spr = node_handles[4].advertise<std_msgs::String>("/speechRec/feedback_spch", 10);
-    pub_currnet_object = node_handles[5].advertise<sepanta_msgs::Object>("/behavior/current_object", 10);
     client_navigation = node_handles[5].serviceClient<sepanta_msgs::command>("sepantamovebase/command");
-  
+    client_object_on  = node_handles[6].serviceClient<std_srvs::Empty>("object_recognition/turn_on");
+    client_object_off = node_handles[7].serviceClient<std_srvs::Empty>("object_recognition/turn_off");
     sub_handles[3] = node_handles[8].subscribe("lowerbodycore/isrobotmove",10,chatterCallback_move);
+    sub_handles[4] = node_handles[9].subscribe("object_recognition/objects",10,chatterCallback_object);
+
+    sub_handles[5] = node_handles[10].subscribe("/camera/rgb/image_color", 1, rosImageCallBack);
     say_service = node_handles[11].serviceClient<sepanta_msgs::command>("texttospeech/say");
-
-
 
     ros::Rate loop_rate(20);
 
@@ -765,7 +959,12 @@ int main(int argc, char **argv)
     _thread_Logic.interrupt();
     _thread_Logic.join();
     
- 
+    _thread_Logic2.interrupt();
+    _thread_Logic2.join();
+
+    _thread_Logic3.interrupt();
+    _thread_Logic3.join();
+
     App_exit = true;
     return 0;
 }

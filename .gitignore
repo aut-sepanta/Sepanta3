@@ -37,6 +37,7 @@ qtcreator-*
 /planning/cfg
 /planning/docs
 /planning/src
+/Managment/logs
 
 *~
 *.swp

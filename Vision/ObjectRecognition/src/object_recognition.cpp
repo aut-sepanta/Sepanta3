@@ -40,7 +40,7 @@ ObjectRecognition::ObjectRecognition(ros::NodeHandle node_handle) :
     this->objects_publisher = node_handle.advertise<sepanta_msgs::Objects>("/object_recognition/objects", 5);
     this->turnOnService = node_handle.advertiseService("/object_recognition/turn_on", &ObjectRecognition::turnOn, this);
     this->turnOffService = node_handle.advertiseService("/object_recognition/turn_off", &ObjectRecognition::turnOff, this);
-    rgbd_image_synchronizer.registerCallback(boost::bind(&ObjectRecognition::rgbdImageCallback, this, _1, _2));
+
 }
 
 bool ObjectRecognition::turnOff(std_srvs::Empty::Request &req, std_srvs::Empty::Response &resp) {
