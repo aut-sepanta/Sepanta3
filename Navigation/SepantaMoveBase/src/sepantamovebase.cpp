@@ -86,7 +86,7 @@ using namespace boost;
 using namespace ros;
 
 
-//#define VIRTUALMODE
+// #define VIRTUALMODE
  int tempLogicState;
  int tempSystemState;
 
@@ -153,6 +153,8 @@ bool IsGoalReached = false;
 bool IsRecoveryState = false;
 bool IsHectorReset = false;
 bool isttsready = true;
+bool IsPoseStimated = false;
+bool IsamclReady = false;
 
 string sayMessageId;
 
@@ -207,6 +209,10 @@ int step = 0;
 double position[2] = {0};
 double oldposition[2] = {0};
 double orientation[4] = {0};
+double amclPosition[2] = {0};
+double amclOrientation[4] = {0};
+// std::vector<double> amclCovariance;
+boost::array<double, 36ul> amclCovariance;
 double tetha = 0;
 double oldtetha = 0;
 
@@ -255,6 +261,15 @@ inline double Deg2Rad(double deg)
 inline double Rad2Deg(double rad)
 {
     return rad * 180 / M_PI;
+}
+
+double Quat2Rad(double orientation[])
+{
+    tf::Quaternion q(orientation[0], orientation[1], orientation[2], orientation[3]);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    return yaw;
 }
 
 void publish_isrobotmove()
@@ -476,7 +491,7 @@ void logic_thread()
             
          }
 
-         if ( logic_state == 1 )
+         else if ( logic_state == 1 )
          {
                idle_flag = false;
                //operation loop
@@ -485,7 +500,7 @@ void logic_thread()
                logic_state = 2;
          }
 
-        if ( logic_state == 2 )
+        else if ( logic_state == 2 )
         {
             //check the plan
             cout<<"Check the plan from global planner"<<endl;
@@ -512,7 +527,7 @@ void logic_thread()
             }
         }
 
-        if ( logic_state == 3 )
+        else if ( logic_state == 3 )
         {
         	say_message("Let me think");
             cout<<coutcolor_red<<" Recovery state " <<coutcolor0<<endl;
@@ -553,11 +568,20 @@ void logic_thread()
              
         }
 
-        if ( logic_state == 4 ) //controlling mode
+        else if ( logic_state == 4 ) //controlling mode
         {
         	IsRecoveryState = false;
         	IsHectorReset = false;
-             cout<<coutcolor_magenta<<" logic_state == 4 " <<coutcolor0<<endl;
+            cout<<coutcolor_magenta<<" logic_state == 4 " <<coutcolor0<<endl;
+
+            if(!IsPoseStimated && IsamclReady)
+            {
+            	logic_state = 5;
+            	system_state = -1; //wait
+            	IsPoseStimated = true;
+            	force_stop();
+            }
+
            if ( IsGoalReached == true)
            {
                cout<<coutcolor_red<<" Goal reached " <<coutcolor0<<endl;
@@ -590,9 +614,16 @@ void logic_thread()
         
 
         }
-
-
-
+        else if ( logic_state == 5 ) //Stimating position
+        {
+        	say_message("Stimating Position");
+    		reset_hector_slam();
+    		update_hector_origin(amclPosition[0],amclPosition[1],Quat2Rad(amclOrientation));
+            boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+            clean_costmaps();   
+            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    		logic_state = 1;
+        }
     }
 }
 
@@ -641,22 +672,12 @@ void exe_slam(goal_data g)
    
 }
 
-void exe_cancle()
+void exe_cancel()
 {
      force_stop();
      // say_message("cancel requested , operation canceled!");
      logic_state = 0;
      system_state = 0;
-}
-
-
-double Quat2Rad(double orientation[])
-{
-    tf::Quaternion q(orientation[0], orientation[1], orientation[2], orientation[3]);
-    tf::Matrix3x3 m(q);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-    return yaw;
 }
 
 int sign(double data)
@@ -1031,8 +1052,6 @@ void PathFwr()
     }
 }
 
-
-
 void GetCostmap(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 {
 	if(!IsCmValid)
@@ -1078,6 +1097,21 @@ void hector_problem_detected()
 
             force_stop();
         }
+}
+
+void GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
+{
+	amclCovariance = msg->pose.covariance;
+	amclPosition[0] = msg->pose.pose.position.x;
+	amclPosition[1] = msg->pose.pose.position.y;
+    amclOrientation[0] = msg->pose.pose.orientation.x;
+    amclOrientation[1] = msg->pose.pose.orientation.y;
+    amclOrientation[2] = msg->pose.pose.orientation.z;
+    amclOrientation[3] = msg->pose.pose.orientation.w;
+    if(abs(amclCovariance[0]) < 0.02)
+        IsamclReady = true;
+    else
+    	IsamclReady = false;
 }
 
 ros::Time old_time;
@@ -1184,9 +1218,9 @@ bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Re
         exe_slam(g);
     }
 
-    if ( _cmd == "cancle")
+    if ( _cmd == "cancel")
     {
-        exe_cancle();
+        exe_cancel();
     }
 
     if ( _cmd == "reset_hector")
@@ -1309,6 +1343,8 @@ int main(int argc, char **argv)
     sub_handles[1] = node_handles[1].subscribe("/move_base/global_costmap/costmap", 10, GetCostmap);
     //============================================================================================
     sub_handles[2] = node_handles[2].subscribe("/HectorStatus", 10, CheckHectorStatus);
+    //============================================================================================
+    sub_handles[4] = node_handles[13].subscribe("/amcl_pose", 10, GetAmclPose);
     //============================================================================================
     mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
     pub_slam_origin = node_handles[4].advertise<geometry_msgs::PoseWithCovarianceStamped>("/slam_origin", 1);

@@ -55,7 +55,7 @@ add_executable (train_objects src/train_objects_main.cpp src/train_objects.cpp s
 add_dependencies(train_objects sepanta_msgs_generate_messages_cpp)
 target_link_libraries (train_objects ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
 
-add_executable (object_recognition src/object_recognition_main.cpp src/object_recognition.cpp src/object_pipeline.cpp src/object.cpp)
+add_executable (object_recognition src/image_conversions.cpp src/object_recognition_main.cpp src/object_recognition.cpp src/object_pipeline.cpp src/object.cpp)
 add_dependencies(object_recognition sepanta_msgs_generate_messages_cpp)
 target_link_libraries(object_recognition ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
 
@@ -63,6 +63,6 @@ add_executable (visualize_objects src/visualize_objects.cpp)
 add_dependencies(visualize_objects sepanta_msgs_generate_messages_cpp)
 target_link_libraries(visualize_objects ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable (object_recognition_action_server src/object_recognition_action_server_main.cpp src/object_recognition_action_server.cpp src/object_recognition.cpp src/object_pipeline.cpp src/object.cpp)
+add_executable (object_recognition_action_server src/image_conversions.cpp src/object_recognition_action_server_main.cpp src/object_recognition_action_server.cpp src/object_recognition.cpp src/object_pipeline.cpp src/object.cpp)
 add_dependencies(object_recognition_action_server sepanta_msgs_generate_messages_cpp)
 target_link_libraries(object_recognition_action_server ${catkin_LIBRARIES} ${OMPL_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})

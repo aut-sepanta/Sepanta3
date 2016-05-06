@@ -299,7 +299,7 @@ AmclNode::AmclNode() :
   boost::recursive_mutex::scoped_lock l(configuration_mutex_);
 
   // Grab params off the param server
-  private_nh_.param("use_map_topic", use_map_topic_, false);
+  private_nh_.param("use_map_topic", use_map_topic_, true);
   private_nh_.param("first_map_only", first_map_only_, false);
 
   double tmp;
@@ -403,12 +403,10 @@ AmclNode::AmclNode() :
                                                    this, _1));
   initial_pose_sub_ = nh_.subscribe("initialpose", 2, &AmclNode::initialPoseReceived, this);
 
-  if(use_map_topic_) {
+
     map_sub_ = nh_.subscribe("map", 1, &AmclNode::mapReceived, this);
     ROS_INFO("Subscribed to map topic.");
-  } else {
-    requestMap();
-  }
+
   m_force_update = false;
 
   dsrv_ = new dynamic_reconfigure::Server<amcl::AMCLConfig>(ros::NodeHandle("~"));
