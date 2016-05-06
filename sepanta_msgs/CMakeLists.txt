@@ -27,6 +27,7 @@ add_message_files(
     forcedata.msg
     Object.msg
     Objects.msg
+    log.msg
   
     wave_hand.msg
     object_fetch.msg
@@ -107,6 +108,7 @@ add_action_files(
     slamaction.action
     whatDidYouSay.action
     grip.action
+    Fibonacci.action
 
 )
 

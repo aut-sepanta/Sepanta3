@@ -116,15 +116,24 @@
             this.arm_left_2 = new System.Windows.Forms.TrackBar();
             this.arm_left_1 = new System.Windows.Forms.TrackBar();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label19 = new System.Windows.Forms.Label();
+            this.label18 = new System.Windows.Forms.Label();
+            this.txt_offsety = new System.Windows.Forms.TextBox();
+            this.txt_offsetx = new System.Windows.Forms.TextBox();
+            this.btn_hector_offset = new System.Windows.Forms.Button();
+            this.PencilSize_label = new System.Windows.Forms.Label();
+            this.track_size = new System.Windows.Forms.TrackBar();
             this.button4 = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
             this.btn_selectHand = new System.Windows.Forms.Button();
             this.btn_selectPencil = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.PencilSize_label = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
             this.btn_paint_g = new System.Windows.Forms.Button();
             this.btn_paint_w = new System.Windows.Forms.Button();
             this.btn_paint_b = new System.Windows.Forms.Button();
+            this.btn_zoom_out = new System.Windows.Forms.Button();
+            this.btn_zoom_in = new System.Windows.Forms.Button();
             this.btn_show_lables = new System.Windows.Forms.Button();
             this.btn_edit_selected = new System.Windows.Forms.Button();
             this.btn_delete_selected = new System.Windows.Forms.Button();
@@ -134,20 +143,41 @@
             this.btn_save_map = new System.Windows.Forms.Button();
             this.btn_get_current_map = new System.Windows.Forms.Button();
             this.txt_map = new System.Windows.Forms.TextBox();
-            this.btn_zoom_out = new System.Windows.Forms.Button();
-            this.btn_zoom_in = new System.Windows.Forms.Button();
             this.img_map = new System.Windows.Forms.PictureBox();
             this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.button3 = new System.Windows.Forms.Button();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
-            this.btn_navigation = new System.Windows.Forms.Button();
-            this.btn_upperbody = new System.Windows.Forms.Button();
-            this.btn_lowerbody = new System.Windows.Forms.Button();
-            this.btn_dynamixel = new System.Windows.Forms.Button();
-            this.btn_laser = new System.Windows.Forms.Button();
-            this.btn_kinect2 = new System.Windows.Forms.Button();
+            this.rad_stop = new System.Windows.Forms.RadioButton();
+            this.rad_start = new System.Windows.Forms.RadioButton();
+            this.btn_m20 = new System.Windows.Forms.Button();
+            this.label17 = new System.Windows.Forms.Label();
+            this.btn_m19 = new System.Windows.Forms.Button();
+            this.label16 = new System.Windows.Forms.Label();
+            this.btn_m9 = new System.Windows.Forms.Button();
+            this.btn_m8 = new System.Windows.Forms.Button();
+            this.btn_m18 = new System.Windows.Forms.Button();
+            this.label15 = new System.Windows.Forms.Label();
+            this.btn_m7 = new System.Windows.Forms.Button();
+            this.btn_m11 = new System.Windows.Forms.Button();
+            this.btn_m10 = new System.Windows.Forms.Button();
+            this.label14 = new System.Windows.Forms.Label();
+            this.btn_m14 = new System.Windows.Forms.Button();
+            this.btn_m13 = new System.Windows.Forms.Button();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.btn_m2 = new System.Windows.Forms.Button();
+            this.btn_m15 = new System.Windows.Forms.Button();
+            this.btn_m16 = new System.Windows.Forms.Button();
+            this.btn_m12 = new System.Windows.Forms.Button();
+            this.btn_m17 = new System.Windows.Forms.Button();
+            this.btn_m5 = new System.Windows.Forms.Button();
+            this.btn_m4 = new System.Windows.Forms.Button();
+            this.btn_m3 = new System.Windows.Forms.Button();
+            this.btn_m6 = new System.Windows.Forms.Button();
+            this.btn_m1 = new System.Windows.Forms.Button();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.txt_path = new System.Windows.Forms.TextBox();
+            this.rad_linux = new System.Windows.Forms.RadioButton();
+            this.rad_windows = new System.Windows.Forms.RadioButton();
+            this.chk_coonect = new System.Windows.Forms.CheckBox();
             this.label10 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.txt_port = new System.Windows.Forms.TextBox();
@@ -155,19 +185,9 @@
             this.btn_disconnect = new System.Windows.Forms.Button();
             this.btn_connect = new System.Windows.Forms.Button();
             this.lst_tcp = new System.Windows.Forms.ListBox();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.chk_coonect = new System.Windows.Forms.CheckBox();
-            this.track_size = new System.Windows.Forms.TrackBar();
-            this.label11 = new System.Windows.Forms.Label();
-            this.rad_windows = new System.Windows.Forms.RadioButton();
-            this.rad_linux = new System.Windows.Forms.RadioButton();
-            this.txt_path = new System.Windows.Forms.TextBox();
             this.tabPage5 = new System.Windows.Forms.TabPage();
-            this.button6 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
-            this.button7 = new System.Windows.Forms.Button();
-            this.txt_offsetx = new System.Windows.Forms.TextBox();
-            this.txt_offsety = new System.Windows.Forms.TextBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.tabControl1.SuspendLayout();
             this.tab.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -203,13 +223,14 @@
             ((System.ComponentModel.ISupportInitialize)(this.arm_left_2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.arm_left_1)).BeginInit();
             this.tabPage3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.track_size)).BeginInit();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.img_map)).BeginInit();
             this.tabPage4.SuspendLayout();
             this.tabPage1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.track_size)).BeginInit();
             this.tabPage5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // imageList1
@@ -234,7 +255,7 @@
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(737, 488);
+            this.tabControl1.Size = new System.Drawing.Size(737, 541);
             this.tabControl1.TabIndex = 1;
             // 
             // tab
@@ -288,7 +309,7 @@
             this.tab.Location = new System.Drawing.Point(4, 22);
             this.tab.Name = "tab";
             this.tab.Padding = new System.Windows.Forms.Padding(3);
-            this.tab.Size = new System.Drawing.Size(729, 462);
+            this.tab.Size = new System.Drawing.Size(729, 515);
             this.tab.TabIndex = 0;
             this.tab.Text = "Main";
             this.tab.UseVisualStyleBackColor = true;
@@ -757,7 +778,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(729, 462);
+            this.tabPage2.Size = new System.Drawing.Size(729, 515);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Upperbody";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -1019,6 +1040,11 @@
             // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.label19);
+            this.tabPage3.Controls.Add(this.label18);
+            this.tabPage3.Controls.Add(this.txt_offsety);
+            this.tabPage3.Controls.Add(this.txt_offsetx);
+            this.tabPage3.Controls.Add(this.btn_hector_offset);
             this.tabPage3.Controls.Add(this.PencilSize_label);
             this.tabPage3.Controls.Add(this.track_size);
             this.tabPage3.Controls.Add(this.button4);
@@ -1037,10 +1063,71 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(729, 462);
+            this.tabPage3.Size = new System.Drawing.Size(729, 515);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Maptools";
             this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label19
+            // 
+            this.label19.AutoSize = true;
+            this.label19.Location = new System.Drawing.Point(278, 465);
+            this.label19.Name = "label19";
+            this.label19.Size = new System.Drawing.Size(15, 13);
+            this.label19.TabIndex = 25;
+            this.label19.Text = "y:";
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(171, 465);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(15, 13);
+            this.label18.TabIndex = 24;
+            this.label18.Text = "x:";
+            // 
+            // txt_offsety
+            // 
+            this.txt_offsety.Location = new System.Drawing.Point(278, 480);
+            this.txt_offsety.Name = "txt_offsety";
+            this.txt_offsety.Size = new System.Drawing.Size(100, 20);
+            this.txt_offsety.TabIndex = 23;
+            // 
+            // txt_offsetx
+            // 
+            this.txt_offsetx.Location = new System.Drawing.Point(172, 480);
+            this.txt_offsetx.Name = "txt_offsetx";
+            this.txt_offsetx.Size = new System.Drawing.Size(100, 20);
+            this.txt_offsetx.TabIndex = 22;
+            // 
+            // btn_hector_offset
+            // 
+            this.btn_hector_offset.Location = new System.Drawing.Point(6, 465);
+            this.btn_hector_offset.Name = "btn_hector_offset";
+            this.btn_hector_offset.Size = new System.Drawing.Size(159, 38);
+            this.btn_hector_offset.TabIndex = 21;
+            this.btn_hector_offset.Text = "hector Set Offset";
+            this.btn_hector_offset.UseVisualStyleBackColor = true;
+            this.btn_hector_offset.Click += new System.EventHandler(this.btn_hector_offset_Click);
+            // 
+            // PencilSize_label
+            // 
+            this.PencilSize_label.AutoSize = true;
+            this.PencilSize_label.Location = new System.Drawing.Point(55, 414);
+            this.PencilSize_label.Name = "PencilSize_label";
+            this.PencilSize_label.Size = new System.Drawing.Size(65, 13);
+            this.PencilSize_label.TabIndex = 16;
+            this.PencilSize_label.Text = "Pencil Size: ";
+            // 
+            // track_size
+            // 
+            this.track_size.Location = new System.Drawing.Point(126, 411);
+            this.track_size.Minimum = 1;
+            this.track_size.Name = "track_size";
+            this.track_size.Size = new System.Drawing.Size(207, 45);
+            this.track_size.TabIndex = 18;
+            this.track_size.Value = 4;
+            this.track_size.Scroll += new System.EventHandler(this.track_size_Scroll);
             // 
             // button4
             // 
@@ -1095,14 +1182,14 @@
             this.panel1.Size = new System.Drawing.Size(350, 43);
             this.panel1.TabIndex = 18;
             // 
-            // PencilSize_label
+            // label11
             // 
-            this.PencilSize_label.AutoSize = true;
-            this.PencilSize_label.Location = new System.Drawing.Point(55, 414);
-            this.PencilSize_label.Name = "PencilSize_label";
-            this.PencilSize_label.Size = new System.Drawing.Size(65, 13);
-            this.PencilSize_label.TabIndex = 16;
-            this.PencilSize_label.Text = "Pencil Size: ";
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(12, 14);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(40, 13);
+            this.label11.TabIndex = 21;
+            this.label11.Text = "Zoom :";
             // 
             // btn_paint_g
             // 
@@ -1135,13 +1222,35 @@
             this.btn_paint_b.UseVisualStyleBackColor = true;
             this.btn_paint_b.Click += new System.EventHandler(this.btn_paint_b_Click);
             // 
+            // btn_zoom_out
+            // 
+            this.btn_zoom_out.Enabled = false;
+            this.btn_zoom_out.Location = new System.Drawing.Point(104, 4);
+            this.btn_zoom_out.Name = "btn_zoom_out";
+            this.btn_zoom_out.Size = new System.Drawing.Size(40, 35);
+            this.btn_zoom_out.TabIndex = 2;
+            this.btn_zoom_out.Text = "-";
+            this.btn_zoom_out.UseVisualStyleBackColor = true;
+            this.btn_zoom_out.Click += new System.EventHandler(this.btn_zoom_out_Click);
+            // 
+            // btn_zoom_in
+            // 
+            this.btn_zoom_in.Enabled = false;
+            this.btn_zoom_in.Location = new System.Drawing.Point(58, 4);
+            this.btn_zoom_in.Name = "btn_zoom_in";
+            this.btn_zoom_in.Size = new System.Drawing.Size(40, 35);
+            this.btn_zoom_in.TabIndex = 1;
+            this.btn_zoom_in.Text = "+";
+            this.btn_zoom_in.UseVisualStyleBackColor = true;
+            this.btn_zoom_in.Click += new System.EventHandler(this.btn_zoom_in_Click);
+            // 
             // btn_show_lables
             // 
-            this.btn_show_lables.Location = new System.Drawing.Point(600, 397);
+            this.btn_show_lables.Location = new System.Drawing.Point(600, 396);
             this.btn_show_lables.Name = "btn_show_lables";
             this.btn_show_lables.Size = new System.Drawing.Size(114, 37);
             this.btn_show_lables.TabIndex = 15;
-            this.btn_show_lables.Text = "Show Labels";
+            this.btn_show_lables.Text = "Navigate To";
             this.btn_show_lables.UseVisualStyleBackColor = true;
             // 
             // btn_edit_selected
@@ -1221,28 +1330,6 @@
             this.txt_map.Size = new System.Drawing.Size(65, 20);
             this.txt_map.TabIndex = 3;
             // 
-            // btn_zoom_out
-            // 
-            this.btn_zoom_out.Enabled = false;
-            this.btn_zoom_out.Location = new System.Drawing.Point(104, 4);
-            this.btn_zoom_out.Name = "btn_zoom_out";
-            this.btn_zoom_out.Size = new System.Drawing.Size(40, 35);
-            this.btn_zoom_out.TabIndex = 2;
-            this.btn_zoom_out.Text = "-";
-            this.btn_zoom_out.UseVisualStyleBackColor = true;
-            this.btn_zoom_out.Click += new System.EventHandler(this.btn_zoom_out_Click);
-            // 
-            // btn_zoom_in
-            // 
-            this.btn_zoom_in.Enabled = false;
-            this.btn_zoom_in.Location = new System.Drawing.Point(58, 4);
-            this.btn_zoom_in.Name = "btn_zoom_in";
-            this.btn_zoom_in.Size = new System.Drawing.Size(40, 35);
-            this.btn_zoom_in.TabIndex = 1;
-            this.btn_zoom_in.Text = "+";
-            this.btn_zoom_in.UseVisualStyleBackColor = true;
-            this.btn_zoom_in.Click += new System.EventHandler(this.btn_zoom_in_Click);
-            // 
             // img_map
             // 
             this.img_map.Location = new System.Drawing.Point(54, 55);
@@ -1256,104 +1343,378 @@
             // 
             // tabPage4
             // 
-            this.tabPage4.Controls.Add(this.button3);
-            this.tabPage4.Controls.Add(this.button2);
-            this.tabPage4.Controls.Add(this.button1);
-            this.tabPage4.Controls.Add(this.btn_navigation);
-            this.tabPage4.Controls.Add(this.btn_upperbody);
-            this.tabPage4.Controls.Add(this.btn_lowerbody);
-            this.tabPage4.Controls.Add(this.btn_dynamixel);
-            this.tabPage4.Controls.Add(this.btn_laser);
-            this.tabPage4.Controls.Add(this.btn_kinect2);
+            this.tabPage4.Controls.Add(this.rad_stop);
+            this.tabPage4.Controls.Add(this.rad_start);
+            this.tabPage4.Controls.Add(this.btn_m20);
+            this.tabPage4.Controls.Add(this.label17);
+            this.tabPage4.Controls.Add(this.btn_m19);
+            this.tabPage4.Controls.Add(this.label16);
+            this.tabPage4.Controls.Add(this.btn_m9);
+            this.tabPage4.Controls.Add(this.btn_m8);
+            this.tabPage4.Controls.Add(this.btn_m18);
+            this.tabPage4.Controls.Add(this.label15);
+            this.tabPage4.Controls.Add(this.btn_m7);
+            this.tabPage4.Controls.Add(this.btn_m11);
+            this.tabPage4.Controls.Add(this.btn_m10);
+            this.tabPage4.Controls.Add(this.label14);
+            this.tabPage4.Controls.Add(this.btn_m14);
+            this.tabPage4.Controls.Add(this.btn_m13);
+            this.tabPage4.Controls.Add(this.label13);
+            this.tabPage4.Controls.Add(this.label12);
+            this.tabPage4.Controls.Add(this.btn_m2);
+            this.tabPage4.Controls.Add(this.btn_m15);
+            this.tabPage4.Controls.Add(this.btn_m16);
+            this.tabPage4.Controls.Add(this.btn_m12);
+            this.tabPage4.Controls.Add(this.btn_m17);
+            this.tabPage4.Controls.Add(this.btn_m5);
+            this.tabPage4.Controls.Add(this.btn_m4);
+            this.tabPage4.Controls.Add(this.btn_m3);
+            this.tabPage4.Controls.Add(this.btn_m6);
+            this.tabPage4.Controls.Add(this.btn_m1);
             this.tabPage4.Location = new System.Drawing.Point(4, 22);
             this.tabPage4.Name = "tabPage4";
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(729, 462);
+            this.tabPage4.Size = new System.Drawing.Size(729, 515);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Managment";
             this.tabPage4.UseVisualStyleBackColor = true;
             this.tabPage4.Click += new System.EventHandler(this.tabPage4_Click);
             // 
-            // button3
+            // rad_stop
             // 
-            this.button3.Location = new System.Drawing.Point(24, 205);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(194, 37);
-            this.button3.TabIndex = 8;
-            this.button3.Text = "Sepanta Map Engine";
-            this.button3.UseVisualStyleBackColor = true;
+            this.rad_stop.AutoSize = true;
+            this.rad_stop.Location = new System.Drawing.Point(24, 447);
+            this.rad_stop.Name = "rad_stop";
+            this.rad_stop.Size = new System.Drawing.Size(47, 17);
+            this.rad_stop.TabIndex = 28;
+            this.rad_stop.Text = "Stop";
+            this.rad_stop.UseVisualStyleBackColor = true;
             // 
-            // button2
+            // rad_start
             // 
-            this.button2.Location = new System.Drawing.Point(224, 162);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(194, 37);
-            this.button2.TabIndex = 7;
-            this.button2.Text = "Move Base";
-            this.button2.UseVisualStyleBackColor = true;
+            this.rad_start.AutoSize = true;
+            this.rad_start.Checked = true;
+            this.rad_start.Location = new System.Drawing.Point(24, 415);
+            this.rad_start.Name = "rad_start";
+            this.rad_start.Size = new System.Drawing.Size(47, 17);
+            this.rad_start.TabIndex = 27;
+            this.rad_start.TabStop = true;
+            this.rad_start.Text = "Start";
+            this.rad_start.UseVisualStyleBackColor = true;
             // 
-            // button1
+            // btn_m20
             // 
-            this.button1.Location = new System.Drawing.Point(24, 162);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(194, 37);
-            this.button1.TabIndex = 6;
-            this.button1.Text = "Hector SLAM";
-            this.button1.UseVisualStyleBackColor = true;
+            this.btn_m20.BackColor = System.Drawing.Color.Black;
+            this.btn_m20.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m20.ForeColor = System.Drawing.Color.White;
+            this.btn_m20.Location = new System.Drawing.Point(462, 295);
+            this.btn_m20.Name = "btn_m20";
+            this.btn_m20.Size = new System.Drawing.Size(127, 37);
+            this.btn_m20.TabIndex = 26;
+            this.btn_m20.Text = "Main [20]";
+            this.btn_m20.UseVisualStyleBackColor = false;
+            this.btn_m20.Click += new System.EventHandler(this.btn_m20_Click);
             // 
-            // btn_navigation
+            // label17
             // 
-            this.btn_navigation.Location = new System.Drawing.Point(424, 162);
-            this.btn_navigation.Name = "btn_navigation";
-            this.btn_navigation.Size = new System.Drawing.Size(194, 37);
-            this.btn_navigation.TabIndex = 5;
-            this.btn_navigation.Text = "Sepanta Move";
-            this.btn_navigation.UseVisualStyleBackColor = true;
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(459, 277);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(55, 13);
+            this.label17.TabIndex = 25;
+            this.label17.Text = "Scenario :";
             // 
-            // btn_upperbody
+            // btn_m19
             // 
-            this.btn_upperbody.Location = new System.Drawing.Point(224, 76);
-            this.btn_upperbody.Name = "btn_upperbody";
-            this.btn_upperbody.Size = new System.Drawing.Size(194, 37);
-            this.btn_upperbody.TabIndex = 4;
-            this.btn_upperbody.Text = "Upperbody";
-            this.btn_upperbody.UseVisualStyleBackColor = true;
+            this.btn_m19.BackColor = System.Drawing.Color.Black;
+            this.btn_m19.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m19.ForeColor = System.Drawing.Color.White;
+            this.btn_m19.Location = new System.Drawing.Point(462, 127);
+            this.btn_m19.Name = "btn_m19";
+            this.btn_m19.Size = new System.Drawing.Size(127, 37);
+            this.btn_m19.TabIndex = 24;
+            this.btn_m19.Text = "Human Core [19]";
+            this.btn_m19.UseVisualStyleBackColor = false;
+            this.btn_m19.Click += new System.EventHandler(this.btn_m19_Click);
             // 
-            // btn_lowerbody
+            // label16
             // 
-            this.btn_lowerbody.Location = new System.Drawing.Point(24, 76);
-            this.btn_lowerbody.Name = "btn_lowerbody";
-            this.btn_lowerbody.Size = new System.Drawing.Size(194, 37);
-            this.btn_lowerbody.TabIndex = 3;
-            this.btn_lowerbody.Text = "Lowerbody";
-            this.btn_lowerbody.UseVisualStyleBackColor = true;
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(459, 108);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(47, 13);
+            this.label16.TabIndex = 23;
+            this.label16.Text = "Human :";
             // 
-            // btn_dynamixel
+            // btn_m9
             // 
-            this.btn_dynamixel.Location = new System.Drawing.Point(424, 33);
-            this.btn_dynamixel.Name = "btn_dynamixel";
-            this.btn_dynamixel.Size = new System.Drawing.Size(194, 37);
-            this.btn_dynamixel.TabIndex = 2;
-            this.btn_dynamixel.Text = "Dynamixel";
-            this.btn_dynamixel.UseVisualStyleBackColor = true;
+            this.btn_m9.BackColor = System.Drawing.Color.Black;
+            this.btn_m9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m9.ForeColor = System.Drawing.Color.White;
+            this.btn_m9.Location = new System.Drawing.Point(291, 127);
+            this.btn_m9.Name = "btn_m9";
+            this.btn_m9.Size = new System.Drawing.Size(127, 37);
+            this.btn_m9.TabIndex = 22;
+            this.btn_m9.Text = "Watch dog [9]";
+            this.btn_m9.UseVisualStyleBackColor = false;
+            this.btn_m9.Click += new System.EventHandler(this.btn_m9_Click);
             // 
-            // btn_laser
+            // btn_m8
             // 
-            this.btn_laser.Location = new System.Drawing.Point(224, 33);
-            this.btn_laser.Name = "btn_laser";
-            this.btn_laser.Size = new System.Drawing.Size(194, 37);
-            this.btn_laser.TabIndex = 1;
-            this.btn_laser.Text = "Laser";
-            this.btn_laser.UseVisualStyleBackColor = true;
+            this.btn_m8.BackColor = System.Drawing.Color.Black;
+            this.btn_m8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m8.ForeColor = System.Drawing.Color.White;
+            this.btn_m8.Location = new System.Drawing.Point(157, 127);
+            this.btn_m8.Name = "btn_m8";
+            this.btn_m8.Size = new System.Drawing.Size(127, 37);
+            this.btn_m8.TabIndex = 21;
+            this.btn_m8.Text = "Odometry [8]";
+            this.btn_m8.UseVisualStyleBackColor = false;
+            this.btn_m8.Click += new System.EventHandler(this.btn_m8_Click);
             // 
-            // btn_kinect2
+            // btn_m18
             // 
-            this.btn_kinect2.Location = new System.Drawing.Point(24, 33);
-            this.btn_kinect2.Name = "btn_kinect2";
-            this.btn_kinect2.Size = new System.Drawing.Size(194, 37);
-            this.btn_kinect2.TabIndex = 0;
-            this.btn_kinect2.Text = "Kinect II";
-            this.btn_kinect2.UseVisualStyleBackColor = true;
+            this.btn_m18.BackColor = System.Drawing.Color.Black;
+            this.btn_m18.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m18.ForeColor = System.Drawing.Color.White;
+            this.btn_m18.Location = new System.Drawing.Point(462, 41);
+            this.btn_m18.Name = "btn_m18";
+            this.btn_m18.Size = new System.Drawing.Size(127, 37);
+            this.btn_m18.TabIndex = 20;
+            this.btn_m18.Text = "Object Recognition [18]";
+            this.btn_m18.UseVisualStyleBackColor = false;
+            this.btn_m18.Click += new System.EventHandler(this.btn_m18_Click);
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(459, 25);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(44, 13);
+            this.label15.TabIndex = 19;
+            this.label15.Text = "Object :";
+            // 
+            // btn_m7
+            // 
+            this.btn_m7.BackColor = System.Drawing.Color.Black;
+            this.btn_m7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m7.ForeColor = System.Drawing.Color.White;
+            this.btn_m7.Location = new System.Drawing.Point(24, 127);
+            this.btn_m7.Name = "btn_m7";
+            this.btn_m7.Size = new System.Drawing.Size(127, 37);
+            this.btn_m7.TabIndex = 18;
+            this.btn_m7.Text = "TCP/IP Core [7]";
+            this.btn_m7.UseVisualStyleBackColor = false;
+            this.btn_m7.Click += new System.EventHandler(this.btn_m7_Click);
+            // 
+            // btn_m11
+            // 
+            this.btn_m11.BackColor = System.Drawing.Color.Black;
+            this.btn_m11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m11.ForeColor = System.Drawing.Color.White;
+            this.btn_m11.Location = new System.Drawing.Point(157, 210);
+            this.btn_m11.Name = "btn_m11";
+            this.btn_m11.Size = new System.Drawing.Size(127, 37);
+            this.btn_m11.TabIndex = 16;
+            this.btn_m11.Text = "WebSocket [11]";
+            this.btn_m11.UseVisualStyleBackColor = false;
+            this.btn_m11.Click += new System.EventHandler(this.btn_m11_Click);
+            // 
+            // btn_m10
+            // 
+            this.btn_m10.BackColor = System.Drawing.Color.Black;
+            this.btn_m10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m10.ForeColor = System.Drawing.Color.White;
+            this.btn_m10.Location = new System.Drawing.Point(24, 210);
+            this.btn_m10.Name = "btn_m10";
+            this.btn_m10.Size = new System.Drawing.Size(127, 37);
+            this.btn_m10.TabIndex = 15;
+            this.btn_m10.Text = "TTS Controller [10]";
+            this.btn_m10.UseVisualStyleBackColor = false;
+            this.btn_m10.Click += new System.EventHandler(this.btn_m10_Click);
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(21, 194);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(50, 13);
+            this.label14.TabIndex = 14;
+            this.label14.Text = "Speech :";
+            // 
+            // btn_m14
+            // 
+            this.btn_m14.BackColor = System.Drawing.Color.Black;
+            this.btn_m14.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m14.ForeColor = System.Drawing.Color.White;
+            this.btn_m14.Location = new System.Drawing.Point(291, 295);
+            this.btn_m14.Name = "btn_m14";
+            this.btn_m14.Size = new System.Drawing.Size(127, 37);
+            this.btn_m14.TabIndex = 13;
+            this.btn_m14.Text = "HectorMain [14]";
+            this.btn_m14.UseVisualStyleBackColor = false;
+            this.btn_m14.Click += new System.EventHandler(this.btn_m14_Click);
+            // 
+            // btn_m13
+            // 
+            this.btn_m13.BackColor = System.Drawing.Color.Black;
+            this.btn_m13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m13.ForeColor = System.Drawing.Color.White;
+            this.btn_m13.Location = new System.Drawing.Point(157, 295);
+            this.btn_m13.Name = "btn_m13";
+            this.btn_m13.Size = new System.Drawing.Size(127, 37);
+            this.btn_m13.TabIndex = 12;
+            this.btn_m13.Text = "Hector Rec [13]";
+            this.btn_m13.UseVisualStyleBackColor = false;
+            this.btn_m13.Click += new System.EventHandler(this.btn_m13_Click);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(21, 277);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(64, 13);
+            this.label13.TabIndex = 11;
+            this.label13.Text = "Navigation :";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(21, 25);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(37, 13);
+            this.label12.TabIndex = 10;
+            this.label12.Text = "DCM :";
+            // 
+            // btn_m2
+            // 
+            this.btn_m2.BackColor = System.Drawing.Color.Black;
+            this.btn_m2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m2.ForeColor = System.Drawing.Color.White;
+            this.btn_m2.Location = new System.Drawing.Point(157, 41);
+            this.btn_m2.Name = "btn_m2";
+            this.btn_m2.Size = new System.Drawing.Size(127, 37);
+            this.btn_m2.TabIndex = 9;
+            this.btn_m2.Text = "Kinect Xbox360 [2]";
+            this.btn_m2.UseVisualStyleBackColor = false;
+            this.btn_m2.Click += new System.EventHandler(this.btn_m2_Click);
+            // 
+            // btn_m15
+            // 
+            this.btn_m15.BackColor = System.Drawing.Color.Black;
+            this.btn_m15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m15.ForeColor = System.Drawing.Color.White;
+            this.btn_m15.Location = new System.Drawing.Point(24, 338);
+            this.btn_m15.Name = "btn_m15";
+            this.btn_m15.Size = new System.Drawing.Size(127, 37);
+            this.btn_m15.TabIndex = 8;
+            this.btn_m15.Text = "Map Engine [15]";
+            this.btn_m15.UseVisualStyleBackColor = false;
+            this.btn_m15.Click += new System.EventHandler(this.btn_m15_Click);
+            // 
+            // btn_m16
+            // 
+            this.btn_m16.BackColor = System.Drawing.Color.Black;
+            this.btn_m16.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m16.ForeColor = System.Drawing.Color.White;
+            this.btn_m16.Location = new System.Drawing.Point(157, 338);
+            this.btn_m16.Name = "btn_m16";
+            this.btn_m16.Size = new System.Drawing.Size(127, 37);
+            this.btn_m16.TabIndex = 7;
+            this.btn_m16.Text = "Move Base [16]";
+            this.btn_m16.UseVisualStyleBackColor = false;
+            this.btn_m16.Click += new System.EventHandler(this.btn_m16_Click);
+            // 
+            // btn_m12
+            // 
+            this.btn_m12.BackColor = System.Drawing.Color.Black;
+            this.btn_m12.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m12.ForeColor = System.Drawing.Color.White;
+            this.btn_m12.Location = new System.Drawing.Point(24, 295);
+            this.btn_m12.Name = "btn_m12";
+            this.btn_m12.Size = new System.Drawing.Size(127, 37);
+            this.btn_m12.TabIndex = 6;
+            this.btn_m12.Text = "Hector Calib [12]";
+            this.btn_m12.UseVisualStyleBackColor = false;
+            this.btn_m12.Click += new System.EventHandler(this.btn_m12_Click);
+            // 
+            // btn_m17
+            // 
+            this.btn_m17.BackColor = System.Drawing.Color.Black;
+            this.btn_m17.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m17.ForeColor = System.Drawing.Color.White;
+            this.btn_m17.Location = new System.Drawing.Point(291, 338);
+            this.btn_m17.Name = "btn_m17";
+            this.btn_m17.Size = new System.Drawing.Size(127, 37);
+            this.btn_m17.TabIndex = 5;
+            this.btn_m17.Text = "Sepanta Move [17]";
+            this.btn_m17.UseVisualStyleBackColor = false;
+            this.btn_m17.Click += new System.EventHandler(this.btn_m17_Click);
+            // 
+            // btn_m5
+            // 
+            this.btn_m5.BackColor = System.Drawing.Color.Black;
+            this.btn_m5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m5.ForeColor = System.Drawing.Color.White;
+            this.btn_m5.Location = new System.Drawing.Point(157, 84);
+            this.btn_m5.Name = "btn_m5";
+            this.btn_m5.Size = new System.Drawing.Size(127, 37);
+            this.btn_m5.TabIndex = 4;
+            this.btn_m5.Text = "Upperbodycore [5]";
+            this.btn_m5.UseVisualStyleBackColor = false;
+            this.btn_m5.Click += new System.EventHandler(this.btn_m5_Click);
+            // 
+            // btn_m4
+            // 
+            this.btn_m4.BackColor = System.Drawing.Color.Black;
+            this.btn_m4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m4.ForeColor = System.Drawing.Color.White;
+            this.btn_m4.Location = new System.Drawing.Point(24, 84);
+            this.btn_m4.Name = "btn_m4";
+            this.btn_m4.Size = new System.Drawing.Size(127, 37);
+            this.btn_m4.TabIndex = 3;
+            this.btn_m4.Text = "Lowerbodycore [4]";
+            this.btn_m4.UseVisualStyleBackColor = false;
+            this.btn_m4.Click += new System.EventHandler(this.btn_m4_Click);
+            // 
+            // btn_m3
+            // 
+            this.btn_m3.BackColor = System.Drawing.Color.Black;
+            this.btn_m3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m3.ForeColor = System.Drawing.Color.White;
+            this.btn_m3.Location = new System.Drawing.Point(291, 41);
+            this.btn_m3.Name = "btn_m3";
+            this.btn_m3.Size = new System.Drawing.Size(127, 37);
+            this.btn_m3.TabIndex = 2;
+            this.btn_m3.Text = "Dynamixel Motors [3]";
+            this.btn_m3.UseVisualStyleBackColor = false;
+            this.btn_m3.Click += new System.EventHandler(this.btn_m3_Click);
+            // 
+            // btn_m6
+            // 
+            this.btn_m6.BackColor = System.Drawing.Color.Black;
+            this.btn_m6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m6.ForeColor = System.Drawing.Color.White;
+            this.btn_m6.Location = new System.Drawing.Point(291, 84);
+            this.btn_m6.Name = "btn_m6";
+            this.btn_m6.Size = new System.Drawing.Size(127, 37);
+            this.btn_m6.TabIndex = 1;
+            this.btn_m6.Text = "Laser [6]";
+            this.btn_m6.UseVisualStyleBackColor = false;
+            this.btn_m6.Click += new System.EventHandler(this.btn_m6_Click);
+            // 
+            // btn_m1
+            // 
+            this.btn_m1.BackColor = System.Drawing.Color.Black;
+            this.btn_m1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_m1.ForeColor = System.Drawing.Color.White;
+            this.btn_m1.Location = new System.Drawing.Point(24, 41);
+            this.btn_m1.Name = "btn_m1";
+            this.btn_m1.Size = new System.Drawing.Size(127, 37);
+            this.btn_m1.TabIndex = 0;
+            this.btn_m1.Text = "Kinect V 2.0 [1]";
+            this.btn_m1.UseVisualStyleBackColor = false;
+            this.btn_m1.Click += new System.EventHandler(this.btn_m1_Click);
             // 
             // tabPage1
             // 
@@ -1371,10 +1732,54 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(729, 462);
+            this.tabPage1.Size = new System.Drawing.Size(729, 515);
             this.tabPage1.TabIndex = 4;
             this.tabPage1.Text = "TCP_Client";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // txt_path
+            // 
+            this.txt_path.Location = new System.Drawing.Point(460, 22);
+            this.txt_path.Name = "txt_path";
+            this.txt_path.ReadOnly = true;
+            this.txt_path.Size = new System.Drawing.Size(244, 20);
+            this.txt_path.TabIndex = 12;
+            // 
+            // rad_linux
+            // 
+            this.rad_linux.AutoSize = true;
+            this.rad_linux.Location = new System.Drawing.Point(352, 43);
+            this.rad_linux.Name = "rad_linux";
+            this.rad_linux.Size = new System.Drawing.Size(74, 17);
+            this.rad_linux.TabIndex = 11;
+            this.rad_linux.TabStop = true;
+            this.rad_linux.Text = "Linux path";
+            this.rad_linux.UseVisualStyleBackColor = true;
+            this.rad_linux.CheckedChanged += new System.EventHandler(this.rad_linux_CheckedChanged);
+            // 
+            // rad_windows
+            // 
+            this.rad_windows.AutoSize = true;
+            this.rad_windows.Location = new System.Drawing.Point(352, 21);
+            this.rad_windows.Name = "rad_windows";
+            this.rad_windows.Size = new System.Drawing.Size(93, 17);
+            this.rad_windows.TabIndex = 10;
+            this.rad_windows.TabStop = true;
+            this.rad_windows.Text = "Windows path";
+            this.rad_windows.UseVisualStyleBackColor = true;
+            this.rad_windows.CheckedChanged += new System.EventHandler(this.rad_windows_CheckedChanged);
+            // 
+            // chk_coonect
+            // 
+            this.chk_coonect.AutoSize = true;
+            this.chk_coonect.Checked = true;
+            this.chk_coonect.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chk_coonect.Location = new System.Drawing.Point(227, 22);
+            this.chk_coonect.Name = "chk_coonect";
+            this.chk_coonect.Size = new System.Drawing.Size(105, 17);
+            this.chk_coonect.TabIndex = 9;
+            this.chk_coonect.Text = "Auto Connection";
+            this.chk_coonect.UseVisualStyleBackColor = true;
             // 
             // label10
             // 
@@ -1441,142 +1846,37 @@
             this.lst_tcp.Size = new System.Drawing.Size(717, 277);
             this.lst_tcp.TabIndex = 0;
             // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.pictureBox1);
+            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(729, 515);
+            this.tabPage5.TabIndex = 5;
+            this.tabPage5.Text = "Viewer";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Location = new System.Drawing.Point(14, 17);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(640, 480);
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
+            // 
             // timer1
             // 
             this.timer1.Enabled = true;
             this.timer1.Interval = 3000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // chk_coonect
-            // 
-            this.chk_coonect.AutoSize = true;
-            this.chk_coonect.Checked = true;
-            this.chk_coonect.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chk_coonect.Location = new System.Drawing.Point(227, 22);
-            this.chk_coonect.Name = "chk_coonect";
-            this.chk_coonect.Size = new System.Drawing.Size(105, 17);
-            this.chk_coonect.TabIndex = 9;
-            this.chk_coonect.Text = "Auto Connection";
-            this.chk_coonect.UseVisualStyleBackColor = true;
-            // 
-            // track_size
-            // 
-            this.track_size.Location = new System.Drawing.Point(126, 411);
-            this.track_size.Minimum = 1;
-            this.track_size.Name = "track_size";
-            this.track_size.Size = new System.Drawing.Size(207, 45);
-            this.track_size.TabIndex = 18;
-            this.track_size.Value = 4;
-            this.track_size.Scroll += new System.EventHandler(this.track_size_Scroll);
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(12, 14);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(40, 13);
-            this.label11.TabIndex = 21;
-            this.label11.Text = "Zoom :";
-            // 
-            // rad_windows
-            // 
-            this.rad_windows.AutoSize = true;
-            this.rad_windows.Location = new System.Drawing.Point(352, 21);
-            this.rad_windows.Name = "rad_windows";
-            this.rad_windows.Size = new System.Drawing.Size(93, 17);
-            this.rad_windows.TabIndex = 10;
-            this.rad_windows.TabStop = true;
-            this.rad_windows.Text = "Windows path";
-            this.rad_windows.UseVisualStyleBackColor = true;
-            this.rad_windows.CheckedChanged += new System.EventHandler(this.rad_windows_CheckedChanged);
-            // 
-            // rad_linux
-            // 
-            this.rad_linux.AutoSize = true;
-            this.rad_linux.Location = new System.Drawing.Point(352, 43);
-            this.rad_linux.Name = "rad_linux";
-            this.rad_linux.Size = new System.Drawing.Size(74, 17);
-            this.rad_linux.TabIndex = 11;
-            this.rad_linux.TabStop = true;
-            this.rad_linux.Text = "Linux path";
-            this.rad_linux.UseVisualStyleBackColor = true;
-            this.rad_linux.CheckedChanged += new System.EventHandler(this.rad_linux_CheckedChanged);
-            // 
-            // txt_path
-            // 
-            this.txt_path.Location = new System.Drawing.Point(460, 22);
-            this.txt_path.Name = "txt_path";
-            this.txt_path.ReadOnly = true;
-            this.txt_path.Size = new System.Drawing.Size(244, 20);
-            this.txt_path.TabIndex = 12;
-            // 
-            // tabPage5
-            // 
-            this.tabPage5.Controls.Add(this.txt_offsety);
-            this.tabPage5.Controls.Add(this.txt_offsetx);
-            this.tabPage5.Controls.Add(this.button7);
-            this.tabPage5.Controls.Add(this.button6);
-            this.tabPage5.Controls.Add(this.button5);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(729, 462);
-            this.tabPage5.TabIndex = 5;
-            this.tabPage5.Text = "Navigation";
-            this.tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // button6
-            // 
-            this.button6.Location = new System.Drawing.Point(233, 47);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(194, 37);
-            this.button6.TabIndex = 12;
-            this.button6.Text = "Reset Hector";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
-            // 
-            // button5
-            // 
-            this.button5.Location = new System.Drawing.Point(33, 47);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(194, 37);
-            this.button5.TabIndex = 11;
-            this.button5.Text = "Clear CostMaps";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
-            // button7
-            // 
-            this.button7.Location = new System.Drawing.Point(433, 47);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(194, 37);
-            this.button7.TabIndex = 13;
-            this.button7.Text = "Set Hector Offset";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
-            // 
-            // txt_offsetx
-            // 
-            this.txt_offsetx.Location = new System.Drawing.Point(433, 103);
-            this.txt_offsetx.Name = "txt_offsetx";
-            this.txt_offsetx.Size = new System.Drawing.Size(194, 20);
-            this.txt_offsetx.TabIndex = 14;
-            this.txt_offsetx.Text = "0";
-            // 
-            // txt_offsety
-            // 
-            this.txt_offsety.Location = new System.Drawing.Point(433, 140);
-            this.txt_offsety.Name = "txt_offsety";
-            this.txt_offsety.Size = new System.Drawing.Size(194, 20);
-            this.txt_offsety.TabIndex = 15;
-            this.txt_offsety.Text = "0";
-            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.ClientSize = new System.Drawing.Size(761, 512);
+            this.ClientSize = new System.Drawing.Size(761, 565);
             this.Controls.Add(this.tabControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -1623,16 +1923,17 @@
             ((System.ComponentModel.ISupportInitialize)(this.arm_left_1)).EndInit();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.track_size)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.img_map)).EndInit();
             this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.track_size)).EndInit();
             this.tabPage5.ResumeLayout(false);
-            this.tabPage5.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -1681,12 +1982,12 @@
         private System.Windows.Forms.TextBox txt_voltage2;
         private System.Windows.Forms.TextBox txt_voltage1;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Button btn_navigation;
-        private System.Windows.Forms.Button btn_upperbody;
-        private System.Windows.Forms.Button btn_lowerbody;
-        private System.Windows.Forms.Button btn_dynamixel;
-        private System.Windows.Forms.Button btn_laser;
-        private System.Windows.Forms.Button btn_kinect2;
+        private System.Windows.Forms.Button btn_m17;
+        private System.Windows.Forms.Button btn_m5;
+        private System.Windows.Forms.Button btn_m4;
+        private System.Windows.Forms.Button btn_m3;
+        private System.Windows.Forms.Button btn_m6;
+        private System.Windows.Forms.Button btn_m1;
         private System.Windows.Forms.TextBox txt_isobstacle;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.TextBox txt_isrobotmove;
@@ -1760,10 +2061,10 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txt_port;
         private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btn_m16;
+        private System.Windows.Forms.Button btn_m12;
         private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button btn_m15;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.CheckBox chk_coonect;
         private System.Windows.Forms.TrackBar track_size;
@@ -1772,11 +2073,31 @@
         private System.Windows.Forms.RadioButton rad_windows;
         private System.Windows.Forms.TextBox txt_path;
         private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.Button btn_m2;
+        private System.Windows.Forms.Button btn_m18;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Button btn_m7;
+        private System.Windows.Forms.Button btn_m11;
+        private System.Windows.Forms.Button btn_m10;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Button btn_m14;
+        private System.Windows.Forms.Button btn_m13;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button btn_m20;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.Button btn_m19;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Button btn_m9;
+        private System.Windows.Forms.Button btn_m8;
+        private System.Windows.Forms.Button btn_hector_offset;
+        private System.Windows.Forms.Label label19;
+        private System.Windows.Forms.Label label18;
         private System.Windows.Forms.TextBox txt_offsety;
         private System.Windows.Forms.TextBox txt_offsetx;
-        private System.Windows.Forms.Button button7;
-        private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.RadioButton rad_stop;
+        private System.Windows.Forms.RadioButton rad_start;
     }
 }
 

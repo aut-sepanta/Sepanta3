@@ -47,6 +47,12 @@
     <Compile Include="frmMain.Designer.cs">
       <DependentUpon>frmMain.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmNaigation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmNaigation.Designer.cs">
+      <DependentUpon>frmNaigation.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmpoint.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -60,6 +66,9 @@
     <Compile Include="Statics.cs" />
     <EmbeddedResource Include="frmMain.resx">
       <DependentUpon>frmMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmNaigation.resx">
+      <DependentUpon>frmNaigation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmpoint.resx">
       <DependentUpon>frmpoint.cs</DependentUpon>

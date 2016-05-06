@@ -26,16 +26,23 @@
 #include <sepanta_msgs/irsensor.h>
 #include <sepanta_msgs/motortorques.h>
 #include <sepanta_msgs/speechkill.h>
+#include <sepanta_msgs/nodestatuslist.h>
+#include <sepanta_msgs/nodestatus.h>
 #include <sepanta_msgs/sound.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <move_base_msgs/MoveBaseActionGoal.h>
+#include <sepanta_msgs/NodeAction.h>
+#include <sepanta_msgs/log.h>
 
 int speedx = 150;
 int speedy = 150;
 int speedt = -150;
+
+ros::ServiceClient service_start;
+ros::ServiceClient service_stop;
 
 using namespace std;
 string global_tcp;
@@ -75,8 +82,9 @@ void send_ack()
 
 void send_log(string msg)
 {
-    std_msgs::String msg_log;
-    msg_log.data = msg;
+    sepanta_msgs::log msg_log;
+    msg_log.message = msg;
+    msg_log.id = "7";
     chatter_pub_log.publish(msg_log);
 }
 
@@ -205,9 +213,23 @@ void turnlocal(string value)
    cout<<"get turnlocal "<<endl;
 }
 
-void move_cancle()
+void move_cancel()
 {
-   cout<<"get move cancle "<<endl;
+   cout<<"get move cancel "<<endl;
+}
+
+void manager_run(string command)
+{
+   sepanta_msgs::NodeAction _msg;
+   _msg.request.node_file_name = command;
+   service_start.call(_msg);
+}
+
+void manager_stop(string command)
+{
+   sepanta_msgs::NodeAction _msg;
+   _msg.request.node_file_name = command;
+   service_stop.call(_msg);
 }
 
 void process_command(string input)
@@ -244,9 +266,14 @@ void process_command(string input)
           if ( plugin_list[1] == "move_y")  move_y(plugin_list[2]);
           if ( plugin_list[1] == "move_turnlocal")  turnlocal(plugin_list[2]);
           if ( plugin_list[1] == "move_turnto")  turngl(plugin_list[2]);
-          if ( plugin_list[1] == "cancle")  move_cancle();
-          
+          if ( plugin_list[1] == "cancel")  move_cancel();
 
+       }
+
+       if ( plugin_list[0] == "MANAGER")
+       {
+          if ( plugin_list[1] == "start") manager_run(plugin_list[2]);
+          if ( plugin_list[1] == "stop") manager_stop(plugin_list[2]);
        }
 
 }
@@ -263,14 +290,14 @@ void send_es()
         chatter_pub[3].publish(msg);
 }
 
-void tcp_write_tcp(std::string msg,string mode)
+void tcp_write_tcp(std::string msg)
 {
     int len = msg.length();
     string data =  msg.c_str() ;
     if ( stream_tcp1 != NULL )
     {
         stream_tcp1->send(data.c_str(), len);
-        cout<<"write : "<<data<<endl;
+        //cout<<"write : "<<data<<endl;
         send_log("write : " + data);
     }
 }
@@ -301,7 +328,7 @@ void serial_write(string  msg,string mode)
   #else
 
     if ( mode == "1")
-        tcp_write_tcp(msg,mode);
+        tcp_write_tcp(msg);
 
 
   #endif
@@ -427,6 +454,43 @@ void chatterCallback_tcp(const std_msgs::String::ConstPtr &msg)
     serial_write(in_put,"1");
 }
 
+void chatterCallback_manager(const sepanta_msgs::nodestatuslist &msg)
+{
+    // std::cout<<"GET STATUS"<<std::endl;
+    std::string result = "MANAGER,";
+
+    for ( int i = 0 ; i < msg.statuslist.size() ; i++)
+    {
+        std::string val = msg.statuslist.at(i).status;
+
+        if ( val == "start")
+        {
+            if (  msg.statuslist.at(i).ack )
+            {
+                val = "2"; //RUN
+            }
+            else
+            {
+                val = "1"; //WARN
+            }
+        }
+        else if ( val == "stop" )
+        {
+            val = "0"; //STOP
+        }
+
+        if ( i != msg.statuslist.size() - 1)
+        result += val + ",";
+        else
+        result += val;
+    }
+
+    //send
+    tcp_write_tcp(result);
+
+}
+
+
 bool tcp_request(sepanta_msgs::sound::Request  &req,sepanta_msgs::sound::Response &res)
 {
     res.result = true;
@@ -441,7 +505,7 @@ bool tcp_request(sepanta_msgs::sound::Request  &req,sepanta_msgs::sound::Respons
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "windows_communication_tcp");
+    ros::init(argc, argv, "tcpcore");
     ros::Time::init();
 
     cout << "WINDOWS COMMUNICATION TCP STARTED" << endl;
@@ -459,12 +523,17 @@ int main(int argc, char** argv)
     chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
     chatter_pub[4] = node_handles[5].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 1);
     chatter_pub[3] = node_handles[3].advertise<std_msgs::String>("tcpip/es", 1);
+
     //==========================================================================================
     sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
+    sub_handles[1] = node_handles[5].subscribe("manager/node_status",10,chatterCallback_manager);
     
     ros::NodeHandle nn;
     chatter_pub_ack = nn.advertise<std_msgs::String>("/core_tcp/ack",10);
-    chatter_pub_log = nn.advertise<std_msgs::String>("/core_tcp/log",10);
+    chatter_pub_log = nn.advertise<sepanta_msgs::log>("/manager/log",10);
+
+    service_start = node_handles[4].serviceClient<sepanta_msgs::NodeAction>("manager/start");
+    service_stop  = node_handles[5].serviceClient<sepanta_msgs::NodeAction>("manager/stop");
 
     service_tcp = nn.advertiseService("pgitic_service_tcp", tcp_request);
 

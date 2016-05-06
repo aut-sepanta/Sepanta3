@@ -78,6 +78,8 @@ void watchdog::init()
     sub_ack = node_handles[0].subscribe(callback_name, 1, &watchdog::callbackRaw_marker , this);
 }
 
+
+
 void watchdog::kill()
 {
      appexit = true;

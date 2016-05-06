@@ -10,7 +10,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition.hpp>
-
+ #include <boost/algorithm/string.hpp>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -29,6 +29,8 @@
 #include <stdlib.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -55,16 +57,19 @@ public:
     std::string name;
     std::string ack_mode;
 
-    watchdog(int vtimeout,std::string callname,std::string node_name,std::string mode)
+    watchdog(std::string name)
     {
-        ack_mode = mode;
+        ack_mode = "string";
         wd_max = 5;
-        name = node_name;
-        callback_name = callname;
+        name = name;
+        boost::erase_all(name, ".");
+
+        callback_name =  name + "/ack";
+
         callback_mode = 0;
         ack = false;
         signal = false;
-        timeout = vtimeout;
+        timeout = 1000;
         appexit = false;
         init();
     }

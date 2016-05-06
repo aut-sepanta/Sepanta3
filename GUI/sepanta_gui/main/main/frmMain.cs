@@ -12,6 +12,7 @@ namespace main
 {
     public partial class frmMain : Form
     {
+        public const int max_manager_nodes = 20;
         public bool es = false;
         public bool isMouseDown = false;
         public Color paintColor = Color.White;
@@ -19,9 +20,51 @@ namespace main
         public Item currentTool = Item.Pencil;
         MapTool objMap = new MapTool();
         int mouseX, mouseY, mapPosX = 0, mapPosY = 0;
+
+        List<Button> manager_btn_list = new List<Button>();
+
+       class manager_node
+       {
+           public string status;
+         
+       }
+
+        List<manager_node> manager_node_list = new List<manager_node>();
+
         public frmMain()
         {
             InitializeComponent();
+
+            for (int i = 0 ; i < max_manager_nodes ; i++)
+            {
+                manager_node n = new manager_node();
+                n.status = "stop";
+
+                manager_node_list.Add(n);
+            }
+
+            manager_btn_list.Add(btn_m1);
+            manager_btn_list.Add(btn_m2);
+            manager_btn_list.Add(btn_m3);
+            manager_btn_list.Add(btn_m4);
+            manager_btn_list.Add(btn_m5);
+            manager_btn_list.Add(btn_m6);
+            manager_btn_list.Add(btn_m7);
+            manager_btn_list.Add(btn_m8);
+            manager_btn_list.Add(btn_m9);
+            manager_btn_list.Add(btn_m10);
+            manager_btn_list.Add(btn_m11);
+            manager_btn_list.Add(btn_m12);
+            manager_btn_list.Add(btn_m13);
+            manager_btn_list.Add(btn_m14);
+            manager_btn_list.Add(btn_m15);
+            manager_btn_list.Add(btn_m16);
+            manager_btn_list.Add(btn_m17);
+            manager_btn_list.Add(btn_m18);
+            manager_btn_list.Add(btn_m19);
+            manager_btn_list.Add(btn_m20);
+
+            update_manager_page();
         }
 
         private void textBox6_TextChanged(object sender, EventArgs e)
@@ -98,7 +141,19 @@ namespace main
             }
         }
 
-
+        public void update_manager_page()
+        {
+            for ( int i = 0 ; i < manager_node_list.Count ; i++)
+            {
+                if (manager_node_list[i].status == "0")
+                    manager_btn_list[i].BackColor = Color.DarkRed;
+                if ( manager_node_list[i].status == "2")
+                     manager_btn_list[i].BackColor = Color.Green;
+                if (manager_node_list[i].status == "1")
+                        manager_btn_list[i].BackColor = Color.DarkOrange;
+            }
+          
+        }
         public void process_command(string a)
         {
             string[] array = a.Split(',');
@@ -118,15 +173,34 @@ namespace main
                     odom2_t.Text = array[4];
                 }
             }
+            if ( array[0] == "MANAGER")
+            {
+                for ( int i = 0 ; i < max_manager_nodes ; i++)
+                {
+                   manager_node_list[i].status = array[1 + i];
+                }
+
+                update_manager_page();
+             }
         }
 
         void main_tcp_get_message(client.ClientEventArgs args)
         {
-            this.BeginInvoke(new MethodInvoker(delegate
-                         {
-                             lst_tcp.Items.Add(args.message);
-                             process_command(args.message);
-                         }));
+            try
+            {
+                this.BeginInvoke(new MethodInvoker(delegate
+                             {
+                                 if (!args.message.Contains("MANAGER"))
+                                 {
+                                     lst_tcp.Items.Add(args.message);
+                                 }
+                                 process_command(args.message);
+                             }));
+            }
+            catch
+            {
+
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -516,19 +590,175 @@ namespace main
             txt_path.Text = statics.main_config.linux_path;
         }
 
-        private void button5_Click(object sender, EventArgs e)
-        {
-            statics.global_send("COMMAND,reset_costmap");
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
-            statics.global_send("COMMAND,reset_hector");
-        }
-
-        private void button7_Click(object sender, EventArgs e)
+        private void btn_hector_offset_Click(object sender, EventArgs e)
         {
             statics.global_send("COMMAND,offset_hector," + txt_offsetx.Text + "," + txt_offsety.Text);
+            txt_offsetx.Text = "";
+            txt_offsety.Text = "";
         }
+
+        private void btn_m1_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,1");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,1");
+        }
+
+        private void btn_m2_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,2");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,2");
+        }
+
+        private void btn_m3_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,3");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,3");
+        }
+
+        private void btn_m4_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,4");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,4");
+        }
+
+        private void btn_m5_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,5");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,5");
+        }
+
+        private void btn_m6_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,6");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,6");
+        }
+
+        private void btn_m7_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,7");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,7");
+        }
+
+        private void btn_m8_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,8");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,8");
+        }
+
+        private void btn_m9_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,9");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,9");
+        }
+
+        private void btn_m10_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,10");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,10");
+        }
+
+        private void btn_m11_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,11");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,11");
+        }
+
+        private void btn_m12_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,12");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,12");
+        }
+
+        private void btn_m13_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,13");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,13");
+        }
+
+        private void btn_m14_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,14");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,14");
+        }
+
+        private void btn_m15_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,15");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,15");
+        }
+
+        private void btn_m16_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,16");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,16");
+        }
+
+        private void btn_m17_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,17");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,17");
+        }
+
+        private void btn_m18_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,18");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,18");
+        }
+
+        private void btn_m19_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,19");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,19");
+        }
+
+        private void btn_m20_Click(object sender, EventArgs e)
+        {
+            if (rad_start.Checked)
+                statics.global_send("MANAGER,start,20");
+            if (rad_stop.Checked)
+                statics.global_send("MANAGER,stop,20");
+        }
+
+      
+
+     
     }
 }

@@ -67,6 +67,8 @@ bool isdooropened = true;
 
 ros::Publisher chatter_pub[20];
 ros::Publisher chatter_pub_motor[20];
+ros::Publisher pub_ack;
+
 tbb::atomic<int> Compass;
 
 int key_pad_reset = 0;
@@ -643,6 +645,8 @@ int main(int argc, char **argv)
     sub_handles[9] = node_handles[11].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
     sub_handles[10] = node_handles[12].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
     sub_handles[11] = node_handles[13].subscribe("tcpip/es", 10, chatterCallback_tcpes);
+
+    pub_ack = node_handles[14].advertise<std_msgs::String>("lowerbodycore/ack",10);
     //============================================================================================
 
     ros::Rate loop_rate(20);
@@ -653,6 +657,11 @@ int main(int argc, char **argv)
         Update();
         ros::spinOnce();
         loop_rate.sleep();
+
+        //===================================
+        std_msgs::String _msg;
+        _msg.data = "ok";
+        pub_ack.publish(_msg);
     }
 
     App_exit = true;

@@ -1,50 +1,18 @@
-
-/***************************************************************************
- *  sepanta_msgs.cpp - sepanta_msgs main application
- *
- *  Created: Tue Aug  3 17:06:44 2010
- *  Copyright  2010  Tim Niemueller [www.niemueller.de]
- *             2010  Carnegie Mellon University
- *             2010  Intel Labs Pittsburgh, Intel Research
- *
- ****************************************************************************/
-
-/*  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free
- *
- * Software Foundation; either version 2 of the License, or
- *  (at your option) any later version. A runtime exception applies to
- *  this software (see LICENSE file mentioned below for details).
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
- *
- *  Read the full text in the LICENSE file in the base directory.
- */
-
-
 #include "sepanta_msgs/NodeAction.h"
 #include "sepanta_msgs/ListAvailable.h"
 #include "sepanta_msgs/ListLoaded.h"
 #include "sepanta_msgs/NodeEvent.h"
-
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/package.h>
-
 #include <map>
 #include <string>
 #include <utility>
 #include <fstream>
-
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition.hpp>
-
-
+#include <boost/algorithm/string.hpp>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -52,27 +20,21 @@
 #include <signal.h>
 #include <unistd.h>
 #include <regex.h>
-
 #include <boost/filesystem.hpp>
 #include <fstream>
 #include <ros/package.h>
-
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
-
 #include <sensor_msgs/Image.h>
-
 #include <rosspawn/watchdog.h>
 #include <sepanta_msgs/nodestatus.h>
 #include <sepanta_msgs/nodestatuslist.h>
 #include <sepanta_msgs/kill_marker.h>
 #include <fstream>
-
 #include "ros/ros.h"
 #include <math.h>
 #include <sstream>
@@ -86,39 +48,66 @@
 #include <iostream>
 #include <math.h>
 #include <boost/lexical_cast.hpp>
+#include <sepanta_msgs/log.h>
 
 using namespace std;
 using namespace boost;
-// For now we only accept binaries which are in a bin directory. This makes
-// thinks much less clutered, otherwise add  "%s/%s" to the array
+
+std::string coutcolor0 = "\033[0;0m";
+std::string coutcolor_red = "\033[0;31m";
+std::string coutcolor_green = "\033[0;32m";
+std::string coutcolor_blue = "\033[0;34m";
+std::string coutcolor_magenta = "\033[0;35m";
+std::string coutcolor_brown = "\033[0;33m";
+
 const char *test_paths[] = { "%s/bin/%s" };
 
 std::vector<std::string > models_fpath;
 std::vector<std::string > models_ename;
-
 std::vector<std::string > shell_fpath;
 std::vector<std::string > shell_ename;
 
-bool App_exit = false;
-ros::Subscriber sub_log[34];
-std::vector<std::string> logs[34];
-
-struct node_status
+struct main_node
 {
 public :
 
-    std::string name;
-    std::string status;
-    bool ack;
+    std::string name ;
+    std::string status ;
+    watchdog *wd;
+    std::vector<std::string> logs;
 };
 
-std::vector<node_status> node_list;
-ros::Publisher     __pub_node_status;
+bool App_exit = false;
 
+std::vector<main_node> node_list;
+ros::Publisher pub_status;
+ros::Subscriber sub_log;
+
+void std_out(std::string msg,std::string color)
+{
+	if ( color == "")
+	std::cout<<msg<<std::endl;
+
+    if ( color == "red" )
+    std::cout<<coutcolor_red<<msg<<coutcolor0<<std::endl;
+
+    if ( color == "blue" )
+    std::cout<<coutcolor_blue<<msg<<coutcolor0<<std::endl;
+
+    if ( color == "green" )
+    std::cout<<coutcolor_green<<msg<<coutcolor0<<std::endl;
+
+    if ( color == "magenta" )
+    std::cout<<coutcolor_magenta<<msg<<coutcolor0<<std::endl;
+
+    if ( color == "brown" )
+    std::cout<<coutcolor_brown<<msg<<coutcolor0<<std::endl;
+}
+
+//===========================================================================
 
 class sepanta_msgsMain
 {
-
 
 public:
     sepanta_msgsMain(ros::NodeHandle &n)
@@ -132,20 +121,13 @@ public:
         __use_acceptable_modules_file = n.getParam("/sepanta_msgs/acceptable_modules_file",
                                                    __acceptable_modules_file);
 
-        //ros::package rospack;
-
         if (__use_acceptable_modules_file) {
             ROS_INFO("Using acceptable modules file %s", __acceptable_modules_file.c_str());
             std::ifstream f(__acceptable_modules_file.c_str());
             while (! (f.fail() || f.eof()) ) {
                 std::string mod;
                 f >> mod;
-                //                for (rospack::VecPkg::iterator i = rospack::Package::pkgs.begin();
-                //                     i != rospack::Package::pkgs.end(); ++i) {
-                //                    if ((*i)->name == mod) {
-                //                        __search_paths.push_back((*i)->path);
-                //                    }
-                //                }
+              
             }
         } else {
             std::string ros_root_bin = getenv("ROS_ROOT");
@@ -154,42 +136,33 @@ public:
             }
             ros_root_bin += "/bin";
             __search_paths.push_back(ros_root_bin);
-            //            for (rospack::VecPkg::iterator i = rospack::Package::pkgs.begin();
-            //                 i != rospack::Package::pkgs.end(); ++i) {
-            //                __search_paths.push_back((*i)->path);
-            //            }
+       
         }
 
         ros::NodeHandle nn;
-        __srv_startall = n.advertiseService("/node_manager/startall", &sepanta_msgsMain::startall_node, this);
-        __srv_stopall = n.advertiseService("/node_manager/stopall", &sepanta_msgsMain::stopall_node, this);
-        __srv_start = n.advertiseService("/node_manager/start", &sepanta_msgsMain::start_node, this);
-        __srv_stop = n.advertiseService("/node_manager/stop", &sepanta_msgsMain::stop_node, this);
-        __srv_pause = n.advertiseService("/node_manager/pause", &sepanta_msgsMain::pause_node, this);
-        __srv_continue = n.advertiseService("/node_manager/continue", &sepanta_msgsMain::continue_node, this);
-        __srv_list_loaded = n.advertiseService("/node_manager/list_loaded",&sepanta_msgsMain::list_loaded, this);
-        __srv_list_avail = n.advertiseService("/node_manager/list_available", &sepanta_msgsMain::list_available, this);
+        __srv_startall = n.advertiseService("/manager/startall", &sepanta_msgsMain::startall_node, this);
+        __srv_stopall = n.advertiseService("/manager/stopall", &sepanta_msgsMain::stopall_node, this);
+        __srv_start = n.advertiseService("/manager/start", &sepanta_msgsMain::start_node, this);
+        __srv_stop = n.advertiseService("/manager/stop", &sepanta_msgsMain::stop_node, this);
+        __srv_pause = n.advertiseService("/manager/pause", &sepanta_msgsMain::pause_node, this);
+        __srv_continue = n.advertiseService("/manager/continue", &sepanta_msgsMain::continue_node, this);
+        __srv_list_loaded = n.advertiseService("/manager/list_loaded",&sepanta_msgsMain::list_loaded, this);
+        __srv_list_avail = n.advertiseService("/manager/list_available", &sepanta_msgsMain::list_available, this);
 
-        __pub_node_events = n.advertise<sepanta_msgs::NodeEvent>("node_manager/node_events", 10);
+        __pub_node_events = n.advertise<sepanta_msgs::NodeEvent>("manager/node_events", 10);
         service_markerkill = nn.serviceClient<sepanta_msgs::kill_marker>("pgitic_kill_marker");
 
     }
 
     ~sepanta_msgsMain()
     {
-        // We use native pthread calls here since Boost does not allow to cancel a thread.
-        // I'm not going back to the stoneage and do a polling wait() in the thread and
-        // waste power just to account for the sluggish Boost API.
         void *dont_care;
         pthread_cancel(__children_wait_thread.native_handle());
         pthread_join(__children_wait_thread.native_handle(), &dont_care);
     }
 
-    std::string find_valid(std::string &progname)
+    std::string find_valid_devel(std::string &progname)
     {
-        //        if (regexec(&__re_alnum, progname.c_str(), 0, NULL, 0) == REG_NOMATCH) {
-        //            throw ros::Exception("Invalid program name");
-        //        }
 
         for (ChildrenMap::iterator i = __children.begin(); i != __children.end(); ++i) {
             if (i->second.first == progname) {
@@ -208,16 +181,8 @@ public:
         throw ros::Exception("No program with the requested name found");
     }
 
-    void kill_marker()
+    std::string find_valid_shell(std::string &progname)
     {
-        sepanta_msgs::kill_marker srv_kill;
-        service_markerkill.call(srv_kill);
-    }
-
-    std::string find_valid2(std::string &progname)
-    {
-
-
         for (ChildrenMap::iterator i = __children.begin(); i != __children.end(); ++i) {
             if (i->second.first == progname) {
                 throw ros::Exception("Program is already running");
@@ -237,6 +202,7 @@ public:
 
     void update_status(std::string name,std::string status)
     {
+    	std::cout<<"updated : "<<name<<" "<<status<<std::endl;
         for ( int i = 0 ; i < node_list.size() ; i++ )
         {
             if ( node_list.at(i).name == name )
@@ -246,18 +212,19 @@ public:
         }
     }
 
+    
     bool fork_and_exec(std::string progname)
     {
-        std::cout<<"try:"<<progname<<std::endl;
-        std::string p;
-        if ( progname != "kinect.sh" && progname != "kinectkill.sh" && progname != "kinectkill2.sh" &&
-             progname != "motor.sh"  && progname != "motorkill.sh"  && progname != "modelkill.sh" && progname != "objectkill.sh" &&
-             progname != "marker.sh" && progname != "markerkill.sh" &&
-             progname != "lowerbody.sh" && progname != "lowerbodykill.sh" && progname != "speechkill.sh" && progname != "tcpkill.sh")
+        std_out("GET START :" + progname,"magenta");
 
-            p = find_valid(progname);
+        std::string p;
+        bool isshell = false;
+        isshell = boost::algorithm::contains(progname, ".sh");
+
+        if (  isshell )
+            p = find_valid_shell(progname);
         else
-            p = find_valid2(progname);
+            p = find_valid_devel(progname);
 
         pid_t pid = fork();
         if (pid == -1) {
@@ -285,8 +252,6 @@ public:
             __pub_node_events.publish(msg);
 
             update_status(progname,"start");
-
-
         }
 
         return true;
@@ -414,7 +379,8 @@ public:
     bool start_node(sepanta_msgs::NodeAction::Request &req,
                     sepanta_msgs::NodeAction::Response &resp)
     {
-        return fork_and_exec(req.node_file_name);
+
+        return fork_and_exec(get_name(req.node_file_name));
     }
 
     bool send_signal(std::string &node_file_name, int signum)
@@ -451,61 +417,41 @@ public:
         boost::algorithm::split(strs,line,boost::algorithm::is_any_of(","));
         for ( int i = 0 ; i < strs.size() ; i++ )
         {
-            fork_and_exec(strs.at(i));
+            fork_and_exec(get_name(strs.at(i)));
         }
-
     }
+
+
+    string get_name(string sindex)
+    {
+        int index = boost::lexical_cast<int>(sindex);
+        index--;
+        return node_list.at(index).name;
+    } 
 
     bool stopnode(std::string name)
     {
-        pid_t pid = get_pid(name);
+        string nodeName = get_name(name);
+
+        std_out("GET STOP :" + nodeName,"magenta");
+
+        pid_t pid = get_pid(nodeName);
         if (pid != 0) {
             std::string state = get_process_state(pid);
             ROS_INFO("Sending signal %s (%i) to %s (PID %i)", strsignal(SIGINT), SIGINT,
                      __children[pid].first.c_str(), pid);
             ::kill(pid, SIGINT);
 
-            if ( name == "kinect.sh")
+            //additional kill
+            bool isshell = boost::algorithm::contains(nodeName, ".sh");
+            
+            if ( isshell )
             {
-                fork_and_exec("kinectkill.sh");
-                fork_and_exec("kinectkill2.sh");
-            }
+                boost::erase_all(nodeName, ".sh");
+                nodeName += "kill.sh";
 
-            if ( name == "lowerbody.sh")
-            {
-                fork_and_exec("lowerbodykill.sh");
-            }
-
-            if ( name == "marker.sh")
-            {
-                kill_marker();
-                fork_and_exec("markerkill.sh");
-            }
-
-            std::cout<<"speech"<<std::endl;
-            if ( name == "core_speech")
-            {
-                fork_and_exec("speechkill.sh");
-            }
-
-            if ( name == "core_tcp")
-            {
-                fork_and_exec("tcpkill.sh");
-            }
-
-            if ( name == "motor.sh")
-            {
-                fork_and_exec("motorkill.sh");
-            }
-
-            if ( name == "core_objectRecognition")
-            {
-                fork_and_exec("objectkill.sh");
-            }
-
-            if ( name == "core_createModel")
-            {
-                fork_and_exec("modelkill.sh");
+                std_out("KILL : " + nodeName,"red");
+                fork_and_exec(nodeName);
             }
 
             return true;
@@ -584,15 +530,11 @@ public:
         return true;
     }
 
-
-
 private:
     ros::NodeHandle &__n;
     ros::Publisher     __pub_node_events;
-    
     ros::ServiceServer __srv_startall;
     ros::ServiceServer __srv_stopall;
-
     ros::ServiceServer __srv_start;
     ros::ServiceServer __srv_stop;
     ros::ServiceServer __srv_pause;
@@ -600,23 +542,18 @@ private:
     ros::ServiceServer __srv_list_loaded;
     ros::ServiceServer __srv_list_avail;
     ros::ServiceClient service_markerkill;
-
     std::list<std::string> __search_paths;
-
-
     typedef std::map<int, std::pair<std::string, std::string> > ChildrenMap;
     ChildrenMap                __children;
     boost::mutex               __children_mutex;
     boost::condition_variable  __children_cond;
     boost::thread              __children_wait_thread;
-
     bool                   __use_acceptable_modules_file;
     std::string            __acceptable_modules_file;
     std::list<std::string> __acceptable_modules;
-
-
     regex_t __re_alnum;
 };
+
 
 
 void loadFeatureModels (const boost::filesystem::path &base_dir, const std::string &extension, std::vector<std::string> &models)
@@ -646,125 +583,48 @@ void loadFeatureModels (const boost::filesystem::path &base_dir, const std::stri
     }
 }
 
-const int names_count = 38;
-std::string names[names_count];
+std::vector<std::string> names;
 
 int init_nodes()
 {
+	//DCM [9]
+    names.push_back("kinect2.sh");         //1
+    names.push_back("kinect1.sh");         //2
+    names.push_back("motor.sh");           //3
+    names.push_back("lowerbodycore");      //4
+	names.push_back("upperbodycore");      //5
+	names.push_back("laser.sh");           //6
+	names.push_back("tcp_core");           //7
+    names.push_back("odometry");           //8
+    names.push_back("cmd_watchdog");       //9
+    names.push_back("texttospeech");        //10
+    names.push_back("websocket.sh");        //11
+    names.push_back("hector_calib.sh");     //12
+    names.push_back("hector_rec.sh");       //13
+    names.push_back("hector_main.sh");      //14
+    names.push_back("sepantamapengine");    //15
+    names.push_back("move.sh");             //16
+    names.push_back("sepantamovebase");     //17
+    names.push_back("object_recognition");  //18
+    names.push_back("human.sh");            //19
+	names.push_back("scenario1");           //20
 
-    names[0] = "kinect.sh";
-    names[1] = "motor.sh";
-    names[2] = "marker.sh";
-    names[3] = "core_skeleton";
-    names[4] = "core_faceDetect";
-    names[5] = "upperbodycore";
-    names[6] = "core_rampStairDetection";
-    names[7] = "lowerbody.sh";
-    names[8] = "core_waveDetect";
-    names[9] = "core_speech";
-    names[10] = "core_sound";
-    names[11] = "core_recordPlayMotors";
-    names[12] = "kinect_aux_node";
-    names[13] = "core_objectRecognition";
-    names[14] = "robot_byby";
-    names[15] = "hand_imitation";
-    names[16] = "anounce_pose";
-    names[17] = "introduction";
-    names[18] = "hand_track";
-    names[19] = "senario";
-    names[20] = "stair";
-    names[21] = "logic2";
-    names[22] = "sample_stair_ramp";      //ramp
-    names[23] = "sample";                 //upperbody
-    names[24] = "sample1";                //downerbody
-    names[25] = "sample_use";             //sound
-    names[26] = "sample_skeleton";    //skeleton
-    names[27] = "sample_recordmotor";     //record
-    names[28] = "sample_speech";     //record
-    names[29] = "sample_aux";     //record
-    names[30] = "core_createModel";     //record
-    names[31] = "sample_wavedetect";     //record
-    names[32] = "sample_faceDetect";     //record
-    names[33] = "core"; //in hichi nist ! :)
-    names[34] = "ikfk";
-    names[35] = "model.sh";
-    names[36] = "object.sh";
-    names[37] = "core_tcp";
-
-    for ( int i = 0 ; i < names_count ; i++ )
+	for ( int i = 0 ; i < names.size() ; i++)
     {
-        node_status nd_st;
-        nd_st.name = names[i];
-        nd_st.status = "stop";
-        nd_st.ack = false;
-        node_list.push_back(nd_st);
+	     main_node _main_node;
+	    _main_node.name = names.at(i);
+	    _main_node.wd = new watchdog(_main_node.name);
+	    _main_node.status = "stop";
+	    node_list.push_back(_main_node);
     }
 }
 
 void publisher()
 {
-    watchdog wd1(1000,"/camera/rgb/image_color","kinect","image");
-    watchdog wd2(1000,"/core_upperbody/ack","upperbodycore","string");
-    watchdog wd3(1000,"/core_speech/ack","core_speech","string");
-    watchdog wd4(1000,"/core_aux/ack","core_aux","string");
-    watchdog wd5(1000,"/core_sound/ack","core_sound","string");
-    watchdog wd6(1000,"/core_lowerbody/ack","core_lowerbody","string");
-
-    watchdog wd7(1000,"/senario_byby/ack","senario_byby","string");
-    watchdog wd8(1000,"/senario_stair/ack","senario_stair","string");
-    watchdog wd9(1000,"/senario_walk/ack","senario_walk","string");
-    watchdog wd10(1000,"/senario_introduction/ack","senario_introduction","string");
-    watchdog wd11(1000,"/senario_anouncepose/ack","senario_anouncepose","string");
-    watchdog wd12(1000,"/senario_imitation/ack","senario_imitation","string");
-    watchdog wd13(1000,"/senario_handtrack/ack","senario_handtrack","string");
-    watchdog wd14(1000,"/senario_logic2/ack","senario_logic2","string");
-
-    watchdog wd15(1000,"/core_object/ack","core_object","string");
-    watchdog wd16(1000,"/core_face/ack","core_face","string");
-    watchdog wd17(1000,"/motor_states/dx_port","core_motor","motor");
-    watchdog wd18(1000,"/skeleton_markers","core_marker","marker");
-    watchdog wd19(1000,"/core_wavedetection/ack","core_wavedetection","string");
-    watchdog wd20(1000,"/core_skeleton/ack","core_skeleton","string");
-    watchdog wd21(1000,"/core_stair/ack","core_stair","string");
-    watchdog wd22(1000,"/core_recordmotor/ack","core_recordmotor","string");
-
-    watchdog wd23(1000,"/OBJECTOUT/createmodel/ack","core_createModel","string");
-    watchdog wd24(1000,"/core_ikfk/ack","ikfk","string");
-    watchdog wd25(1000,"/core_tcp/ack","core_tcp","string");
-
-    boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
-
     while ( App_exit == false )
     {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+        boost::this_thread::sleep(boost::posix_time::milliseconds(500));
         
-        node_list.at(0).ack = wd1.ack;
-        node_list.at(1).ack = true;
-        node_list.at(5).ack = wd2.ack;
-        node_list.at(9).ack = wd3.ack;
-        node_list.at(12).ack = wd4.ack;
-        node_list.at(10).ack = wd5.ack;
-        node_list.at(7).ack = wd6.ack;
-        node_list.at(14).ack = wd7.ack;
-        node_list.at(20).ack = wd8.ack;
-        node_list.at(19).ack = wd9.ack;
-        node_list.at(17).ack = wd10.ack;
-        node_list.at(16).ack = wd11.ack;
-        node_list.at(15).ack = wd12.ack;
-        node_list.at(18).ack = wd13.ack;
-        node_list.at(21).ack = wd14.ack;
-        node_list.at(11).ack = wd22.ack;
-        node_list.at(2).ack = wd18.ack;
-        node_list.at(8).ack = wd19.ack;
-        node_list.at(3).ack = wd20.ack;
-        node_list.at(6).ack = wd21.ack;
-        node_list.at(4).ack = wd16.ack;
-        node_list.at(13).ack = wd15.ack;
-        node_list.at(30).ack = wd23.ack;
-        node_list.at(34).ack = wd24.ack;
-        node_list.at(37).ack = wd25.ack;
-
-        //=========
         sepanta_msgs::nodestatuslist list;
 
         for ( int i = 0 ; i < node_list.size() ; i++ )
@@ -772,44 +632,20 @@ void publisher()
             sepanta_msgs::nodestatus ns;
             ns.name = node_list.at(i).name;
             ns.status = node_list.at(i).status;
-            ns.ack = node_list.at(i).ack;
+            ns.ack = node_list.at(i).wd->ack;
             list.statuslist.push_back(ns);
         }
 
-        __pub_node_status.publish(list);
-
-        // std::cout<<"io"<<std::endl;
-
+        pub_status.publish(list);
     }
 
-    wd1.kill();
-    wd2.kill();
-    wd3.kill();
-    wd4.kill();
-    wd5.kill();
-    wd6.kill();
-    wd7.kill();
-    wd8.kill();
-    wd9.kill();
-    wd10.kill();
-    wd11.kill();
-    wd12.kill();
-    wd13.kill();
-    wd14.kill();
-    wd15.kill();
-    wd16.kill();
-    wd17.kill();
-    wd18.kill();
-    wd19.kill();
-    wd20.kill();
-    wd21.kill();
-    wd22.kill();
-    wd23.kill();
-    wd24.kill();
-    wd25.kill();
-}
+    //kill all wds
+    for ( int i = 0 ; i < node_list.size() ; i++)
+    {
+        node_list.at(i).wd->kill();
+    }
 
-int log_state[33] = {0};
+}
 
 string get_time()
 {
@@ -845,207 +681,40 @@ string get_time()
     return time_stamp;
 }
 
-void save_log(int index,string message)
+void save_log(std::string id,string message)
 {
-    std::string homedir = getenv("HOME");
-    std::string path_points =  homedir + "/catkin_ws/log/" + names[index] + ".txt";
+    std::string path_points =  ros::package::getPath("managment") + "/logs/" + id + ".txt";
     std::string line;
     std::ofstream text;
 
     string time_stamp =  get_time();
 
-    if ( log_state[index] == 0)
-        text.open(path_points.c_str(), std::fstream::out ); //first time create a new log txt
-    else
-        text.open(path_points.c_str(), std::fstream::out | std::fstream::app); //second time append the current log txt
+    text.open(path_points.c_str(), std::fstream::out | std::fstream::app); //second time append the current log txt
 
     if (text.is_open())
     {
-        log_state[index] = 1;
         text<<time_stamp<<message<<endl;
         text.flush();
         text.close();
     }
     else
     {
-        std::cout << "Unable to open file" << std::endl << std::endl;
+        std::cout<<coutcolor_red << "Unable to open file" << coutcolor0 << std::endl;
     }
 
 }
 
-void callback_log1(const std_msgs::String::ConstPtr &msg)
+void main_log_callback(const sepanta_msgs::log::ConstPtr &msg)
 {
-    save_log(0,msg->data);
-}
-void callback_log2(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(1,msg->data);
-}
-void callback_log3(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(2,msg->data);
-
-}
-void callback_log4(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(3,msg->data);
-
-}
-void callback_log5(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(4,msg->data);
-
-}
-void callback_log6(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(5,msg->data);
-
-}
-void callback_log7(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(6,msg->data);
-
-}
-void callback_log8(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(7,msg->data);
-
-}
-void callback_log9(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(8,msg->data);
-
-}
-void callback_log10(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(9,msg->data);
-
-}
-void callback_log11(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(10,msg->data);
-
-}
-void callback_log12(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(11,msg->data);
-
-}
-void callback_log13(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(12,msg->data);
-
-}
-void callback_log14(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(13,msg->data);
-
-}
-void callback_log15(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(14,msg->data);
-
-}
-void callback_log16(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(15,msg->data);
-
-}
-void callback_log17(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(16,msg->data);
-
-}
-void callback_log18(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(17,msg->data);
-
-}
-void callback_log19(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(18,msg->data);
-
-}
-void callback_log20(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(19,msg->data);
-
-}
-void callback_log21(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(20,msg->data);
-
-}
-void callback_log22(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(21,msg->data);
-
-}
-void callback_log23(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(22,msg->data);
-
-}
-void callback_log24(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(23,msg->data);
-
-}
-void callback_log25(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(24,msg->data);
-
-}
-void callback_log26(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(25,msg->data);
-
-}
-void callback_log27(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(26,msg->data);
-
-}
-void callback_log28(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(27,msg->data);
-
-}
-void callback_log29(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(28,msg->data);
-
-}
-void callback_log30(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(29,msg->data);
-
-}
-void callback_log31(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(30,msg->data);
-
-}
-void callback_log32(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(31,msg->data);
-
-}
-void callback_log33(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(32,msg->data);
-
-}
-void callback_log34(const std_msgs::String::ConstPtr &msg)
-{
-    save_log(33,msg->data);
+   save_log(msg->id,msg->message);
 }
 
 int main(int argc, char **argv)
 {
-    init_nodes();
-    ros::init(argc, argv, "rosspawn");
+    ros::init(argc, argv, "manager");
     ros::Time::init();
+
+    init_nodes();
 
     ros::NodeHandle n;
     //=========================================================================
@@ -1063,12 +732,12 @@ int main(int argc, char **argv)
 
         std::string name = strs.at(strs.size()-1);
         models_ename.push_back(name);
-        std::cout << name << std::endl;
+        std_out(name,"brown");
     }
 
     std::cout<< models_ename.size() << std::endl;
-    //=========================================================================
-    root_path = homedir + "/catkin_ws/shell/";
+
+    root_path =  ros::package::getPath("managment") + "/shell/";
     extension = ".sh";
 
     transform (extension.begin (), extension.end (), extension.begin (), (int(*)(int))tolower);
@@ -1082,57 +751,20 @@ int main(int argc, char **argv)
 
         std::string name = strs.at(strs.size()-1);
         shell_ename.push_back(name);
-        std::cout << name << std::endl;
+        std_out(name,"brown");
     }
 
     std::cout<< shell_ename.size() << std::endl;
 
-    //init nodes
-    __pub_node_status = n.advertise<sepanta_msgs::nodestatuslist>("node_manager/node_status", 10);
+    std_out("======================================== Ready ========================================","green");
 
-    
-    boost::thread _thread_wd(&publisher);
+    pub_status = n.advertise<sepanta_msgs::nodestatuslist>("manager/node_status", 10);
+    sub_log = n.subscribe("/manager/log", 1, main_log_callback);
 
     sepanta_msgsMain sepanta_msgs(n);
-    ros::NodeHandle _n;
 
-    sub_log[0] = _n.subscribe("/core_kinect/log", 1, callback_log1);
-    sub_log[1] = _n.subscribe("/core_motor/log", 1, callback_log2);
-    sub_log[2] = _n.subscribe("/core_marker/log", 1, callback_log3);
-    sub_log[3] = _n.subscribe("/core_skeleton/log", 1, callback_log4);
-    sub_log[4] = _n.subscribe("/core_face/log", 1, callback_log5);
-    sub_log[5] = _n.subscribe("/core_upperbody/log", 1, callback_log6);
-    sub_log[6] = _n.subscribe("/core_stair/log", 1, callback_log7);
-    sub_log[7] = _n.subscribe("/core_lowerbody/log", 1, callback_log8);
-    sub_log[8] = _n.subscribe("/core_wavedetect/log", 1, callback_log9);
-    sub_log[9] = _n.subscribe("/core_speech/log", 1, callback_log10);
-    sub_log[10] = _n.subscribe("/core_sound/log", 1, callback_log11);
-    sub_log[11] = _n.subscribe("/core_recordmotor/log", 1, callback_log12);
-    sub_log[12] = _n.subscribe("/core_aux/log", 1, callback_log13);
-    sub_log[13] = _n.subscribe("/core_object/log", 1, callback_log14);
-    sub_log[14] = _n.subscribe("/senario_byby/log", 1, callback_log15);
-    sub_log[15] = _n.subscribe("/senario_imitation/log", 1, callback_log16);
-    sub_log[16] = _n.subscribe("/senario_anouncepose/log", 1, callback_log17);
-    sub_log[17] = _n.subscribe("/senario_introduction/log", 1, callback_log18);
-    sub_log[18] = _n.subscribe("/senario_handtrack/log", 1, callback_log19);
-    sub_log[19] = _n.subscribe("/senario_walk/log", 1, callback_log20);
-    sub_log[20] = _n.subscribe("/senario_stair/log", 1, callback_log21);
-    sub_log[21] = _n.subscribe("/senario_logic2/log", 1, callback_log22);
-    sub_log[22] =  _n.subscribe("/sample_stair/log", 1, callback_log23);
-    sub_log[23] =  _n.subscribe("/sample_upperbody/log", 1, callback_log24);
-    sub_log[24] =  _n.subscribe("/sample_lowerbody/log", 1, callback_log25);
-    sub_log[25] =  _n.subscribe("/sample_sound/log", 1, callback_log26);
-    sub_log[26] =  _n.subscribe("/sample_skeleton/log", 1, callback_log27);
-    sub_log[27] =  _n.subscribe("/sample_recordmotor/log", 1, callback_log28);
-    sub_log[28] =  _n.subscribe("/sample_speech/log", 1, callback_log29);
-    sub_log[29] =  _n.subscribe("/sample_aux/log", 1, callback_log30);
-    sub_log[30] =  _n.subscribe("/sample_object/log", 1, callback_log31);
-    sub_log[31] =  _n.subscribe("/sample_wavedetect/log", 1, callback_log32);
-    sub_log[32] =  _n.subscribe("/sample_face/log", 1, callback_log33);
-    sub_log[33] =  _n.subscribe("/core_tcp/log", 1, callback_log34);
-
-    // save_log(0);
-
+    boost::thread _thread_wd(&publisher);
+  
     ros::spin();
 
     _thread_wd.interrupt();

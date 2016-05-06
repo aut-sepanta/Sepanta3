@@ -71,7 +71,6 @@ private:
 
 };
 
-
 Socket::Socket(const char address[],char portNum[],int bufferSize)
 {
 	memset(&(this->hints), 0, sizeof (this->hints));
