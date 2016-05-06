@@ -142,6 +142,7 @@ class MapServer
     std::string fname;
     std::string mapfname;
 
+
     MapServer(const std::string& _fname, double _res)
     {
       service2 = n.advertiseService("sepantamapengenine/load", &MapServer::checkcommand , this);
@@ -260,9 +261,10 @@ class MapServer
       std::cout<<"map origin: "<<origin[0]<<" "<<origin[1]<<std::endl;
       map_resp_.map.info.origin = mpos;
       metadata_pub.publish( meta_data_message_ );
-      
      
       map_pub.publish( map_resp_.map );
+
+      set_map = true;
 
       ROS_INFO("Read and published a %d X %d map @ %.3lf m/cell",
                map_resp_.map.info.width,
@@ -273,15 +275,13 @@ class MapServer
     /** Callback invoked when someone requests our service */
     bool mapCallback(nav_msgs::GetMap::Request  &req,nav_msgs::GetMap::Response &res )
     {
-      if ( set_map )
-      {
-        res = map_resp_;
-        ROS_INFO("Sending map");
-      }
-      else
-      {
-        ROS_ERROR("First you should call load map service"); 
-      }
+      
+        
+          res = map_resp_;
+          ROS_INFO("Sending map");
+
+        
+     
 
       return true;
     }
@@ -289,7 +289,6 @@ class MapServer
    bool checkcommand(std_srvs::Empty::Request  &req,std_srvs::Empty::Response &res)
    {
       ROS_INFO("Load Requested");
-      set_map = true;
       load_map();
       return true;
     }
