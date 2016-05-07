@@ -128,7 +128,7 @@ ros::Publisher pub_spr;
 ros::Publisher pub_currnet_object;
 bool say_enable = true;
 
-int logic_state = 3;
+int logic_state = 0;
 bool isdooropened = false;
 bool isrobotmove = false;
 bool isspeechready = false;
@@ -233,7 +233,7 @@ bool process_object(string name)
   sepanta_msgs::LookForObjectsGoal goal;
   ac.sendGoal(goal);
 
-  bool finished_before_timeout = ac.waitForResult(ros::Duration(30.0));
+  bool finished_before_timeout = ac.waitForResult(ros::Duration(60));
 
   if (finished_before_timeout)
   {
