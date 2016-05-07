@@ -3,7 +3,9 @@
     <arg name="base_frame_name" default="base_link"/>
     <arg name="laser_frame_name" default="laser_link"/>
     
-   
+    <node pkg="tf" type="static_transform_publisher" name="broadcaster_baseodom_odom_to_base" output="screen"
+        args="0 0 0 0 0 0 1 $(arg odom_frame_name) $(arg base_frame_name) 30"
+    />
 
     <node pkg="tf" type="static_transform_publisher" name="broadcaster_laserscan_base_to_laser" output="screen"
         args="0.27 0 0 0 0 0 1 $(arg base_frame_name) $(arg laser_frame_name) 30"

@@ -243,7 +243,7 @@ std::vector<goal_data> goal_list;
 
 
 int info_counter = 0;
-bool say_enable = false;
+bool say_enable = true;
 
 int system_state = 0;
 int logic_state = 0;
