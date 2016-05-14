@@ -147,7 +147,7 @@ std::string coutcolor_brown = "\033[0;33m";
 
 //=============================================================
 
-bool say_enable = true;
+bool say_enable = false;
 
 bool App_exit = false;
 bool IsCmValid = false;
