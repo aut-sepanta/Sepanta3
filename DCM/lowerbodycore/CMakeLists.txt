@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   std_msgs
   nav_msgs
+  sensor_msgs
   geometry_msgs
   image_transport
   message_generation
@@ -41,9 +42,14 @@ add_definitions(${PCL_DEFINITIONS})
 add_library(serial src/serial.cc src/impl/unix.cc src/impl/list_ports/list_ports_linux.cc)
 target_link_libraries(serial rt )
 
+
 add_executable(lowerbodycore src/lowerbodycore.cpp)
 target_link_libraries(lowerbodycore ${catkin_LIBRARIES} ${Boost_LIBRARIES} serial)
 add_dependencies(lowerbodycore sepanta_msgs_generate_messages_cpp)
+
+add_executable(remotecontrol src/remotecontrol.cpp)
+target_link_libraries(remotecontrol ${catkin_LIBRARIES} ${Boost_LIBRARIES} serial)
+add_dependencies(remotecontrol sepanta_msgs_generate_messages_cpp)
 
 
 
