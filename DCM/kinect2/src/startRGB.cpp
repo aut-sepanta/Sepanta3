@@ -27,8 +27,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 ***************************************************************************************/
 #include "k2_client.h"
 
-int imageSize = 6220800;
-int streamSize = 6226560;// imageSize + sizeof(double);
+int imageSize = 2764800;
+int streamSize = 2768640;// imageSize + sizeof(double);
 std::string cameraName = "rgb";
 std::string imageTopicSubName = "image_color";
 std::string cameraInfoSubName = "camera_info";
@@ -59,9 +59,9 @@ int main(int argC,char **argV)
         rosImage.header.stamp = ros::Time(utcTime);
         rosImage.header.frame_id = ros::this_node::getNamespace() + "/colorFrame"; 
 		rosImage.encoding = "rgb8";
-        rosImage.width = 1920;
-        rosImage.height = 1081;
-        rosImage.step = 5760; // = 1920*3bytes
+        rosImage.width = 1280;
+        rosImage.height = 721;
+        rosImage.step = 3840; // = 1920*3bytes
         rosImage.data = bufferVector;
 		sensor_msgs::CameraInfo camInfo = camInfoMgr.getCameraInfo();
 		camInfo.header.stamp = cvImage.header.stamp;
