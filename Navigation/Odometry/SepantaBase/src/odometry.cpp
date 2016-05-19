@@ -503,7 +503,7 @@ int main(int argc, char** argv)
   ros::Subscriber sub_handles[15];
 
   chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
-  chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odometry_hector/odometry", 10);
+  chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odom", 10);
 
   //chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
   chatter_pub[4] = node_handles[4].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
@@ -514,7 +514,7 @@ int main(int argc, char** argv)
   sub_handles[2] = node_handles[3].subscribe("lowerbodycore/irsensors", 10, chatterCallback_irsensor);
   sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);
   sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeed", 10, chatterCallback_omnispeed);
-  sub_handles[6] = node_handles[7].subscribe("hectorslam/pose", 10, chatterCallback_pose);
+  sub_handles[6] = node_handles[7].subscribe("slam_out_pose", 10, chatterCallback_pose);
   //sub_handles[7] = node_handles[8].subscribe("odometry_base/syscommand", 10, chatterCallback_pose);
 
   tf::TransformBroadcaster odom_broadcaster;
@@ -533,7 +533,7 @@ int main(int argc, char** argv)
     //mes.data = isrobotmove;
     //chatter_pub[3].publish(mes);
 
-    // geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
+    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
 
     // geometry_msgs::TransformStamped odom_trans;
     // odom_trans.header.stamp = ros::Time::now();
@@ -547,15 +547,15 @@ int main(int argc, char** argv)
 
     // odom_broadcaster.sendTransform(odom_trans);
     
-    // nav_msgs::Odometry odom;
-    // odom.header.stamp = ros::Time::now();
-    // odom.header.frame_id = "odom";
+    nav_msgs::Odometry odom;
+    odom.header.stamp = ros::Time::now();
+    odom.header.frame_id = "odom";
 
-    // //set the position
-    // odom.pose.pose.position.x = slam_position_yaw[0];
-    // odom.pose.pose.position.y = slam_position_yaw[1];
-    // odom.pose.pose.position.z = 0;
-    // odom.pose.pose.orientation = odom_quat;
+    //set the position
+    odom.pose.pose.position.x = slam_position_yaw[0];
+    odom.pose.pose.position.y = slam_position_yaw[1];
+    odom.pose.pose.position.z = 0;
+    odom.pose.pose.orientation = odom_quat;
 
     // //set the velocity
     // odom.child_frame_id = "base_link";
@@ -563,10 +563,10 @@ int main(int argc, char** argv)
     // odom.twist.twist.linear.y = 0;
     // odom.twist.twist.angular.z = 0;
 
-    // //publish the message
-    // chatter_pub[1].publish(odom);
+    //publish the message
+    chatter_pub[1].publish(odom);
 
-    //publish isrobotmove
+    // // publish isrobotmove
     
     //===================================================
     // odom_quat = tf::createQuaternionMsgFromYaw(odom_position_yaw[2]);

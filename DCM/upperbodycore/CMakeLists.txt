@@ -27,11 +27,6 @@ catkin_package(
       CATKIN_DEPENDS message_runtime
 )
 
-
-add_library(libupperbody
-            src/upperbodyclient.cpp
-           )
-
 include_directories(include
 
   ${catkin_INCLUDE_DIRS}
@@ -45,7 +40,6 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-target_link_libraries(libupperbody)
 
 add_executable(upperbodycore src/upperbodycore.cpp)
 target_link_libraries(upperbodycore ${catkin_LIBRARIES} ${Boost_LIBRARIES}  )
