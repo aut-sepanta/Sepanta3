@@ -1,5 +1,4 @@
 <launch>
-    <arg name="odom_frame_name" default="odom"/>
     <arg name="base_frame_name" default="base_link"/>
     <arg name="laser_frame_name" default="laser_link"/>
     <arg name="laser_frame_name2" default="camera_link"/>
