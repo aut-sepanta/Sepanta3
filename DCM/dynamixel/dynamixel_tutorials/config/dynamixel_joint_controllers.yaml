@@ -8,9 +8,9 @@ right1_controller:
 
     motor:
         id: 1
-        init: 3058
-        min: 2126
-        max: 3266
+        init: 3075
+        min: 1992
+        max: 3400
 
 right2_controller:
     controller:
@@ -22,8 +22,8 @@ right2_controller:
 
     motor:
         id: 2
-        init: 1072
-        min: 912    
+        init: 1025
+        min: 800    
         max: 2930
 
 right3_controller:
@@ -36,9 +36,9 @@ right3_controller:
 
     motor:
         id: 3
-        init: 4040
-        min: 1470
-        max: 2600
+        init: 2050
+        min: 1051
+        max: 3099
 
 right4_controller:
     controller:
@@ -65,8 +65,8 @@ right5_controller:
     motor:
         id: 5
         init: 50
-        min: 10
-        max: 500
+        min: 0
+        max: 600
 
 right6_controller:
     controller:
@@ -120,7 +120,7 @@ left3_controller:
 
     motor:
         id: 9
-        init: 4040
+        init: 2040
         min: 1470
         max: 2600
 
