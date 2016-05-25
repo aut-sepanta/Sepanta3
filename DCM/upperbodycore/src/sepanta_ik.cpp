@@ -238,15 +238,15 @@ void motors_callback(const sepanta_msgs::upperbodymotorsfeedback::ConstPtr &msg)
    current_data[2].position_rad_ik = p3;
    current_data[4].position_rad_ik = p5;
 
-   // float c1  = convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(1,Rad2Deg(p1)));
-   // float c2  = convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(2,Rad2Deg(p2)));
-   // float c3  = convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(3,Rad2Deg(p3)));
-   // float c5  = convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(5,Rad2Deg(p5)));
+    double c1  = convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(1,Rad2Deg(p1)));
+    double c2  = convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(2,Rad2Deg(p2)));
+    double c3  = convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(3,Rad2Deg(p3)));
+    double c5  = convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(5,Rad2Deg(p5)));
 
-   //std::cout<<"check 1 : "<<current_data[0].position<<" "<<p1<<" "<<c1<<std::endl;
-   //std::cout<<"check 2 : "<<current_data[1].position<<" "<<p2<<" "<<c2<<std::endl;
-   //std::cout<<"check 3 : "<<current_data[2].position<<" "<<p3<<" "<<c3<<std::endl;
-   //std::cout<<"check 5 : "<<current_data[4].position<<" "<<p5<<" "<<c5<<std::endl;
+   std::cout<<"check 1 : "<<current_data[0].position<<"alireza "<<p1<<"motor "<<c1<<std::endl;
+   std::cout<<"check 2 : "<<current_data[1].position<<"alireza "<<p2<<"motor "<<c2<<std::endl;
+   std::cout<<"check 3 : "<<current_data[2].position<<"alireza "<<p3<<"motor "<<c3<<std::endl;
+   std::cout<<"check 5 : "<<current_data[4].position<<"alireza "<<p5<<"motor "<<c5<<std::endl;
 
    //msg->motorfeedback.size() 
 }
@@ -341,7 +341,7 @@ bool open_challange(double q0[3], double x0, double y0, double (&q_goal)[3])
   int max_iteration = 100000;
   while (ros::ok()) 
   {
-    cout<<"Error :"<<E<<" "<<max_iteration<<endl;
+    //cout<<"Error :"<<E<<" "<<max_iteration<<endl;
     er1 = (22.0 * cos(q2) + 24.8 * cos(q2 + q3)) - ((T1[12] - 7.9) + 7.65);
     er2 = (22.0 * sin(q2) + 24.8 * sin(q2 + q3)) - T1[13];
     E = er1 * er1 + er2 * er2;
@@ -354,7 +354,7 @@ bool open_challange(double q0[3], double x0, double y0, double (&q_goal)[3])
     max_iteration --;
   }
 
-    cout<<"Error :"<<E<<endl;
+   // cout<<"Error :"<<E<<endl;
 
   if ( max_iteration <= 0 )
   {
@@ -367,20 +367,21 @@ bool open_challange(double q0[3], double x0, double y0, double (&q_goal)[3])
   q_goal[1] = q3;
   q_goal[2] = (-1.5707963267948966 - q2) - q3;
 
+  
   return true;
 
 }
 
 void go_to_xy(double x,double y, int speed)
 {
-    // double q0[3] =  { current_data[0].position_rad_ik, 
-    //                  current_data[1].position_rad_ik,
-    //                  current_data[2].position_rad_ik};
+     double q0[3] =  { current_data[0].position_rad_ik, 
+                      current_data[1].position_rad_ik,
+                      current_data[2].position_rad_ik};
 
     double q1[3] = {0};
 
-    // bool result = open_challange(q0,x,y,q1);
-    bool result = SepantaIK(x,y,q1);
+    bool result = open_challange(q0,x,y,q1);
+    //bool result = SepantaIK(x,y,q1);
 
     if ( result )
     {
