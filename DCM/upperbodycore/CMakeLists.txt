@@ -45,6 +45,10 @@ add_executable(upperbodycore src/upperbodycore.cpp)
 target_link_libraries(upperbodycore ${catkin_LIBRARIES} ${Boost_LIBRARIES}  )
 add_dependencies(upperbodycore sepanta_msgs_generate_messages_cpp)
 
+add_executable(sepanta_ik src/sepanta_ik.cpp)
+target_link_libraries(sepanta_ik ${catkin_LIBRARIES} ${Boost_LIBRARIES}  )
+add_dependencies(sepanta_ik sepanta_msgs_generate_messages_cpp)
+
 
 
 

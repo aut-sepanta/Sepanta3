@@ -1085,7 +1085,7 @@ int main(int argc, char **argv)
     //===========================================================================================================
     cout<<"wait finished 1"<<endl;
 
-    ros::Rate loop_rate(15); //20 Hz
+    ros::Rate loop_rate(20); //20 Hz
     ros::Rate loop_rate2(0.1); //20 Hz
     loop_rate2.sleep();
 
