@@ -1,0 +1,2 @@
+/usr/bin/ar cr ../../lib/libmain.a  CMakeFiles/main.dir/main/Config.cpp.o CMakeFiles/main.dir/main/Gui.cpp.o CMakeFiles/main.dir/main/Main.cpp.o CMakeFiles/main.dir/main/Settings.cpp.o CMakeFiles/main.dir/main/Trajectory.cpp.o
+/usr/bin/ranlib ../../lib/libmain.a
