@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS std_msgs genmsg actionlib_msgs geometry_
 add_message_files(
     FILES 
 
+
     arm.msg 
     coordinate.msg
     head.msg 
@@ -109,6 +110,7 @@ add_action_files(
     whatDidYouSay.action
     grip.action
     Fibonacci.action
+    Master.action
 
 )
 

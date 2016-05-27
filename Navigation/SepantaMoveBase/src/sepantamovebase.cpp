@@ -147,6 +147,8 @@ std::string coutcolor_brown = "\033[0;33m";
 
 //=============================================================
 
+bool say_enable = false;
+
 bool App_exit = false;
 bool IsCmValid = false;
 bool IsGoalReached = false;
@@ -243,7 +245,6 @@ std::vector<goal_data> goal_list;
 
 
 int info_counter = 0;
-bool say_enable = true;
 
 int system_state = 0;
 int logic_state = 0;
@@ -617,11 +618,12 @@ void logic_thread()
         else if ( logic_state == 5 ) //Stimating position
         {
         	say_message("Stimating Position");
+        	cout<<coutcolor_green<<"Stimating Position"<<coutcolor0<<endl;
     		reset_hector_slam();
     		update_hector_origin(amclPosition[0],amclPosition[1],Quat2Rad(amclOrientation));
-            boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
-            clean_costmaps();   
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+            clean_costmaps();   
+            boost::this_thread::sleep(boost::posix_time::milliseconds(500));
     		logic_state = 1;
         }
     }
@@ -1108,10 +1110,17 @@ void GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
     amclOrientation[1] = msg->pose.pose.orientation.y;
     amclOrientation[2] = msg->pose.pose.orientation.z;
     amclOrientation[3] = msg->pose.pose.orientation.w;
-    if(abs(amclCovariance[0]) < 0.02)
+    if(abs(amclCovariance[0]) < 0.02 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.02 && amclCovariance[7] != 0)
         IsamclReady = true;
     else
+    {
     	IsamclReady = false;
+    	if(abs(amclCovariance[0]) > 0.05 || abs(amclCovariance[7]) > 0.05)
+    		IsPoseStimated = false;
+    }
+    // for(int i=0;i<10;i++)
+    // 	cout<<amclCovariance[i]<<"\t";
+    // cout<<"\n";
 }
 
 ros::Time old_time;

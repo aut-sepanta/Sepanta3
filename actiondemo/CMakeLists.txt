@@ -45,5 +45,11 @@ target_link_libraries(client ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 add_dependencies(client sepanta_msgs_generate_messages_cpp)
 
 
+add_executable(client_object src/client_object.cpp)
+target_link_libraries(client_object ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_dependencies(client_object sepanta_msgs_generate_messages_cpp)
+
+
+
 
 

@@ -3,8 +3,10 @@ obstacle_range: 3.5
 raytrace_range: 4.0
 inflation_radius: 0.8
 
-footprint: [[0.4, 0.3], [0.4, -0.3], [-0.3, -0.3],[-0.3, 0.3]]
+footprint: [[0.45, 0.35], [0.45, -0.35], [-0.35, -0.35],[-0.35, 0.35]]
 
-observation_sources: scan 
+observation_sources: scan scan2
+
 scan: {data_type: LaserScan, topic: scan , marking: true, clearing: true , observation_persistence: 0}
 
+scan2: {data_type: LaserScan, topic: scan2 , marking: true, clearing: true , observation_persistence: 0}

@@ -7,25 +7,20 @@
     <!-- start specified joint controllers -->
     <node name="dynamixel_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
           args="--manager=dxl_manager
-                --port=dx_port
-                waist_controller
+                --port=dx_port 
+                right1_controller
+                right2_controller
+                right3_controller
+                right4_controller
+                right5_controller
+                right6_controller
+                left1_controller
+                left2_controller
+                left3_controller
+                left4_controller
+                left5_controller
+                left6_controller
                 headYaw_controller
-                headPitch_controller
-                rightshoulderYawm_controller
-                rightshoulderPitchm_controller
-                rightshoulderRoll_controller
-                rightelbowPitch_controller
-                rightelbowRoll_controller
-                rightwristPitch_controller
-                rightwristRoll_controller
-                rightgripper_controller
-                leftshoulderYawm_controller
-                leftshoulderPitchm_controller
-                leftshoulderRoll_controller
-                leftelbowPitch_controller
-                leftelbowRoll_controller
-                leftwristPitch_controller
-                leftwristRoll_controller
-                leftgripper_controller"
+                headPitch_controller"
           output="screen"/>
 </launch>

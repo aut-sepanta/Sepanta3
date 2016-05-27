@@ -605,7 +605,7 @@ int init_nodes()
     names.push_back("sepantamapengine");    //15
     names.push_back("move.sh");             //16
     names.push_back("sepantamovebase");     //17
-    names.push_back("object_recognition");  //18
+    names.push_back("object_recognition_action_server");  //18
     names.push_back("human.sh");            //19
 	names.push_back("scenario1");           //20
 
