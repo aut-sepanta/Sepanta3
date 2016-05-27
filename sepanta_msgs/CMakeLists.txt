@@ -110,6 +110,7 @@ add_action_files(
     whatDidYouSay.action
     grip.action
     Fibonacci.action
+    Master.action
 
 )
 
