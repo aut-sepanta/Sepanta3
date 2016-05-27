@@ -15,63 +15,18 @@
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-
 #include <sepanta_msgs/command.h>
 #include <ik/simple_IK.h>
 #include <ik/traj_IK.h>
+#include <upperbody_core/sepanta_ik.h>
 
-using std::string;
-using std::exception;
-using std::cout;
-using std::cerr;
-using std::endl;
-
-using namespace std;
-using namespace boost;
-using namespace ros;
-
-
-ros::Publisher motor_pub[5];
-
-struct motor_data
+IKSystem::IKSystem(ros::NodeHandle n)
 {
-public:
-    int position; //warning this is raw position of motors
-    double position_rad_ik;
-    int speed;
-    int min;
-    int max;
-    int init;
-    ros::Time timestamp;
-
-};
-
-struct motor_range
-{
-    int max;
-    int min;
-    int degree;
-    string name;
-};
-
-std::vector<motor_range> list_motor_configs;
-
-
-motor_data current_data[5];
-
-#define motor_max_speed 800
-
-inline double Deg2Rad(double deg)
-{
-    return deg * M_PI / 180;
+   node_handle = n;
+   init();
 }
 
-inline double Rad2Deg(double rad)
-{
-    return rad * 180 / M_PI;
-}
-
-void init_configs()
+void IKSystem::init_configs()
 {
     motor_range m;
 
@@ -110,8 +65,7 @@ void init_configs()
     list_motor_configs.push_back(m);
 }
 
-
-float convert_motor_to_degree(string model_name,float value)
+float IKSystem::convert_motor_to_degree(string model_name,float value)
 {
     if ( model_name == "MX-106")
     {
@@ -132,11 +86,9 @@ float convert_motor_to_degree(string model_name,float value)
     }
 
     return -1;
-
 }
 
-//warning change this function if real hardware changed !
-float convert_degreeMotor_to_degreeIK(int index,float value)
+float IKSystem::convert_degreeMotor_to_degreeIK(int index,float value)
 {
     if ( index == 1) return (-1 * (value - 90)); else
     if ( index == 2) return (-1 * value); else
@@ -146,7 +98,7 @@ float convert_degreeMotor_to_degreeIK(int index,float value)
     return -1;
 }
 
-float convert_degreeIK_to_degreeMotor(int index,float value)
+float IKSystem::convert_degreeIK_to_degreeMotor(int index,float value)
 {
     if ( index == 1) return (-1 * value + 90); else
     if ( index == 2) return (-1 * value); else
@@ -156,8 +108,7 @@ float convert_degreeIK_to_degreeMotor(int index,float value)
     return -1;
 }
 
-
-int convert_degree_to_motor(string model_name,float value)
+int IKSystem::convert_degree_to_motor(string model_name,float value)
 {
     if ( model_name == "MX-106")
     {
@@ -183,10 +134,9 @@ int convert_degree_to_motor(string model_name,float value)
 
    
     return -1;
-
 }
 
-void scale_velocity(double * v1,double * v2 , double * v3,int size)
+void IKSystem::scale_velocity(double * v1,double * v2 , double * v3,int size)
 {
    double max = 0;
    for ( int i = 0 ; i < size ; i++)
@@ -204,7 +154,7 @@ void scale_velocity(double * v1,double * v2 , double * v3,int size)
    }
 }
 
-bool convert_all_positions(double * positions,int size)
+bool IKSystem::convert_all_positions(double * positions,int size)
 {
 
    for ( int i = 0 ; i < size ; i++)
@@ -222,7 +172,7 @@ bool convert_all_positions(double * positions,int size)
    return true;
 }
 
-int convert_radPerSecond_to_speedMotor(double value)
+int IKSystem::convert_radPerSecond_to_speedMotor(double value)
 {
     int direction = 0;
 
@@ -238,7 +188,7 @@ int convert_radPerSecond_to_speedMotor(double value)
     return speed;
 }
 
-void motors_callback(const sepanta_msgs::upperbodymotorsfeedback::ConstPtr &msg)
+void IKSystem::motors_callback(const sepanta_msgs::upperbodymotorsfeedback::ConstPtr &msg)
 {
    //std::cout<<"get feedbacks "<<msg->motorfeedbacks.size() <<std::endl;
 
@@ -302,7 +252,7 @@ void motors_callback(const sepanta_msgs::upperbodymotorsfeedback::ConstPtr &msg)
    //msg->motorfeedback.size() 
 }
 
-void update_arm_motors(int positions[3],int speed[3])
+void IKSystem::update_arm_motors(int positions[3],int speed[3])
 {
     //cout<<speed[0]<<" "<<speed[1]<<" "<<speed[2]<<endl;
     sepanta_msgs::motor _msg;
@@ -323,7 +273,7 @@ void update_arm_motors(int positions[3],int speed[3])
     motor_pub[2].publish(_msg);
 }
 
-void update_pen_motor(int position,int speed)
+void IKSystem::update_pen_motor(int position,int speed)
 {
     sepanta_msgs::motor _msg;
     _msg.position = position;
@@ -331,7 +281,7 @@ void update_pen_motor(int position,int speed)
     motor_pub[4].publish(_msg);
 }
 
-bool SepantaIK(double x0, double y0, double (&q_goal)[3])
+bool IKSystem::SepantaIK(double x0, double y0, double (&q_goal)[3])
 {
     double l1 = 220;
     double l2 = 246;
@@ -354,7 +304,7 @@ bool SepantaIK(double x0, double y0, double (&q_goal)[3])
     return true;
 }
 
-bool open_challange(double q0[3], double x0, double y0, double (&q_goal)[3])
+bool IKSystem::open_challange(double q0[3], double x0, double y0, double (&q_goal)[3])
 {
   double T1[16] = {0};
   int i0;
@@ -422,19 +372,17 @@ bool open_challange(double q0[3], double x0, double y0, double (&q_goal)[3])
 
   
   return true;
-
 }
 
-void go_to_xy_new(double x,double y,int time)
+string IKSystem::go_to_xy(int x,int y,int time)
 {
      double q0[3] =  { current_data[0].position_rad_ik, 
-                      current_data[1].position_rad_ik,
-                      current_data[2].position_rad_ik};
+                       current_data[1].position_rad_ik,
+                       current_data[2].position_rad_ik};
 
      cout<<"IK start "<<q0[0]<<" "<<q0[1]<<" "<<q0[2]<<endl;
 
-     //double q1[3] = {0};
-     double f[2] = { x/10 , y/10};
+     double f[2] = { x / 10 , y / 10};
      int frq=40;
      int TE=time;
      int samples = frq*TE;
@@ -465,7 +413,6 @@ void go_to_xy_new(double x,double y,int time)
      v3.numDimensions=2;
      v3.canFreeData=false;
 
-
      emxArray_real_T q1;
      q1.data = new double[samples * 3];
      q1.size = new int[2];
@@ -475,20 +422,15 @@ void go_to_xy_new(double x,double y,int time)
      q1.numDimensions=2;
      q1.canFreeData=false;
 
-     cout<<"IK 1"<<endl;
-
-    // bool result = simple_IK(q0,f,q1);
      bool result = traj_IK(q0, f,TE,frq,&q1, &v1, &v2,&v3);
 
     if ( result )
     {
-        cout<<"IK OK"<<endl;
-
         bool result2 = convert_all_positions(q1.data,samples);
         if ( result2 == false )
         {
-           cout<<"Motor Limitation error - go to cancled"<<endl;
-           return;
+           //cout<<"Motor Limitation error - go to cancled"<<endl;
+           return "ERROR MOTOR LIMITATION";
         }
         scale_velocity(v1.data,v2.data,v3.data,samples);
 
@@ -505,168 +447,36 @@ void go_to_xy_new(double x,double y,int time)
             speeds[1] = (int)v2.data[i];
             speeds[2] = (int)v3.data[i];
 
-            //cout<<speeds[0]<<" "<<speeds[1]<<" "<<speeds[2]<<endl;
-            //cout<<positions[0]<<" "<<positions[1]<<" "<<positions[2]<<endl;
-
-
         	  update_arm_motors(positions,speeds);
-        	  //cout<<i<<endl;
-            
-            //bool wait = true;
 
-            //double dist1 = abs(positions[0] - current_data[0].position);
-            //double dist2 = abs(positions[1] - current_data[1].position);
-            //double dist3 = abs(positions[2] - current_data[2].position);
-            
-            //if ( dist1 == 0 || dist2 == 0 || dist3 == 0 ) continue;
-
-            // while ( wait )
-            // {
-              
-            //    cout<<positions[0]<<" "<<positions[1]<<" "<<positions[2]<<endl;
-            //    cout<<current_data[0].position<<" "<<current_data[1].position<<" "<<current_data[2].position<<endl;
-            //    double rate_1 = ( abs(positions[0] - current_data[0].position));
-            //    double rate_2 = ( abs(positions[1] - current_data[1].position));
-            //    double rate_3 = ( abs(positions[2] - current_data[2].position));
-
-            //    if ( rate_1 < 10 && rate_2 < 10 && rate_3 < 10 ) 
-            //         wait = false; 
-            //       else
-            //       {
-            //           //cout<<rate_1<<" "<<rate_2<<" "<<rate_3<<endl;
-            //       }
-
-            //       //boost::this_thread::sleep(boost::posix_time::milliseconds(10));
-
-            // }
-
-           cout<<"step :"<<i<<endl;
-        	 boost::this_thread::sleep(boost::posix_time::milliseconds(1000 / frq));
+            //cout<<"step :"<<i<<endl;
+        	  boost::this_thread::sleep(boost::posix_time::milliseconds(1000 / frq));
         }
+
+        return "DONE";
     }
     else
     {
-        cout<<"IK FAILED  go to cancled"<<endl;
+        return "ERROR IK";
     }
 
 }
 
-int desire_x = 0;
-int desire_y = 0;
-int desire_time = 5;
-int action_mode = 0;
-
-bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Response &res)
+void IKSystem::init()
 {
+  init_configs();
 
-    ROS_INFO("Service Request....");
-
-    std::string _cmd = req.command;
-    desire_x = req.value1;
-    desire_y = req.value2;
-    desire_time = req.value3;
-    action_mode = 1;
-
-    res.result = "done";
-
-    return true;
-}
-
-void logic_thread()
-{
-    boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
-    cout<<"LOGIC STARTED"<<endl;
-
-    while(ros::ok())
-    {
-        if ( action_mode == 1)
-        {
-            cout<<"go to starting..."<<endl;
-            go_to_xy_new(desire_x,desire_y,desire_time);
-            cout<<"go to finished..."<<endl;
-            action_mode = 0;
-        }
-
-        boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-    }
-
-    cout<<"LOGIC TERMINATED"<<endl;
-
-    
-}
-
-void logic_thread2()
-{
-    boost::this_thread::sleep(boost::posix_time::milliseconds(4000));
-    cout<<"LOGIC  2 STARTED"<<endl;
-
-    while(ros::ok())
-    {
-        
-            cout<<"1"<<endl;
-            go_to_xy_new(350,250,4);
-            
-            cout<<"2"<<endl;
-            go_to_xy_new(440,360,4);
-           
-
-            cout<<"3"<<endl;
-            go_to_xy_new(360,440,4);
-       
-
-            cout<<"4"<<endl;
-            go_to_xy_new(250,350,4);
-         
-
-        
-
-        
-    }
-
-    cout<<"LOGIC TERMINATED"<<endl;
+  ros::NodeHandle n2;
+  sub_handles = n2.subscribe("/upperbodycoreout_feedback", 10, &IKSystem::motors_callback,this);
+  //============================================================================================
+  motor_pub[0] = node_handle.advertise<sepanta_msgs::motor>("/upperbodycorein_right_1", 1);
+  motor_pub[1] = node_handle.advertise<sepanta_msgs::motor>("/upperbodycorein_right_2", 1);
+  motor_pub[2] = node_handle.advertise<sepanta_msgs::motor>("/upperbodycorein_right_3", 1);
+  motor_pub[3] = node_handle.advertise<sepanta_msgs::motor>("/upperbodycorein_right_4", 1);
+  motor_pub[4] = node_handle.advertise<sepanta_msgs::motor>("/upperbodycorein_right_5", 1);
+  //============================================================================================
+  cout<<"Init Done"<<endl;
 }
 
 
-int main(int argc, char **argv)
-{
-    ros::init(argc, argv, "upperbody_ik");
 
-    ROS_INFO("upperbody ik started");
-
-    boost::thread _thread_Logic(&logic_thread);
-    boost::thread _thread_Logic2(&logic_thread2);
-
-    ros::Time::init();
-    init_configs();
-
-    ros::NodeHandle node_handles[20];
-    ros::Subscriber sub_handles;
-
-    sub_handles = node_handles[0].subscribe("/upperbodycoreout_feedback", 10, motors_callback);
-    //============================================================================================
-    motor_pub[0] = node_handles[0].advertise<sepanta_msgs::motor>("/upperbodycorein_right_1", 1);
-    motor_pub[1] = node_handles[1].advertise<sepanta_msgs::motor>("/upperbodycorein_right_2", 1);
-    motor_pub[2] = node_handles[2].advertise<sepanta_msgs::motor>("/upperbodycorein_right_3", 1);
-    motor_pub[3] = node_handles[3].advertise<sepanta_msgs::motor>("/upperbodycorein_right_4", 1);
-    motor_pub[4] = node_handles[4].advertise<sepanta_msgs::motor>("/upperbodycorein_right_5", 1);
-    //============================================================================================
-    ros::NodeHandle n_service;
-    ros::ServiceServer service_command = n_service.advertiseService("sepantaik/goto", checkcommand);
-    
-
-    ros::Rate loop_rate(20);
-
-    while (ros::ok())
-    {
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
-
-    _thread_Logic.interrupt();
-    _thread_Logic.join();
-
-    _thread_Logic2.interrupt();
-    _thread_Logic2.join();
-
-    return 0;
-}
