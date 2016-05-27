@@ -38,7 +38,7 @@
 #include <sepanta_msgs/motorreset.h>
 #include <sepanta_msgs/motortorque.h>
 #include <sepanta_msgs/motorpid.h>
-#include "upperbodycorefunctions.h"
+#include "upperbody_core/upperbodycorefunctions.h"
 
 #include "opencv2/opencv.hpp"
 #include <ros/package.h>

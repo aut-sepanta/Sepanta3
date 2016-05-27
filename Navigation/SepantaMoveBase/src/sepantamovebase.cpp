@@ -1,270 +1,23 @@
-#include "ros/ros.h"
-#include <tf/tf.h>
-#include <tf/transform_listener.h>
-#include <math.h>
-#include <sstream>
-#include <string>
-#include <iostream>
-#include <cstdio>
-#include <ctime>
-#include <unistd.h>
-#include <cmath>
-#include <stdio.h>
-#include <stdlib.h>
-#include <tbb/atomic.h>
-#include <tf/transform_broadcaster.h>
-#include "std_msgs/Int32.h"
-#include "std_msgs/String.h"
-#include "std_msgs/Bool.h"
-
-#include "sepanta_msgs/omnidata.h"
-
-#include <dynamixel_msgs/MotorStateList.h>
-#include <dynamixel_msgs/JointState.h>
-
-#include <geometry_msgs/Twist.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <nav_msgs/Path.h>
-#include <geometry_msgs/PolygonStamped.h>
-#include <move_base_msgs/MoveBaseActionGoal.h>
-
-#include <dynamixel_controllers/SetComplianceSlope.h>
-#include <dynamixel_controllers/SetCompliancePunch.h>
-
-#include <boost/thread.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-
-#include "std_msgs/Int32.h"
-#include "std_msgs/String.h"
-#include "std_msgs/Bool.h"
-#include "geometry_msgs/Twist.h"
-#include <sensor_msgs/LaserScan.h>
-
-#include <termios.h>
-
-#include <nav_msgs/Odometry.h>
-
-#include <tf/transform_datatypes.h>
-
-#include <sepanta_msgs/command.h>
-#include <sepanta_msgs/omnidata.h>
-#include <sepanta_msgs/sepantaAction.h> //movex movey turngl turngllocal actions
-#include <sepanta_msgs/slamactionAction.h> //slam action
-#include <ros/package.h>
-
-#include <fstream>
-#include <iostream>
-#include <stdlib.h>
-#include <sstream>
-#include <vector>
-#include <fstream>
-
-#include <nav_core/base_local_planner.h>
-#include <nav_core/base_global_planner.h>
-#include <nav_core/recovery_behavior.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <costmap_2d/costmap_2d_ros.h>
-#include <costmap_2d/costmap_2d.h>
-#include <nav_msgs/GetPlan.h>
-#include <std_srvs/Empty.h>
-#include <tf/transform_datatypes.h>
-#include <geometry_msgs/PoseStamped.h>
-//=============================================================
-
-#include <visualization_msgs/Marker.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-
-using std::string;
-using std::exception;
-using std::cout;
-using std::cerr;
-using std::endl;
-
-using namespace std;
-using namespace boost;
-using namespace ros;
+#include <sepantamovebase.h>
 
 
 // #define VIRTUALMODE
- int tempLogicState;
- int tempSystemState;
 
-
-#ifdef VIRTUALMODE
-//MAX SPEED
-#define normal_max_linear_speedX 0.45
-#define normal_max_linear_speedY 0.45
-#define normal_max_angular_speed 0.6
-//KP
-#define normal_kp_linearX 0.4
-#define normal_kp_linearY 0.4
-#define norma_kp_angular 1.5
-#endif
-
-#ifndef VIRTUALMODE //real robot
-#define normal_max_linear_speedX 0.45
-#define normal_max_linear_speedY 0.45
-#define normal_max_angular_speed 0.45
-//KP
-#define normal_kp_linearX 0.4
-#define normal_kp_linearY 0.4
-#define norma_kp_angular 1
-#endif
-
-//-
-#define goal_max_linear_speedX 0.25
-#define goal_max_linear_speedY 0.25
-#define goal_max_angular_speed 0.2
-//-
-#define goal_kp_linearX 0.3
-#define goal_kp_linearY 0.3
-#define goal_kp_angular 0.6
-//Ki
-#define normal_ki_linearX 0
-#define normal_ki_linearY 0
-#define normal_ki_angular 0
-//-
-#define goal_ki_linearX 0
-#define goal_ki_linearY 0
-#define goal_ki_angular 0
-//DESIRE ERRORS
-#define normal_desire_errorX 0.1
-#define normal_desire_errorY 0.1
-#define normal_desire_errorTetha 0.18 // 10 degree
-//-
-#define goal_desire_errorX 0.035
-#define goal_desire_errorY 0.035
-#define goal_desire_errorTetha 0.04 // 2 degree
-//=============================================================
-
-std::string coutcolor0 = "\033[0;0m";
-std::string coutcolor_red = "\033[0;31m";
-std::string coutcolor_green = "\033[0;32m";
-std::string coutcolor_blue = "\033[0;34m";
-std::string coutcolor_magenta = "\033[0;35m";
-std::string coutcolor_brown = "\033[0;33m";
-
-//=============================================================
-
-bool say_enable = false;
-
-bool App_exit = false;
-bool IsCmValid = false;
-bool IsGoalReached = false;
-bool IsRecoveryState = false;
-bool IsHectorReset = false;
-bool isttsready = true;
-bool IsPoseStimated = false;
-bool IsamclReady = false;
-
-string sayMessageId;
-
-ros::ServiceClient client_makeplan;
-ros::ServiceClient client_resetcostmap;
-ros::ServiceClient client_map_save;
-ros::ServiceClient client_map_load;
-ros::ServiceClient say_service;
-
-double maxLinSpeedX = normal_max_linear_speedX;
-double maxLinSpeedY = normal_max_linear_speedY;
-double maxTethaSpeed = normal_max_angular_speed;
-
-ros::Publisher pub_slam_origin;
-ros::Publisher pub_slam_reset;
-
-nav_msgs::Path globalPath;
-int globalPathSize = 0;
-nav_msgs::Path tempPath;
-int temp_path_size = 0;
-
-nav_msgs::OccupancyGrid costmap;
-
-ros::Publisher mycmd_vel_pub;
-ros::Publisher pub_tts;
-ros::Publisher pub_current_goal;
-ros::Publisher pub_move;
-
-double xSpeed=0;
-double ySpeed=0;
-double tethaSpeed=0;
-
-double desireErrorX = normal_desire_errorX;
-double desireErrorY = normal_desire_errorY;
-double desireErrorTetha = normal_desire_errorTetha;
-
-double errorX = 0;
-double errorY = 0;
-double errorTetha = 0;
-double errorX_R = 0;
-double errorY_R = 0;
-
-double LKpX = normal_kp_linearX;
-double LKpY = normal_kp_linearY;
-double WKp = norma_kp_angular;
-double LKiX = normal_ki_linearX;
-double LKiY = normal_ki_linearY;
-double WKi = normal_ki_angular;
-
-int step = 0;
-
-double position[2] = {0};
-double oldposition[2] = {0};
-double orientation[4] = {0};
-double amclPosition[2] = {0};
-double amclOrientation[4] = {0};
-// std::vector<double> amclCovariance;
-boost::array<double, 36ul> amclCovariance;
-double tetha = 0;
-double oldtetha = 0;
-
-double tempGoalPos[2] = {0};
-double tempGoalTetha = 0;
-
-double goalPos[2] = {0};
-double goalOri[4] = {0};
-double goalTetha = 0;
-
-struct goal_data
+SepantaMoveBase::SepantaMoveBase() : 
+_thread_PathFwr(&SepantaMoveBase::PathFwr,this),
+_thread_Logic(&SepantaMoveBase::logic_thread,this),
+_thread_Vis(&SepantaMoveBase::vis_thread,this)
 {
-  public :
-    int x; //cm
-    int y; //cm
-    int yaw; //angle - degree
-    int height;
-    string id;
-};
 
-geometry_msgs::PoseStamped  target_goal_stamped;
-goal_data target_goal_data;
-
-float distacne_to_goal = 0;
-
-double maxErrorX = 0, maxErrorY = 0, maxErrorTetha = 0;
-std::vector<goal_data> goal_list;
-
-
-int info_counter = 0;
-
-int system_state = 0;
-int logic_state = 0;
-bool on_the_goal = false;
-int step_size  = 40;
-bool wait_flag = false;
-bool idle_flag = false;
-bool isrobotmove = false;
-
-inline double Deg2Rad(double deg)
-{
-    return deg * M_PI / 180;
+    init();
 }
 
-inline double Rad2Deg(double rad)
+SepantaMoveBase::~SepantaMoveBase()
 {
-    return rad * 180 / M_PI;
+	kill();
 }
 
-double Quat2Rad(double orientation[])
+double SepantaMoveBase::Quat2Rad(double orientation[])
 {
     tf::Quaternion q(orientation[0], orientation[1], orientation[2], orientation[3]);
     tf::Matrix3x3 m(q);
@@ -273,14 +26,46 @@ double Quat2Rad(double orientation[])
     return yaw;
 }
 
-void publish_isrobotmove()
+void SepantaMoveBase::publish_isrobotmove()
 {
     std_msgs::Bool _msg;
-    _msg.data = isrobotmove;
+    _msg.data = getrobotmove();
     pub_move.publish(_msg);
 }
 
-void say_message(string data)
+void SepantaMoveBase::setsystemstate(int value,bool forced = false)
+{
+   if ( getstatemutex() || forced)
+   		system_state = value;
+}
+
+void SepantaMoveBase::setlogicstate(int value,bool forced = false)
+{
+	if ( getstatemutex() || forced)
+   		logic_state = value;
+}
+
+int SepantaMoveBase::getsystemstate()
+{
+   return system_state;
+}
+
+int SepantaMoveBase::getlogicstate()
+{
+  return logic_state;
+}
+
+bool SepantaMoveBase::getstatemutex()
+{
+   return statemutex;
+}
+
+void SepantaMoveBase::setstatemutex(bool value)
+{
+    statemutex = value;
+}
+
+void SepantaMoveBase::say_message(string data)
 {
     if ( say_enable == false ) return;
     isttsready = false;
@@ -295,7 +80,7 @@ void say_message(string data)
     }
 }
 
-void send_omni(double x,double y ,double w)
+void SepantaMoveBase::send_omni(double x,double y ,double w)
 {
         geometry_msgs::Twist myTwist;
 
@@ -313,24 +98,22 @@ void send_omni(double x,double y ,double w)
         #endif
        
         mycmd_vel_pub.publish(myTwist); 
-
 }
 
-
-void force_stop()
+void SepantaMoveBase::force_stop()
 {
     send_omni(0,0,0);
     boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 }
 
-double GetDistance(double x1, double y1, double x2, double y2)
+double SepantaMoveBase::GetDistance(double x1, double y1, double x2, double y2)
 {
     double x = x2-x1;
     double y = y2-y1;
     return sqrt(x*x + y*y);
 }
 
-int GetCurrentStep()
+int SepantaMoveBase::GetCurrentStep()
 {
     for(int i=0;i<globalPathSize-1;i++)
     {
@@ -340,26 +123,26 @@ int GetCurrentStep()
     return globalPathSize-1;
 }
 
-void sepantamapengine_savemap()
+void SepantaMoveBase::sepantamapengine_savemap()
 {
    std_srvs::Empty _s;
    client_map_save.call(_s);
 }
 
-void sepantamapengine_loadmap()
+void SepantaMoveBase::sepantamapengine_loadmap()
 {
    std_srvs::Empty _s;
    client_map_load.call(_s);
 }
 
-void clean_costmaps()
+void SepantaMoveBase::clean_costmaps()
 {
    std_srvs::Empty _s;
    client_resetcostmap.call(_s);
 }
 
 //cm cm degree
-void update_hector_origin(float x,float y,float yaw)
+void SepantaMoveBase::update_hector_origin(float x,float y,float yaw)
 {
     geometry_msgs::PoseWithCovarianceStamped msg;
     msg.pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
@@ -368,7 +151,7 @@ void update_hector_origin(float x,float y,float yaw)
     pub_slam_origin.publish(msg);
 }
 
-void reset_hector_slam()
+void SepantaMoveBase::reset_hector_slam()
 {
 	std_msgs::String _msg;
 	_msg.data = "reset";
@@ -376,7 +159,7 @@ void reset_hector_slam()
 }
 
 
-void read_file()
+void SepantaMoveBase::read_file()
 {
 
         std::string path_points =  ros::package::getPath("managment") + "/maps/points.txt";
@@ -420,10 +203,9 @@ void read_file()
         }
 
         std::cout << coutcolor_blue << "read done : " << coutcolor0 << goal_list.size()<<std::endl << std::endl;
-
 }
 
-int find_goal_byname(string name)
+int SepantaMoveBase::find_goal_byname(string name)
 {
     for ( int i = 0 ; i < goal_list.size() ; i++ )
     {
@@ -436,8 +218,7 @@ int find_goal_byname(string name)
     return -1;
 }
 
-
-nav_msgs::Path call_make_plan()
+nav_msgs::Path SepantaMoveBase::call_make_plan()
 {
     nav_msgs::GetPlan srv;
 
@@ -457,16 +238,16 @@ nav_msgs::Path call_make_plan()
     return srv.response.plan;
 }
 
-void logic_thread()
+void SepantaMoveBase::logic_thread()
 {
     nav_msgs::Path result;
 
     while(ros::ok() && !App_exit)
     {
          boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+         //cout<<"issepantamove : "<< isrobotmove << endl;
 
-
-         if ( logic_state == -1)
+         if ( getlogicstate() == -1)
          {
             cout<<"Get Error With Hector Status"<<endl;
             say_message("There is a problem with my laser");
@@ -477,11 +258,12 @@ void logic_thread()
             clean_costmaps();     
             say_message("My laser recovered successfuly");
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            system_state = tempSystemState;
-            logic_state = tempLogicState;
+            setsystemstate(tempSystemState);
+            setlogicstate(tempLogicState);
+       
 
          }
-         if ( logic_state == 0 )
+         if ( getlogicstate() == 0 )
          {
             IsGoalReached = false;
             if ( idle_flag == false )
@@ -492,16 +274,17 @@ void logic_thread()
             
          }
 
-         else if ( logic_state == 1 )
+         else if ( getlogicstate() == 1 )
          {
                idle_flag = false;
                //operation loop
                cout<<coutcolor_green<<"Planning... " <<coutcolor0<<endl;
                result = call_make_plan();
-               logic_state = 2;
+               setlogicstate(2);
+              
          }
 
-        else if ( logic_state == 2 )
+        else if ( getlogicstate() == 2 )
         {
             //check the plan
             cout<<"Check the plan from global planner"<<endl;
@@ -510,8 +293,9 @@ void logic_thread()
             {
                     cout<<coutcolor_red<<"Error in PATH ! "<<coutcolor0<<endl;
                     
-                    logic_state = 3;   //recovery
-                    system_state = -1; //wait
+                  
+                    setlogicstate(3);
+                    setsystemstate(-1); //wait
                     force_stop();
                     if(!IsRecoveryState)
                         say_message("Error in path generation");
@@ -521,14 +305,14 @@ void logic_thread()
                 globalPath = result;
                 globalPathSize = globalPath.poses.size();
                 cout<<coutcolor_green<<"get a new PATH from GPLANNER Points : "<< globalPathSize <<coutcolor0<<endl;
-                system_state = 1;
-                logic_state = 4; //valid
+                setsystemstate(1);
+                setlogicstate(4);
                 force_stop();   
 
             }
         }
 
-        else if ( logic_state == 3 )
+        else if ( getlogicstate() == 3 )
         {
         	say_message("Let me think");
             cout<<coutcolor_red<<" Recovery state " <<coutcolor0<<endl;
@@ -541,9 +325,10 @@ void logic_thread()
             	{
             		IsRecoveryState = false;
 	            	IsHectorReset = false;
+	            	setlastnavigationresult("GOAL IS UNREACHABLE");
 	            	say_message("Goal is unreachable");
-	            	system_state = 0;
-	            	logic_state = 0;
+	            	setsystemstate(0);
+	            	setlogicstate(0);
             	}
             	else
             	{
@@ -554,7 +339,7 @@ void logic_thread()
                     boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
                     clean_costmaps();   
                     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            		logic_state = 1;
+            		setlogicstate(1);
 	            }
 
             }
@@ -564,21 +349,21 @@ void logic_thread()
             	say_message("reseting cost map");
             	clean_costmaps();
                 boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-            	logic_state = 1;
+            	setlogicstate(1);
          	}
              
         }
 
-        else if ( logic_state == 4 ) //controlling mode
+        else if ( getlogicstate() == 4 ) //controlling mode
         {
         	IsRecoveryState = false;
         	IsHectorReset = false;
-            cout<<coutcolor_magenta<<" logic_state == 4 " <<coutcolor0<<endl;
+            cout<<coutcolor_magenta<<" getlogicstate() == 4 " <<coutcolor0<<endl;
 
             if(!IsPoseStimated && IsamclReady)
             {
-            	logic_state = 5;
-            	system_state = -1; //wait
+            	 setlogicstate(5);
+            	 setsystemstate(-1); //wait
             	IsPoseStimated = true;
             	force_stop();
             }
@@ -586,7 +371,8 @@ void logic_thread()
            if ( IsGoalReached == true)
            {
                cout<<coutcolor_red<<" Goal reached " <<coutcolor0<<endl;
-               logic_state = 0;
+               setlogicstate(0);
+             
                continue;
            }
             
@@ -600,7 +386,7 @@ void logic_thread()
                     {
                         globalPath = result;
                         globalPathSize = result.poses.size();
-                        system_state = 1;
+                         setsystemstate(1);
                         cout<<coutcolor_red<<"PATH changed : "<< globalPathSize <<coutcolor0<<endl;
                         break;
                     }
@@ -610,27 +396,26 @@ void logic_thread()
              else
              {
                     cout<<coutcolor_red<<"Error in PATH ! "<<coutcolor0<<endl;
-                    logic_state = 2; //invalid
+                    setlogicstate(2);
              }
         
 
         }
-        else if ( logic_state == 5 ) //Stimating position
+        else if ( getlogicstate() == 5 ) //Estimating position
         {
-        	say_message("Stimating Position");
-        	cout<<coutcolor_green<<"Stimating Position"<<coutcolor0<<endl;
+        	say_message("Estimating Position");
+        	cout<<coutcolor_green<<"Estimating Position"<<coutcolor0<<endl;
     		reset_hector_slam();
     		update_hector_origin(amclPosition[0],amclPosition[1],Quat2Rad(amclOrientation));
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             clean_costmaps();   
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-    		logic_state = 1;
+    		setlogicstate(1);
         }
     }
 }
 
-
-void exe_slam(goal_data g)
+void SepantaMoveBase::exe_slam(goal_data g)
 {
     bool valid_point = false;
     //this function get goal and move robot to there
@@ -663,33 +448,36 @@ void exe_slam(goal_data g)
        }
     }
 
-    if ( valid_point && logic_state == 0)
+    if ( valid_point && getlogicstate() == 0)
     {
        
         // say_message("Got a new goal");
-        logic_state = 1;
-    }
-
-
-   
+       setlogicstate(1);
+    }  
 }
 
-void exe_cancel()
+void SepantaMoveBase::exe_cancel()
 {
-     force_stop();
+	 setstatemutex(false);
+	 setlogicstate(0,true);
+     setsystemstate(0,true);
+     
+     cout<<"Cancel requested"<<endl;
      // say_message("cancel requested , operation canceled!");
-     logic_state = 0;
-     system_state = 0;
+     setlastnavigationresult("CANCEL REQUEST");
+
+      force_stop();
+    
 }
 
-int sign(double data)
+int SepantaMoveBase::sign(double data)
 {
     if(data > 0) return 1;
     else if(data < 0) return -1;
     else return 0;
 }
 
-int roundData(double data)
+int SepantaMoveBase::roundData(double data)
 {
     if(data>=0)
         return ceil(data);
@@ -697,12 +485,12 @@ int roundData(double data)
         return floor(data);
 }
 
-double GetToPointsAngle(double x1, double y1, double x2, double y2)
+double SepantaMoveBase::GetToPointsAngle(double x1, double y1, double x2, double y2)
 {
     return atan2(y2-y1,x2-x1);
 }
 
-void ResetLimits()
+void SepantaMoveBase::ResetLimits()
 {
     desireErrorX = normal_desire_errorX;
     desireErrorY = normal_desire_errorY;
@@ -721,7 +509,7 @@ void ResetLimits()
     maxTethaSpeed = normal_max_angular_speed;
 }
 
-void ReduceLimits()
+void SepantaMoveBase::ReduceLimits()
 {
     desireErrorX = goal_desire_errorX;
     desireErrorY = goal_desire_errorY;
@@ -740,21 +528,33 @@ void ReduceLimits()
     WKi = goal_ki_angular;
 }
 
-
-
-
-
-
-
-
 //0 => wait for goal
 //2 => turn to target
 //4 => go on path
 //6 => turn to goal
 //8 => reached
 
+void SepantaMoveBase::setrobotmove(bool value)
+{
+	isrobotmove = value;
+}
 
-int calc_next_point()
+bool SepantaMoveBase::getrobotmove()
+{
+	return isrobotmove;
+}
+
+void SepantaMoveBase::setlastnavigationresult(string value)
+{
+	last_navigation_result = value;
+}
+
+string SepantaMoveBase::getlastnavigationresult()
+{
+	return last_navigation_result;
+}
+
+int SepantaMoveBase::calc_next_point()
 {
             bool isgoalnext = false;
             if ( step == globalPathSize-1)
@@ -799,7 +599,7 @@ int calc_next_point()
             return isgoalnext;
 }
 
-void errors_update()
+void SepantaMoveBase::errors_update()
 {
             //calc errorX , errorY , errorTetha 
             errorX = tempGoalPos[0]-position[0];
@@ -825,7 +625,7 @@ void errors_update()
             distacne_to_goal = sqrt(distacne_to_goal);
 }
 
-void publish_info()
+void SepantaMoveBase::publish_info()
 {
         info_counter++;
         if ( info_counter>50)
@@ -839,7 +639,7 @@ void publish_info()
         }
 }
 
-void controller_update(int x,bool y,bool theta)
+void SepantaMoveBase::controller_update(int x,bool y,bool theta)
 {
     if ( x == 1)
     xSpeed = (fabs(errorX_R*LKpX)<=maxLinSpeedX)?(errorX_R*LKpX):sign(errorX_R)*maxLinSpeedX;
@@ -861,9 +661,7 @@ void controller_update(int x,bool y,bool theta)
     send_omni(xSpeed,ySpeed,tethaSpeed); 
 }
 
-
-
-void PathFwr()
+void SepantaMoveBase::PathFwr()
 {
 	
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
@@ -879,21 +677,26 @@ void PathFwr()
     {
         errors_update();
 
-        if ( system_state == 0 )
+        if ( getsystemstate() == 0 )
         {
-            isrobotmove = 0;
+        	if ( getstatemutex() == false )
+        	{
+        		boost::this_thread::sleep(boost::posix_time::milliseconds(2000));
+        		setstatemutex(true);
+        	}
+        	setrobotmove(false);
         }
         else
         {
-            isrobotmove = 1;
+        	setrobotmove(true);
         }
 
-        if ( system_state == -1) //wait state
+        if ( getsystemstate() == -1) //wait state
         {
 
            boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         }
-        if ( system_state == 0)
+        if ( getsystemstate() == 0)
         {
 
             if ( wait_flag == false)
@@ -906,7 +709,7 @@ void PathFwr()
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
         }
         else
-        if ( system_state == 1)
+        if ( getsystemstate() == 1)
         {
            force_stop();
            IsGoalReached = false;
@@ -921,17 +724,18 @@ void PathFwr()
             {
                 //next is the goal !
                 cout<<"Next is goal =>3"<<endl;
-                system_state = 3;
+              
+                setsystemstate(3);
             }
             else
             {
                 cout<<"Next is step =>2"<<endl;
-                system_state = 2;
+                setsystemstate(2);
             }
 
         }
         else
-        if ( system_state == 2)
+        if ( getsystemstate() == 2)
         {
             //turn to goal <loop>
           
@@ -939,7 +743,7 @@ void PathFwr()
             {
                 
                 cout<<"DONE ! "<<tetha<<" "<<tempGoalTetha<<" "<<errorTetha<<endl;
-                system_state = 3;
+                setsystemstate(3);
                 force_stop();
                 
             }
@@ -950,13 +754,13 @@ void PathFwr()
 
         }
         else
-        if ( system_state == 3)
+        if ( getsystemstate() == 3)
         {
            cout<<"State = 3 -go on path- Step = "<<step<<endl;
-           system_state = 4;
+           setsystemstate(4);
         }
         else
-        if ( system_state == 4)
+        if ( getsystemstate() == 4)
         {
            
             if(fabs(errorX_R)<=desireErrorX && fabs(errorY_R)<=desireErrorY && fabs(errorTetha)<=desireErrorTetha)
@@ -969,18 +773,18 @@ void PathFwr()
 
                     if ( on_the_goal )
                     {
-                        system_state = 5;
+                       setsystemstate(5);
                     }
                     else
                     {
-                        system_state = 3;
+                       setsystemstate(3);
                     }
                     
                 }
                 else
                 {
                     cout<<"Temp point reached"<<endl;
-                    system_state = 3;
+                    setsystemstate(3);
                 }
             }
             else
@@ -1005,20 +809,20 @@ void PathFwr()
             }
         }
         else
-        if ( system_state == 5)
+        if ( getsystemstate() == 5)
         {
 
             cout<<"State = 5 -turn to goal-"<<endl;
-            system_state = 6;
+            setsystemstate(6);
         }
         else
-        if ( system_state == 6)
+        if ( getsystemstate() == 6)
         {
            
             if(fabs(errorTetha)<=desireErrorTetha)
             {
                 cout<<"DONE ! "<<tetha<<" "<<tempGoalTetha<<" "<<errorTetha<<endl;
-                system_state = 7;
+                setsystemstate(7);
                 force_stop();
                 
             }
@@ -1028,13 +832,13 @@ void PathFwr()
             }
         }
         else
-        if ( system_state == 7)
+        if ( getsystemstate() == 7)
         {
             cout<<"State = 7 -goal reached-"<<endl;
-            system_state = 8;
+            setsystemstate(8);
         }
         else
-        if ( system_state == 8)
+        if ( getsystemstate() == 8)
         {
             cout<<"Finished !"<<endl;
             
@@ -1044,7 +848,8 @@ void PathFwr()
             wait_flag = false;
             force_stop();
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-            system_state = 0;
+            setsystemstate(0);
+            setlastnavigationresult("GOAL REACHED");
             say_message("Goal reached");
         }
 
@@ -1054,7 +859,7 @@ void PathFwr()
     }
 }
 
-void GetCostmap(const nav_msgs::OccupancyGrid::ConstPtr &msg)
+void SepantaMoveBase::GetCostmap(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 {
 	if(!IsCmValid)
 	{
@@ -1063,9 +868,7 @@ void GetCostmap(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 	}
 }
 
-
-
-bool calc_error(double x1,double y1,double t1,double x2,double y2,double t2,double delta_t)
+bool SepantaMoveBase::calc_error(double x1,double y1,double t1,double x2,double y2,double t2,double delta_t)
 {
    bool valid = true;
    double v1 = fabs(x2-x1) / delta_t;
@@ -1086,22 +889,22 @@ bool calc_error(double x1,double y1,double t1,double x2,double y2,double t2,doub
    return valid;
 }
 
-void hector_problem_detected()
+void SepantaMoveBase::hector_problem_detected()
 {
-    if ( logic_state != -1)
+    if ( getlogicstate() != -1)
     {
         
-            tempLogicState = logic_state;
-            logic_state = -1;
+            tempLogicState = getlogicstate();
+            setlogicstate(-1);
 
-            tempSystemState = system_state;
-            system_state = -1;
+            tempSystemState = getsystemstate();
+            setsystemstate(-1);
 
             force_stop();
         }
 }
 
-void GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
+void SepantaMoveBase::GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
 {
 	amclCovariance = msg->pose.covariance;
 	amclPosition[0] = msg->pose.pose.position.x;
@@ -1123,9 +926,7 @@ void GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
     // cout<<"\n";
 }
 
-ros::Time old_time;
-
-void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
+void SepantaMoveBase::GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
     oldposition[0] = msg->pose.position.x;
     oldposition[1] = msg->pose.position.y;
@@ -1151,7 +952,7 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     else
     {
         cout<<"Keeped POSE : "<<position[0]<<" "<<position[1]<<" "<<tetha<<endl;
-        if( logic_state != 3) //if we are not in revcovery state and this is not caused by out request or hector reseting
+        if( getlogicstate() != 3) //if we are not in revcovery state and this is not caused by out request or hector reseting
         {
             cout<<coutcolor_red<<"problem with position"<<coutcolor0<<endl;
             //hector_problem_detected();
@@ -1161,26 +962,18 @@ void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
     }
 
     old_time = msg->header.stamp;
-    //=====================================
-
-
-       
-    
-    
+    //===================================== 
 }
 
-void CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
-{
-   
+void SepantaMoveBase::CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
+{ 
     if(msg->data == false)
     {
-       
-        hector_problem_detected();
-        
+        hector_problem_detected(); 
     }
 }
 
-void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
+void SepantaMoveBase::chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
 {
     if(!isttsready && msg->data == sayMessageId)
     {
@@ -1189,7 +982,7 @@ void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg)
     }
 }
 
-bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Response &res)
+bool SepantaMoveBase::checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Response &res)
 {
 
 	ROS_INFO("Service Request....");
@@ -1229,6 +1022,7 @@ bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Re
 
     if ( _cmd == "cancel")
     {
+
         exe_cancel();
     }
 
@@ -1247,14 +1041,7 @@ bool checkcommand(sepanta_msgs::command::Request  &req,sepanta_msgs::command::Re
     return true;
 }
 
-
-
-float f = 0.0;
-ros::Publisher marker_pub;
-ros::Publisher marker_pub2;
-ros::Publisher marker_pub3;
-
-void test_vis()
+void SepantaMoveBase::test_vis()
 {
 
     visualization_msgs::Marker points , points2 , points3;
@@ -1334,33 +1121,102 @@ void test_vis()
     marker_pub.publish(points);
 }
 
-int main(int argc, char **argv)
+void SepantaMoveBase::vis_thread()
 {
-    ros::init(argc, argv, "mymovebase");
+    while (ros::ok() && App_exit == false)
+    {
+    	test_vis();
+        boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+    }
+}
 
-    ROS_INFO("SepantaMoveBase Version 2.1.1 + Recovery + laser");
+void SepantaMoveBase::init()
+{
 
-    boost::thread _thread_PathFwr(&PathFwr);
-    boost::thread _thread_Logic(&logic_thread);
+ROS_INFO("SepantaMoveBase Version 2.2 :*");
 
-    ros::NodeHandle node_handles[20];
-    ros::Subscriber sub_handles[5];
+coutcolor0 = "\033[0;0m";
+coutcolor_red = "\033[0;31m";
+coutcolor_green = "\033[0;32m";
+coutcolor_blue = "\033[0;34m";
+coutcolor_magenta = "\033[0;35m";
+coutcolor_brown = "\033[0;33m";
+say_enable = false;
+App_exit = false;
+IsCmValid = false;
+IsGoalReached = false;
+IsRecoveryState = false;
+IsHectorReset = false;
+isttsready = true;
+IsPoseStimated = false;
+IsamclReady = false;
+statemutex = true;
+maxLinSpeedX = normal_max_linear_speedX;
+maxLinSpeedY = normal_max_linear_speedY;
+maxTethaSpeed = normal_max_angular_speed;
+globalPathSize = 0;
+temp_path_size = 0;
+xSpeed=0;
+ySpeed=0;
+tethaSpeed=0;
+desireErrorX = normal_desire_errorX;
+desireErrorY = normal_desire_errorY;
+desireErrorTetha = normal_desire_errorTetha;
+errorX = 0;
+errorY = 0;
+errorTetha = 0;
+errorX_R = 0;
+errorY_R = 0;
+LKpX = normal_kp_linearX;
+LKpY = normal_kp_linearY;
+WKp = norma_kp_angular;
+LKiX = normal_ki_linearX;
+LKiY = normal_ki_linearY;
+WKi = normal_ki_angular;
+step = 0;
+position[2] = {0};
+oldposition[2] = {0};
+orientation[4] = {0};
+amclPosition[2] = {0};
+amclOrientation[4] = {0};
+tetha = 0;
+oldtetha = 0;
+tempGoalPos[2] = {0};
+tempGoalTetha = 0;
+goalPos[2] = {0};
+goalOri[4] = {0};
+goalTetha = 0;
+distacne_to_goal = 0;
+maxErrorX = 0;
+maxErrorY = 0;
+maxErrorTetha = 0;
+info_counter = 0;
+system_state = 0;
+logic_state = 0;
+on_the_goal = false;
+step_size  = 40;
+wait_flag = false;
+idle_flag = false;
+isrobotmove = false;
+last_navigation_result = "";
+f = 0.0;
+
+
 
     //============================================================================================
-    sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, GetPos);
+    sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, &SepantaMoveBase::GetPos,this);
     //============================================================================================
-    sub_handles[1] = node_handles[1].subscribe("/move_base/global_costmap/costmap", 10, GetCostmap);
+    sub_handles[1] = node_handles[1].subscribe("/move_base/global_costmap/costmap", 10, &SepantaMoveBase::GetCostmap,this);
     //============================================================================================
-    sub_handles[2] = node_handles[2].subscribe("/HectorStatus", 10, CheckHectorStatus);
+    sub_handles[2] = node_handles[2].subscribe("/HectorStatus", 10, &SepantaMoveBase::CheckHectorStatus,this);
     //============================================================================================
-    sub_handles[4] = node_handles[13].subscribe("/amcl_pose", 10, GetAmclPose);
+    sub_handles[4] = node_handles[13].subscribe("/amcl_pose", 10, &SepantaMoveBase::GetAmclPose,this);
     //============================================================================================
     mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);
     pub_slam_origin = node_handles[4].advertise<geometry_msgs::PoseWithCovarianceStamped>("/slam_origin", 1);
     pub_slam_reset = node_handles[5].advertise<std_msgs::String>("syscommand", 1);
     //============================================================================================
-    ros::NodeHandle n_service;
-    ros::ServiceServer service_command = n_service.advertiseService("sepantamovebase/command", checkcommand);
+    ros::ServiceServer service_command = n_service.advertiseService("sepantamovebase/command", &SepantaMoveBase::checkcommand,this);
     //============================================================================================
     pub_tts = node_handles[6].advertise<std_msgs::String>("/texttospeech/message", 10);
     //============================================================================================
@@ -1370,33 +1226,27 @@ int main(int argc, char **argv)
     marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_steps", 10);
     marker_pub2 =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_goals", 10);
     marker_pub3 =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_goals_arrow", 10);
-
+    //============================================================================================
     client_makeplan = node_handles[9].serviceClient<nav_msgs::GetPlanRequest>("move_base/make_plan");
  	client_resetcostmap = node_handles[10].serviceClient<std_srvs::EmptyRequest>("move_base/clear_costmaps");
  	client_map_save = node_handles[11].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/save");
     client_map_load = node_handles[12].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/load");
-
-
-    sub_handles[3] = node_handles[3].subscribe("/texttospeech/queue", 10, chatterCallback_ttsfb);
+    //============================================================================================
+    sub_handles[3] = node_handles[3].subscribe("/texttospeech/queue", 10, &SepantaMoveBase::chatterCallback_ttsfb,this);
     say_service = node_handles[11].serviceClient<sepanta_msgs::command>("texttospeech/say");
-
-    ros::Rate loop_rate(20);
-
+    //============================================================================================
     read_file();
+    ROS_INFO("Init done");
+}
 
-    while (ros::ok() && App_exit == false)
-    {
-        publish_isrobotmove();
-    	test_vis();
-        ros::spinOnce();
-        loop_rate.sleep();
-    }
-
-    _thread_PathFwr.interrupt();
+void SepantaMoveBase::kill()
+{
+	_thread_PathFwr.interrupt();
     _thread_PathFwr.join();
 
     _thread_Logic.interrupt();
     _thread_Logic.join();
 
-    return 0;
+    _thread_Vis.interrupt();
+    _thread_Vis.join();
 }

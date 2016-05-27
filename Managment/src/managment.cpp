@@ -683,6 +683,7 @@ string get_time()
 
 void save_log(std::string id,string message)
 {
+    return;
     std::string path_points =  ros::package::getPath("managment") + "/logs/" + id + ".txt";
     std::string line;
     std::ofstream text;
