@@ -309,7 +309,7 @@ void Move_GLY(float SV, float distance)
 
 void chatterCallback_pose(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
-    //cout<<"get"<<endl;
+    cout<<"get"<<endl;
     geometry_msgs::Pose pose;
     geometry_msgs::Point point;
     geometry_msgs::Quaternion quaternion;
@@ -535,17 +535,17 @@ int main(int argc, char** argv)
 
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
 
-    // geometry_msgs::TransformStamped odom_trans;
-    // odom_trans.header.stamp = ros::Time::now();
-    // odom_trans.header.frame_id = "odom";
-    // odom_trans.child_frame_id = "base_link";
+    geometry_msgs::TransformStamped odom_trans;
+     odom_trans.header.stamp = ros::Time::now();
+    odom_trans.header.frame_id = "odom";
+    odom_trans.child_frame_id = "base_link";
 
-    // odom_trans.transform.translation.x = slam_position_yaw[0];
-    // odom_trans.transform.translation.y = slam_position_yaw[1];
-    // odom_trans.transform.translation.z = 0;
-    // odom_trans.transform.rotation = odom_quat;
+    odom_trans.transform.translation.x = slam_position_yaw[0];
+    odom_trans.transform.translation.y = slam_position_yaw[1];
+     odom_trans.transform.translation.z = 0;
+     odom_trans.transform.rotation = odom_quat;
 
-    // odom_broadcaster.sendTransform(odom_trans);
+     odom_broadcaster.sendTransform(odom_trans);
     
     nav_msgs::Odometry odom;
     odom.header.stamp = ros::Time::now();

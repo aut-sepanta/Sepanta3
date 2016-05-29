@@ -75,7 +75,7 @@ using namespace std;
 using namespace boost;
 using namespace ros;
 
-#define VIRTUALMODE
+// #define VIRTUALMODE
 
 #ifdef VIRTUALMODE
 //MAX SPEED
@@ -261,6 +261,8 @@ double orientation[4];
 double amclPosition[2];
 double amclOrientation[4];
 boost::array<double, 36ul> amclCovariance;
+double estimatedPosition[2];
+double estimatedOrientation;
 double tetha;
 double oldtetha;
 double tempGoalPos[2] ;

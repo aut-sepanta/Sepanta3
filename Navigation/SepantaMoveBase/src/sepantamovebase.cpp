@@ -4,11 +4,11 @@
 // #define VIRTUALMODE
 
 SepantaMoveBase::SepantaMoveBase() : 
+App_exit(false),
 _thread_PathFwr(&SepantaMoveBase::PathFwr,this),
 _thread_Logic(&SepantaMoveBase::logic_thread,this),
 _thread_Vis(&SepantaMoveBase::vis_thread,this)
 {
-
     init();
 }
 
@@ -240,6 +240,8 @@ nav_msgs::Path SepantaMoveBase::call_make_plan()
 
 void SepantaMoveBase::logic_thread()
 {
+     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    std::cout<<"logic thread started"<<endl;
     nav_msgs::Path result;
 
     while(ros::ok() && !App_exit)
@@ -360,7 +362,7 @@ void SepantaMoveBase::logic_thread()
         	IsHectorReset = false;
             cout<<coutcolor_magenta<<" getlogicstate() == 4 " <<coutcolor0<<endl;
 
-            if(!IsPoseStimated && IsamclReady)
+            if(!IsPoseStimated && IsamclReady && getsystemstate() == 4)
             {
             	 setlogicstate(5);
             	 setsystemstate(-1); //wait
@@ -406,7 +408,7 @@ void SepantaMoveBase::logic_thread()
         	say_message("Estimating Position");
         	cout<<coutcolor_green<<"Estimating Position"<<coutcolor0<<endl;
     		reset_hector_slam();
-    		update_hector_origin(amclPosition[0],amclPosition[1],Quat2Rad(amclOrientation));
+    		update_hector_origin(estimatedPosition[0],estimatedPosition[1],estimatedOrientation);
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             clean_costmaps();   
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
@@ -913,14 +915,29 @@ void SepantaMoveBase::GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped
     amclOrientation[1] = msg->pose.pose.orientation.y;
     amclOrientation[2] = msg->pose.pose.orientation.z;
     amclOrientation[3] = msg->pose.pose.orientation.w;
-    if(abs(amclCovariance[0]) < 0.02 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.02 && amclCovariance[7] != 0)
+    if(abs(amclCovariance[0]) < 0.04 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.02 && amclCovariance[7] != 0)
+    {
+        estimatedPosition[0] = amclPosition[0];
+        estimatedPosition[1] = amclPosition[1];
+        estimatedOrientation = Quat2Rad(amclOrientation);
         IsamclReady = true;
+        if(IsPoseStimated)
+        {
+            if(sqrt((position[0]-estimatedPosition[0])*(position[0]-estimatedPosition[0]) +
+                (position[1]-estimatedPosition[1])*(position[1]-estimatedPosition[1])) > 0.1 && getsystemstate() == 4)
+            {
+                cout<<coutcolor_green<<"Estimating Position without Orientation"<<coutcolor0<<endl;
+                update_hector_origin(estimatedPosition[0],estimatedPosition[1],tetha);
+            }
+        }
+    }
     else
     {
     	IsamclReady = false;
-    	if(abs(amclCovariance[0]) > 0.05 || abs(amclCovariance[7]) > 0.05)
+    	if(abs(amclCovariance[0]) > 0.06 || abs(amclCovariance[7]) > 0.04)
     		IsPoseStimated = false;
     }
+
     // for(int i=0;i<10;i++)
     // 	cout<<amclCovariance[i]<<"\t";
     // cout<<"\n";
@@ -1123,6 +1140,7 @@ void SepantaMoveBase::test_vis()
 
 void SepantaMoveBase::vis_thread()
 {
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     while (ros::ok() && App_exit == false)
     {
     	test_vis();
@@ -1179,6 +1197,8 @@ oldposition[2] = {0};
 orientation[4] = {0};
 amclPosition[2] = {0};
 amclOrientation[4] = {0};
+estimatedPosition[2] = {0};
+estimatedOrientation = 0;
 tetha = 0;
 oldtetha = 0;
 tempGoalPos[2] = {0};
