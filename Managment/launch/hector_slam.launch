@@ -31,11 +31,7 @@
        
   </node>
     
-<<<<<<< HEAD
-  <node pkg="tf" type="static_transform_publisher" name="broadcaster_map_to_odm" args="0 0 0 0 0 0 1 $(arg map_frame_name) $(arg odom_frame_name) 30" />
-=======
-  <node pkg="tf" type="static_transform_publisher" name="broadcaster_odm_to_base" args="0 0 0 0 0 0 1 $(arg odom_frame_name) $(arg base_frame_name) 30" />
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
+  <!-- <node pkg="tf" type="static_transform_publisher" name="broadcaster_map_to_odm" args="0 0 0 0 0 0 1 $(arg map_frame_name) $(arg odom_frame_name) 1" /> -->
     
 </launch>
 

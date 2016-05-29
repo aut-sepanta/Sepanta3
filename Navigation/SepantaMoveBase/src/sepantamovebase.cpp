@@ -4,15 +4,11 @@
 // #define VIRTUALMODE
 
 SepantaMoveBase::SepantaMoveBase() : 
-<<<<<<< HEAD
 App_exit(false),
-=======
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 _thread_PathFwr(&SepantaMoveBase::PathFwr,this),
 _thread_Logic(&SepantaMoveBase::logic_thread,this),
 _thread_Vis(&SepantaMoveBase::vis_thread,this)
 {
-<<<<<<< HEAD
     init();
 }
 
@@ -69,65 +65,6 @@ void SepantaMoveBase::setstatemutex(bool value)
     statemutex = value;
 }
 
-=======
-
-    init();
-}
-
-SepantaMoveBase::~SepantaMoveBase()
-{
-	kill();
-}
-
-double SepantaMoveBase::Quat2Rad(double orientation[])
-{
-    tf::Quaternion q(orientation[0], orientation[1], orientation[2], orientation[3]);
-    tf::Matrix3x3 m(q);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-    return yaw;
-}
-
-void SepantaMoveBase::publish_isrobotmove()
-{
-    std_msgs::Bool _msg;
-    _msg.data = getrobotmove();
-    pub_move.publish(_msg);
-}
-
-void SepantaMoveBase::setsystemstate(int value,bool forced = false)
-{
-   if ( getstatemutex() || forced)
-   		system_state = value;
-}
-
-void SepantaMoveBase::setlogicstate(int value,bool forced = false)
-{
-	if ( getstatemutex() || forced)
-   		logic_state = value;
-}
-
-int SepantaMoveBase::getsystemstate()
-{
-   return system_state;
-}
-
-int SepantaMoveBase::getlogicstate()
-{
-  return logic_state;
-}
-
-bool SepantaMoveBase::getstatemutex()
-{
-   return statemutex;
-}
-
-void SepantaMoveBase::setstatemutex(bool value)
-{
-    statemutex = value;
-}
-
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 void SepantaMoveBase::say_message(string data)
 {
     if ( say_enable == false ) return;
@@ -425,11 +362,7 @@ void SepantaMoveBase::logic_thread()
         	IsHectorReset = false;
             cout<<coutcolor_magenta<<" getlogicstate() == 4 " <<coutcolor0<<endl;
 
-<<<<<<< HEAD
             if(!IsPoseStimated && IsamclReady && getsystemstate() == 4)
-=======
-            if(!IsPoseStimated && IsamclReady)
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
             {
             	 setlogicstate(5);
             	 setsystemstate(-1); //wait
@@ -475,11 +408,7 @@ void SepantaMoveBase::logic_thread()
         	say_message("Estimating Position");
         	cout<<coutcolor_green<<"Estimating Position"<<coutcolor0<<endl;
     		reset_hector_slam();
-<<<<<<< HEAD
     		update_hector_origin(estimatedPosition[0],estimatedPosition[1],estimatedOrientation);
-=======
-    		update_hector_origin(amclPosition[0],amclPosition[1],Quat2Rad(amclOrientation));
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
             boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
             clean_costmaps();   
             boost::this_thread::sleep(boost::posix_time::milliseconds(500));
@@ -611,7 +540,6 @@ void SepantaMoveBase::setrobotmove(bool value)
 {
 	isrobotmove = value;
 }
-<<<<<<< HEAD
 
 bool SepantaMoveBase::getrobotmove()
 {
@@ -628,24 +556,6 @@ string SepantaMoveBase::getlastnavigationresult()
 	return last_navigation_result;
 }
 
-=======
-
-bool SepantaMoveBase::getrobotmove()
-{
-	return isrobotmove;
-}
-
-void SepantaMoveBase::setlastnavigationresult(string value)
-{
-	last_navigation_result = value;
-}
-
-string SepantaMoveBase::getlastnavigationresult()
-{
-	return last_navigation_result;
-}
-
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 int SepantaMoveBase::calc_next_point()
 {
             bool isgoalnext = false;
@@ -1005,7 +915,6 @@ void SepantaMoveBase::GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped
     amclOrientation[1] = msg->pose.pose.orientation.y;
     amclOrientation[2] = msg->pose.pose.orientation.z;
     amclOrientation[3] = msg->pose.pose.orientation.w;
-<<<<<<< HEAD
     if(abs(amclCovariance[0]) < 0.04 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.02 && amclCovariance[7] != 0)
     {
         estimatedPosition[0] = amclPosition[0];
@@ -1015,7 +924,7 @@ void SepantaMoveBase::GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped
         if(IsPoseStimated)
         {
             if(sqrt((position[0]-estimatedPosition[0])*(position[0]-estimatedPosition[0]) +
-                (position[1]-estimatedPosition[1])*(position[1]-estimatedPosition[1])) > 0.1 && getsystemstate() == 4)
+                (position[1]-estimatedPosition[1])*(position[1]-estimatedPosition[1])) > 0.1)
             {
                 cout<<coutcolor_green<<"Estimating Position without Orientation"<<coutcolor0<<endl;
                 update_hector_origin(estimatedPosition[0],estimatedPosition[1],tetha);
@@ -1028,17 +937,6 @@ void SepantaMoveBase::GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped
     	if(abs(amclCovariance[0]) > 0.06 || abs(amclCovariance[7]) > 0.04)
     		IsPoseStimated = false;
     }
-
-=======
-    if(abs(amclCovariance[0]) < 0.02 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.02 && amclCovariance[7] != 0)
-        IsamclReady = true;
-    else
-    {
-    	IsamclReady = false;
-    	if(abs(amclCovariance[0]) > 0.05 || abs(amclCovariance[7]) > 0.05)
-    		IsPoseStimated = false;
-    }
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
     // for(int i=0;i<10;i++)
     // 	cout<<amclCovariance[i]<<"\t";
     // cout<<"\n";
@@ -1241,10 +1139,7 @@ void SepantaMoveBase::test_vis()
 
 void SepantaMoveBase::vis_thread()
 {
-<<<<<<< HEAD
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-=======
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
     while (ros::ok() && App_exit == false)
     {
     	test_vis();
@@ -1301,11 +1196,8 @@ oldposition[2] = {0};
 orientation[4] = {0};
 amclPosition[2] = {0};
 amclOrientation[4] = {0};
-<<<<<<< HEAD
 estimatedPosition[2] = {0};
 estimatedOrientation = 0;
-=======
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 tetha = 0;
 oldtetha = 0;
 tempGoalPos[2] = {0};
@@ -1332,19 +1224,11 @@ f = 0.0;
 
     //============================================================================================
     sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, &SepantaMoveBase::GetPos,this);
-<<<<<<< HEAD
     //============================================================================================
     sub_handles[1] = node_handles[1].subscribe("/move_base/global_costmap/costmap", 10, &SepantaMoveBase::GetCostmap,this);
     //============================================================================================
     sub_handles[2] = node_handles[2].subscribe("/HectorStatus", 10, &SepantaMoveBase::CheckHectorStatus,this);
     //============================================================================================
-=======
-    //============================================================================================
-    sub_handles[1] = node_handles[1].subscribe("/move_base/global_costmap/costmap", 10, &SepantaMoveBase::GetCostmap,this);
-    //============================================================================================
-    sub_handles[2] = node_handles[2].subscribe("/HectorStatus", 10, &SepantaMoveBase::CheckHectorStatus,this);
-    //============================================================================================
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
     sub_handles[4] = node_handles[13].subscribe("/amcl_pose", 10, &SepantaMoveBase::GetAmclPose,this);
     //============================================================================================
     mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 10);

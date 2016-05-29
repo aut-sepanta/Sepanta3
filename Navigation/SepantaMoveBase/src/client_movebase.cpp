@@ -32,20 +32,12 @@ int main (int argc, char **argv)
   // send a goal to the action
   sepanta_msgs::MasterGoal goal;
   goal.action = "exe";
-<<<<<<< HEAD
   goal.id = "hall1";
-=======
-  goal.id = "kitchen";
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 
   ac->sendGoal(goal);
 
   //wait for the action to return
-<<<<<<< HEAD
   bool finished_before_timeout = ac->waitForResult(ros::Duration(300));
-=======
-  bool finished_before_timeout = ac->waitForResult(ros::Duration(30));
->>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 
   if (finished_before_timeout)
   {

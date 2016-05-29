@@ -248,6 +248,7 @@ class MapServer
       }
 
       mapfname = ros::package::getPath("managment") + "/maps/map.pgm";
+      
       ROS_INFO("Loading map from image \"%s\"", mapfname.c_str());
       std::cout<<res<<std::endl;
       //////////////////////////////////////////////////////////
