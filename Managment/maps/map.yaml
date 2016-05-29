@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 image: /home/edwin/catkin_ws/src/Sepanta3/Managment/maps/map.pgm
+=======
+image: /home/sepanta/catkin_ws/src/Sepanta3/Managment/maps/map.pgm
+>>>>>>> 2de9ae01f4fb663c8ab2a23d0f3ffc555dc43eb2
 resolution: 0.025000
 origin: [-19.212500, -19.212500, 0.000000]
 negate: 0
