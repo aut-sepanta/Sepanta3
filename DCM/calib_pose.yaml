@@ -1,0 +1,21 @@
+%YAML:1.0
+rotation: !!opencv-matrix
+   rows: 0
+   cols: 0
+   dt: u
+   data: []
+translation: !!opencv-matrix
+   rows: 0
+   cols: 0
+   dt: u
+   data: []
+essential: !!opencv-matrix
+   rows: 0
+   cols: 0
+   dt: u
+   data: []
+fundamental: !!opencv-matrix
+   rows: 0
+   cols: 0
+   dt: u
+   data: []

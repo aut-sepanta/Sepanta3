@@ -30,8 +30,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 int imageSize = 434176;
 int streamSize = 435200;// imageSize + sizeof(double);
 std::string cameraName = "depth";
-std::string imageTopicSubName = "image_depth";
-std::string cameraInfoSubName = "camera_info";
+std::string imageTopicSubName = "/kinect2/sd/image_depth_rect";
+std::string cameraInfoSubName = "/kinect2/sd/image_depth_rect/camera_info";
 
 int main(int argC,char **argV)
 {
@@ -62,7 +62,7 @@ int main(int argC,char **argV)
         rosImage.step = 1024; // = 1920*3bytes
         rosImage.data = bufferVector;
         sensor_msgs::CameraInfo camInfo = camInfoMgr.getCameraInfo();
-        camInfo.header.stamp = rosImage.header.stamp;
+        camInfo.header.stamp = ros::Time(utcTime);
         camInfo.header.frame_id = rosImage.header.frame_id;
         cameraInfoPub.publish(camInfo);
         imagePublisher.publish(rosImage);

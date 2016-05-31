@@ -30,8 +30,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 int imageSize = 434176;
 int streamSize = imageSize + sizeof(double);
 std::string cameraName = "ir";
-std::string imageTopicSubName = "image_ir";
-std::string cameraInfoSubName = "camera_info";
+std::string imageTopicSubName = "/kinect2/sd/image_ir_rect";
+std::string cameraInfoSubName = "/kinect2/sd/image_ir_rect/camera_info";
 
 int main(int argC,char **argV)
 {
@@ -44,7 +44,7 @@ int main(int argC,char **argV)
 	image_transport::Publisher imagePublisher = imT.advertise(imageTopicSubName,1);
 	ros::Publisher cameraInfoPub = n.advertise<sensor_msgs::CameraInfo>(cameraInfoSubName,1);
 	camera_info_manager::CameraInfoManager camInfoMgr(n,cameraName);
-	camInfoMgr.loadCameraInfo("");
+	camInfoMgr.loadCameraInfo("package://k2_client/data/calib_ir.yaml");
 	cv::Mat frame;
 	cv_bridge::CvImage cvImage;
 	sensor_msgs::Image rosImage;
@@ -61,7 +61,7 @@ int main(int argC,char **argV)
 		cvImage.image = frame;
 		cvImage.toImageMsg(rosImage);
 		sensor_msgs::CameraInfo camInfo = camInfoMgr.getCameraInfo();
-		camInfo.header.stamp = cvImage.header.stamp;
+		camInfo.header.stamp = ros::Time(utcTime);
 		camInfo.header.frame_id = cvImage.header.frame_id;
 		cameraInfoPub.publish(camInfo);
 		imagePublisher.publish(rosImage);

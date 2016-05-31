@@ -31,8 +31,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 int imageSize = 2764800;
 int streamSize = 2768640;// imageSize + sizeof(double);
 std::string cameraName = "rgb";
-std::string imageTopicSubName = "image_color";
-std::string cameraInfoSubName = "camera_info";
+std::string imageTopicSubName = "/kinect2/hd/image_color_rect";
+std::string cameraInfoSubName = "/kinect2/hd/image_color_rect/camera_info";
 
 int main(int argC,char **argV)
 {
@@ -46,7 +46,7 @@ int main(int argC,char **argV)
     ros::Publisher imagePublisher = n.advertise<sensor_msgs::Image>(imageTopicSubName,1);
     ros::Publisher cameraInfoPub = n.advertise<sensor_msgs::CameraInfo>(cameraInfoSubName,1);
     camera_info_manager::CameraInfoManager camInfoMgr(n,cameraName);
-    camInfoMgr.loadCameraInfo("");
+    camInfoMgr.loadCameraInfo("package://k2_client/data/calib_color.yaml");
     cv::Mat frame;
     cv_bridge::CvImage cvImage;
     sensor_msgs::Image rosImage;
@@ -82,7 +82,7 @@ int main(int argC,char **argV)
         rosImage.step = 3840; // = 1920*3bytes
         rosImage.data = bufferVector;
         sensor_msgs::CameraInfo camInfo = camInfoMgr.getCameraInfo();
-        camInfo.header.stamp = cvImage.header.stamp;
+        camInfo.header.stamp = ros::Time(utcTime);
         camInfo.header.frame_id = cvImage.header.frame_id;
         cameraInfoPub.publish(camInfo);
         imagePublisher.publish(rosImage);
