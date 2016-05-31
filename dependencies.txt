@@ -12,5 +12,7 @@
 11 ) sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers ros-indigo-gazebo-ros-control
 12 ) sudo apt-get install ros-indigo-youbot-*
 13 ) sudo apt-get install libspnav-dev
+14 ) sudo apt-get install ros-indigo-joy
+15 ) sudo apt-get install ros-indigo-joystick-drivers
 
 
