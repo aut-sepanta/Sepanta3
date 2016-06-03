@@ -29,7 +29,7 @@ add_message_files(
     Object.msg
     Objects.msg
     log.msg
-  
+    led.msg
     wave_hand.msg
     object_fetch.msg
     nameobjects.msg

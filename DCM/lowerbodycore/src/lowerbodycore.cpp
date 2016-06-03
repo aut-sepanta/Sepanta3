@@ -22,6 +22,7 @@
 #include "sepanta_msgs/omnidata.h"
 #include "sepanta_msgs/head.h"
 #include "sepanta_msgs/irsensor.h"
+#include "sepanta_msgs/led.h"
 #include <dynamixel_msgs/MotorStateList.h>
 #include <dynamixel_msgs/JointState.h>
 #include <dynamixel_controllers/SetComplianceSlope.h>
@@ -64,6 +65,10 @@ int IR[5] = {0};
 int EMS_STOP = 0;
 int EMS_STOP2 = 0;
 bool isdooropened = true;
+bool isledenable = false;
+bool balarm = false;
+char led_color[3] = {0};
+
 
 ros::Publisher chatter_pub[20];
 ros::Publisher chatter_pub_motor[20];
@@ -86,10 +91,38 @@ bool btn_start = false;
 bool btn_stop = false;
 int serial_read_hz = 0;
 int serial_rw_count = 0;
-const int baudrate = 1000000;
+const int baudrate = 115200;
 bool isserialopen = false;
+char desire_z = 100;
 
-const string port_name  = "/dev/serial/by-id/usb-ROBOTIS_CO._LTD._ROBOTIS_Virtual_COM_Port-if00";
+float omnidrive_x = 0;
+float omnidrive_y = 0;
+float omnidrive_w = 0;
+
+int w1_current = 128;
+int w2_current = 128;
+int w3_current = 128;
+int w4_current = 128;
+
+const string port_name  = "/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0";
+
+void chatterCallback_led(const sepanta_msgs::led::ConstPtr &msg)
+{
+   isledenable = msg->enable;
+   led_color[0] = msg->colorR;
+   led_color[1] = msg->colorG;
+   led_color[2] = msg->colorB;
+}
+
+void chatterCallback_z(const std_msgs::Int32::ConstPtr &msg)
+{
+   desire_z = msg->data;
+}
+
+void chatterCallback_alarm(const std_msgs::Bool::ConstPtr &msg)
+{
+   balarm = msg->data;
+}
 
 void chatterCallback_greenlight(const std_msgs::Bool::ConstPtr &msg)
 {
@@ -152,10 +185,6 @@ void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
 
 }
 
-float omnidrive_x = 0;
-float omnidrive_y = 0;
-float omnidrive_w = 0;
-
 void chatterCallback_omnidrive(const sepanta_msgs::omnidata::ConstPtr &msg)
 {
     cout<<"omni"<<endl;
@@ -203,10 +232,7 @@ void smooth_drive()
      }
 }
 
-float w1_current = 128;
-float w2_current = 128;
-float w3_current = 128;
-float w4_current = 128;
+
 
 void Omnidrive(float vx, float vy, float vw)
 {
@@ -299,13 +325,13 @@ void Update()
     chatter_pub[4].publish(omni_info);
 
     //Publisg IR Sensors
-    sepanta_msgs::irsensor sensor_info;
-    sensor_info.d0 = IR[0];
-    sensor_info.d1 = IR[1];
-    sensor_info.d2 = IR[2];
-    sensor_info.d3 = IR[3];
-    sensor_info.d4 = IR[4];
-    chatter_pub[6].publish(sensor_info);
+    // sepanta_msgs::irsensor sensor_info;
+    // sensor_info.d0 = IR[0];
+    // sensor_info.d1 = IR[1];
+    // sensor_info.d2 = IR[2];
+    // sensor_info.d3 = IR[3];
+    // sensor_info.d4 = IR[4];
+    // chatter_pub[6].publish(sensor_info);
 
     //Publish Laser Sensors
     sepanta_msgs::irsensor sensor_info_laser;
@@ -323,9 +349,9 @@ void Update()
     chatter_pub[7].publish(sensor_info_laser);
 
     //Publisg Keypad
-    std_msgs::Int32 key_msg;
-    key_msg.data = keypad_status;
-    chatter_pub[8].publish(key_msg); //keypad
+    // std_msgs::Int32 key_msg;
+    // key_msg.data = keypad_status;
+    // chatter_pub[8].publish(key_msg); //keypad
 
     //Publish EMS_Stop
     std_msgs::Int32 ems_msg;
@@ -338,19 +364,19 @@ void Update()
     chatter_pub[11].publish(btn_msg);// btn_start
 
     //Publisg Mode
-    std_msgs::Int32 mode_msg;
-    mode_msg.data = control_mode;
-    chatter_pub[12].publish(mode_msg); //Mode
+    // std_msgs::Int32 mode_msg;
+    // mode_msg.data = control_mode;
+    // chatter_pub[12].publish(mode_msg); //Mode
 
     //Publish Voltage Down
-    std_msgs::Int32 v1_msg;
-    v1_msg.data = voltage_down;
-    chatter_pub[13].publish(v1_msg); //voltage down
+    // std_msgs::Int32 v1_msg;
+    // v1_msg.data = voltage_down;
+    // chatter_pub[13].publish(v1_msg); //voltage down
 
     //Publish Voltage Up
-    std_msgs::Int32 v2_msg;
-    v2_msg.data = voltage_up;
-    chatter_pub[14].publish(v2_msg); //voltage up
+    // std_msgs::Int32 v2_msg;
+    // v2_msg.data = voltage_up;
+    // chatter_pub[14].publish(v2_msg); //voltage up
 
     std_msgs::Bool bool_msg;
     bool_msg.data = isdooropened;
@@ -384,14 +410,14 @@ void serial_logic()
                 serial::bytesize_t val3 = serial::eightbits;
                 my_serial.setBytesize(val3);
                 my_serial.open();
-
+             
                 //=======================================================
 
                 if (my_serial.isOpen())
                 {
                     ROS_INFO("USB Serial Port OK? : YES");
-                    result_write[0] = 0;
-                    my_serial.write(result_write, 1);
+                    //result_write[0] = 0;
+                    //my_serial.write(result_write, 1);
                 }
                 else
                 {
@@ -411,11 +437,11 @@ void serial_logic()
                 int queuerv1[FILTER_QUEU];
                 int queuerv2[FILTER_QUEU];
 
-
+               
                 while (App_exit == false)
                 {
 
-                    boost::this_thread::sleep(boost::posix_time::milliseconds(25));
+                    boost::this_thread::sleep(boost::posix_time::milliseconds(50));
                     serial_rw_count++;
                     /////////////////////////////////////////////////////
                     //Write Packet
@@ -425,20 +451,34 @@ void serial_logic()
                     result_write[2] = 255;
                     result_write[3] = 100;
                     result_write[4] = 40;
-                    result_write[5] = mobileplatform_motors_write[0];
-                    result_write[6] = mobileplatform_motors_write[1];
-                    result_write[7] = mobileplatform_motors_write[2];
-                    result_write[8] = mobileplatform_motors_write[3];
+                    result_write[5] = (uint8_t)mobileplatform_motors_write[0];
+                    result_write[6] = (uint8_t)mobileplatform_motors_write[1];
+                    result_write[7] = (uint8_t)mobileplatform_motors_write[2];
+                    result_write[8] = (uint8_t)mobileplatform_motors_write[3];
+
+                    cout<<(int)result_write[5]<<" "<<(int)result_write[6]<<" "<<(int)result_write[7]<<" "<<(int)result_write[8]<<endl;
 
                     char green = 25;
                     char red = 25;
+                    char led_enable = 25;
+                    char alarm_enable = 0;
+
                     if ( green_light ) green = 75;
                     if ( red_light   ) red = 75;
+                    if  ( isledenable ) led_enable = 75;
+                    if ( balarm ) alarm_enable = 25;
 
-                    result_write[9] = 75;
-                    result_write[10] = 75;
+                    result_write[9] = green;
+                    result_write[10] = red;
+                    result_write[11] = led_enable;
 
-                    my_serial.write(result_write, 11);
+                    result_write[12] = led_color[0];
+                    result_write[13] = led_color[1];
+                    result_write[14] = led_color[2];
+                    result_write[15] = alarm_enable;
+                    result_write[16] = desire_z;
+
+                    my_serial.write(result_write, 17);
                     boost::this_thread::sleep(boost::posix_time::milliseconds(10));
                     my_serial.flush();
 
@@ -463,87 +503,16 @@ void serial_logic()
                                 if ( read == 255)
                                 {
                                     //Read Packet
-                                    my_serial.read(result_read,21);
+                                    my_serial.read(result_read,8);
                                     mobileplatform_motors_read[0] = result_read[0];
                                     mobileplatform_motors_read[1] = result_read[1];
                                     mobileplatform_motors_read[2] = result_read[2];
                                     mobileplatform_motors_read[3] = result_read[3];
 
-                                    if (  result_read[4] != 0)
-                                    {
-                                        keypad_status = result_read[4];
-                                    }
-
-                                    int x = ( result_read[6] << 8 ) + ( result_read[5] ) ; //Compass (2 byte)
-                                    int y = ( result_read[8] << 8 ) + ( result_read[7] ) ; //Compass (2 byte)
-
-                                    control_mode = result_read[9];
-
-
-                                    for ( int i = FILTER_QUEU  - 2 ; i >= 0 ; i--)
-                                    {
-                                        queuercmpsx[i + 1] = queuercmpsx[i];
-                                        queuercmpsy[i + 1] = queuercmpsy[i];
-                                        queuerir1[i+1] =  queuerir1[i];
-                                        queuerir2[i+1] =  queuerir2[i];
-                                        queuerir3[i+1] =  queuerir3[i];
-                                        queuerir4[i+1] =  queuerir4[i];
-                                        queuerir5[i+1] =  queuerir5[i];
-                                        queuerv1[i+1] = queuerv1[i];
-                                        queuerv2[i+1] = queuerv2[i];
-
-                                    }
-
-                                    queuercmpsx[0] = x;
-                                    queuercmpsy[0] = y;
-                                    queuerir1[0] = (int)result_read[12];
-                                    queuerir2[0] = (int)result_read[13];
-                                    queuerir3[0] = (int)result_read[14];
-                                    queuerir4[0] = (int)result_read[15];
-                                    queuerir5[0] = (int)result_read[16];
-                                    queuerv1[0] = ( result_read[18] << 8 ) + ( result_read[17] );
-                                    queuerv2[0] = ( result_read[20] << 8 ) + ( result_read[19] );
-
-                                    float sum1 = 0;
-                                    float sum12 = 0;
-
-                                    float sum2 = 0;
-                                    float sum3 = 0;
-                                    float sum4 = 0;
-                                    float sum5 = 0;
-                                    float sum6 = 0;
-                                    float sum7 = 0;
-                                    float sum8 = 0;
-
-                                    for ( int i = 0 ; i < FILTER_QUEU ; i++ )
-                                    {
-                                        sum1 += queuercmpsx[i];
-                                        sum12 += queuercmpsy[i];
-                                        sum2 += queuerir1[i];
-                                        sum3 += queuerir2[i];
-                                        sum4 += queuerir3[i];
-                                        sum5 += queuerir4[i];
-                                        sum6 += queuerir5[i];
-                                        sum7 += queuerv1[i];
-                                        sum8 += queuerv2[i];
-                                    }
-
-
-                                    x = (int)(sum1 / FILTER_QUEU);
-                                    y = (int)(sum12 / FILTER_QUEU);
-
-                                    if ( x > 1000 )
-                                        x = -1 * ( 65536 - x );
-
-                                    if ( y > 1000 )
-                                        y = -1 * ( 65536 - y );
-
-                                    Compass = atan2(x,y) * 57.29;
-                                    if (Compass < 0) Compass = Compass + 360;
-
-
-                                    char ems = result_read[10];
-                                    char bstart = result_read[11];
+                                    int teta = ( result_read[5] << 8 ) + ( result_read[4] ) ; //Compass (2 byte)
+                             
+                                    char ems = result_read[6];
+                                    char bstart = result_read[7];
 
                                     if ( bstart < 50 )
                                         btn_start = false;
@@ -551,41 +520,9 @@ void serial_logic()
                                         btn_start = true;
 
                                     if ( ems < 50 )
-                                        EMS_STOP = 0;
+                                        EMS_STOP = false;
                                     else
-                                        EMS_STOP = 1;
-                                    
-                                    //cout<<"EMS : "<<EMS_STOP<<endl;
-
-                                    
-
-                                    IR[0] = (int)(sum2 / FILTER_QUEU);
-                                    IR[1] = (int)(sum3 / FILTER_QUEU);
-                                    IR[2] = (int)(sum4 / FILTER_QUEU);
-                                    IR[3] = (int)(sum5 / FILTER_QUEU);
-                                    IR[4] = (int)(sum6 / FILTER_QUEU);
-
-
-                                    voltage_up = (int)(sum7 / 10);
-                                    voltage_down = (int)(sum8 / 10);
-
-
-                                    if ( control_mode_old != control_mode )
-                                    {
-                                        if ( control_mode == 1 )
-                                        {
-                                            red_light = true;
-                                            control_mode_old = 1;
-                                        }
-                                        else
-                                        {
-                                            red_light = false;
-                                            control_mode_old = 2;
-                                        }
-                                    }
-
-
-                                    //ROS_INFO("USB Serial Read");
+                                        EMS_STOP = true;
                                    
                                     break;
                                 }
@@ -631,20 +568,19 @@ int main(int argc, char **argv)
     //===========================================================================================
 
     chatter_pub[4] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnispeed", 10);
-    chatter_pub[6] = node_handles[1].advertise<sepanta_msgs::irsensor>("lowerbodycore/irsensors", 10);
     chatter_pub[7] = node_handles[2].advertise<sepanta_msgs::irsensor>("lowerbodycore/lasersensors", 10);
-    chatter_pub[8] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/joistick", 10);
     chatter_pub[9] = node_handles[4].advertise<std_msgs::Int32>("lowerbodycore/bntems", 10);
     chatter_pub[11] = node_handles[5].advertise<std_msgs::Bool>("lowerbodycore/btnstart", 10);
-    chatter_pub[12] = node_handles[6].advertise<std_msgs::Int32>("lowerbodycore/controlmode", 10); //1 down //2 up
-    chatter_pub[13] = node_handles[7].advertise<std_msgs::Int32>("lowerbodycore/voltagedown", 10);
-    chatter_pub[14] = node_handles[8].advertise<std_msgs::Int32>("lowerbodycore/voltageup", 10);
     chatter_pub[15] = node_handles[14].advertise<std_msgs::Bool>("lowerbodycore/isdooropened", 10);
-    sub_handles[1] = node_handles[9].subscribe("lowerbodycore/omnidrive", 10, chatterCallback_omnidrive);
-    sub_handles[2] = node_handles[10].subscribe("scan", 10, chatterCallback_laser);
-    sub_handles[9] = node_handles[11].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
-    sub_handles[10] = node_handles[12].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
-    sub_handles[11] = node_handles[13].subscribe("tcpip/es", 10, chatterCallback_tcpes);
+
+    sub_handles[1] = node_handles[15].subscribe("lowerbodycore/omnidrive", 10, chatterCallback_omnidrive);
+    sub_handles[2] = node_handles[16].subscribe("scan", 10, chatterCallback_laser);
+    sub_handles[3] = node_handles[17].subscribe("lowerbodycore/greenlight", 10, chatterCallback_greenlight);
+    sub_handles[4] = node_handles[18].subscribe("lowerbodycore/redlight", 10, chatterCallback_redlight);
+    sub_handles[5] = node_handles[19].subscribe("lowerbodycore/led", 10, chatterCallback_led);
+    sub_handles[6] = node_handles[20].subscribe("lowerbodycore/alarm", 10, chatterCallback_alarm);
+    sub_handles[7] = node_handles[21].subscribe("lowerbodycore/desireZ", 10, chatterCallback_z);
+    sub_handles[8] = node_handles[22].subscribe("tcpip/es", 10, chatterCallback_tcpes);
 
     pub_ack = node_handles[14].advertise<std_msgs::String>("lowerbodycore/ack",10);
     //============================================================================================
