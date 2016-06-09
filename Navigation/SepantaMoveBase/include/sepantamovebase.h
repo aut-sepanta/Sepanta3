@@ -229,6 +229,7 @@ double maxLinSpeedY;
 double maxTethaSpeed;
 ros::Publisher pub_slam_origin;
 ros::Publisher pub_slam_reset;
+ros::Publisher pub_alarm;
 nav_msgs::Path globalPath;
 int globalPathSize;
 nav_msgs::Path tempPath;

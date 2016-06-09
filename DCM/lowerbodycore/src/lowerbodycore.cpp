@@ -66,7 +66,7 @@ int EMS_STOP = 0;
 int EMS_STOP2 = 0;
 bool isdooropened = true;
 bool isledenable = false;
-bool balarm = false;
+int balarm = 0;
 char led_color[3] = {0};
 
 
@@ -119,7 +119,7 @@ void chatterCallback_z(const std_msgs::Int32::ConstPtr &msg)
    desire_z = msg->data;
 }
 
-void chatterCallback_alarm(const std_msgs::Bool::ConstPtr &msg)
+void chatterCallback_alarm(const std_msgs::Int32::ConstPtr &msg)
 {
    balarm = msg->data;
 }
@@ -189,7 +189,7 @@ void chatterCallback_omnidrive(const sepanta_msgs::omnidata::ConstPtr &msg)
 {
     cout<<"omni"<<endl;
     omnidrive_x = -msg->d0;
-    omnidrive_y = msg->d1;
+    omnidrive_y = -msg->d1;
     omnidrive_w = -msg->d2;
 }
 
@@ -456,7 +456,7 @@ void serial_logic()
                     result_write[7] = (uint8_t)mobileplatform_motors_write[2];
                     result_write[8] = (uint8_t)mobileplatform_motors_write[3];
 
-                    cout<<(int)result_write[5]<<" "<<(int)result_write[6]<<" "<<(int)result_write[7]<<" "<<(int)result_write[8]<<endl;
+                    //cout<<(int)result_write[5]<<" "<<(int)result_write[6]<<" "<<(int)result_write[7]<<" "<<(int)result_write[8]<<endl;
 
                     char green = 25;
                     char red = 25;
@@ -466,7 +466,7 @@ void serial_logic()
                     if ( green_light ) green = 75;
                     if ( red_light   ) red = 75;
                     if  ( isledenable ) led_enable = 75;
-                    if ( balarm ) alarm_enable = 25;
+                   
 
                     result_write[9] = green;
                     result_write[10] = red;
@@ -475,17 +475,30 @@ void serial_logic()
                     result_write[12] = led_color[0];
                     result_write[13] = led_color[1];
                     result_write[14] = led_color[2];
-                    result_write[15] = alarm_enable;
+                    result_write[15] = (char)balarm;
                     result_write[16] = desire_z;
+                    result_write[17] = 0;
+                    result_write[18] = 0;
 
-                    my_serial.write(result_write, 17);
+                    uint16_t sum = 0;
+
+                    for ( int i = 0 ; i < 12 ; i++)
+                    {
+                    	sum += result_write[i + 5];
+                    }
+
+                    result_write[17] = (uint8_t)sum;
+                    result_write[18] = (uint8_t)(sum >> 8);
+
+                    my_serial.write(result_write, 19);
                     boost::this_thread::sleep(boost::posix_time::milliseconds(10));
                     my_serial.flush();
 
                     //ROS_INFO("USB Serial Write");
-
                     boost::this_thread::sleep(boost::posix_time::milliseconds(15));
-
+                    
+                    continue; 
+                   
                     uint8_t read;
 
                     while (App_exit == false)
@@ -502,6 +515,7 @@ void serial_logic()
 
                                 if ( read == 255)
                                 {
+                                    //cout<<"READ HEADER OK"<<endl;
                                     //Read Packet
                                     my_serial.read(result_read,8);
                                     mobileplatform_motors_read[0] = result_read[0];

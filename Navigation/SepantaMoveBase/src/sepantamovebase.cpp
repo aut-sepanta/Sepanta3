@@ -1133,11 +1133,29 @@ void SepantaMoveBase::Localization_thread()
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     int counter = 0;
     bool isFirstTime = true;
+
+    double hector_offset[3] = {0};
+    int mode = 0;
+    int loc_mode = 0;
+
     while (ros::ok() && App_exit == false)
     {
-        position[0] = hectorPosition[0];
-        position[1] = hectorPosition[1];
-        tetha = hectorTetha;
+        if ( loc_mode == 0 )
+        {
+
+            position[0] = hectorPosition[0] + hector_offset[0];
+            position[1] = hectorPosition[1] + hector_offset[1];
+            tetha = hectorTetha + hector_offset[2];
+
+        }
+        else
+        {
+
+            position[0] = amclPosition[0];
+            position[1] = amclPosition[1];
+            tetha = amclTetha;
+        
+        }
 
         counter++;
 
@@ -1147,24 +1165,70 @@ void SepantaMoveBase::Localization_thread()
 
             if(abs(amclCovariance[0]) < 2 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 1 && amclCovariance[7] != 0)
             {
-                if(abs(amclCovariance[0]) < 0.04 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.02 && amclCovariance[7] != 0)
+                if( loc_mode == 0)
                 {
-                   if ( isFirstTime )
-                   {
-                      isFirstTime = false;
-                      clean_costmaps();   
-                   }
-                } 
+                    if(abs(amclCovariance[0]) < 0.02 && amclCovariance[0] != 0 && abs(amclCovariance[7]) < 0.01 && amclCovariance[7] != 0)
+                    {
+                       // if ( isFirstTime )
+                       // {
+                       //    isFirstTime = false;
+                       //    //clean_costmaps();   
+                       // }
 
-                if(sqrt((position[0]-amclPosition[0])*(position[0]-amclPosition[0]) + (position[1]-amclPosition[1])*(position[1]-amclPosition[1])) > 0.1)
-                {
-                    // position[0] = hectorPosition[0];
-                    // position[1] = hectorPosition[1];
-                    //tetha = hectorTetha;
-                    update_hector_origin(amclPosition[0],amclPosition[1],amclTetha);
+                        clean_costmaps();
+                        mode = 1;
+                        loc_mode = 1;
+                    } 
+
+                    //if(sqrt((position[0]-amclPosition[0])*(position[0]-amclPosition[0]) + (position[1]-amclPosition[1])*(position[1]-amclPosition[1])) > 0.1)
+                    //{
+                         hector_offset[0] = amclPosition[0] - hectorPosition[0];
+                         hector_offset[1] = amclPosition[1] - hectorPosition[1];
+                         hector_offset[2] = amclTetha - hectorTetha;
+
+                        // position[0] = hectorPosition[0];
+                        // position[1] = hectorPosition[1];
+                        //tetha = hectorTetha;
+                       
+
+                        //update_hector_origin(amclPosition[0],amclPosition[1],amclTetha);
+
+
+                    //}
                 }
-                
+ 
             }
+
+           
+
+            if(abs(amclCovariance[0]) > 0.05 || abs(amclCovariance[7]) > 0.02)
+            {
+                         loc_mode = 0;
+                       
+            }
+
+            if ( mode == 1 )
+            {
+                mode = 2;
+                std_msgs::Int32 _msg;
+                _msg.data = 50;
+                pub_alarm.publish(_msg);
+            }
+            else if ( mode == 3 )
+            {
+                mode = 2;
+                std_msgs::Int32 _msg;
+                _msg.data = 100;
+                pub_alarm.publish(_msg);
+            }
+            else if ( mode == 2 )
+            {
+                mode = 0;
+                std_msgs::Int32 _msg;
+                _msg.data = 0;
+                pub_alarm.publish(_msg);
+            }
+
             SaveLastPosition();
         }
 
@@ -1265,6 +1329,7 @@ f = 0.0;
     pub_tts = node_handles[6].advertise<std_msgs::String>("/texttospeech/message", 10);
     //============================================================================================
     pub_current_goal = node_handles[7].advertise<geometry_msgs::PoseStamped>("current_goal", 0 );
+    pub_alarm = node_handles[7].advertise<std_msgs::Int32>("lowerbodycore/alarm",10);
     pub_move = node_handles[7].advertise<std_msgs::Bool>("lowerbodycore/isrobotmove", 10);
     //============================================================================================
     marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_steps", 10);
@@ -1275,6 +1340,7 @@ f = 0.0;
  	client_resetcostmap = node_handles[10].serviceClient<std_srvs::EmptyRequest>("move_base/clear_costmaps");
  	client_map_save = node_handles[11].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/save");
     client_map_load = node_handles[12].serviceClient<std_srvs::EmptyRequest>("sepantamapengenine/load");
+
     //============================================================================================
     sub_handles[3] = node_handles[3].subscribe("/texttospeech/queue", 10, &SepantaMoveBase::chatterCallback_ttsfb,this);
     say_service = node_handles[11].serviceClient<sepanta_msgs::command>("texttospeech/say");

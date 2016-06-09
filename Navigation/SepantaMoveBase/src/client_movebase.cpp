@@ -32,7 +32,7 @@ int main (int argc, char **argv)
   // send a goal to the action
   sepanta_msgs::MasterGoal goal;
   goal.action = "exe";
-  goal.id = "origin";
+  goal.id = "hall1";
 
   ac->sendGoal(goal);
 

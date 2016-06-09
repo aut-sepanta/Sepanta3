@@ -149,7 +149,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_steps
       Name: Marker
       Namespaces:
-        {}
+        points: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -157,7 +157,14 @@ Visualization Manager:
       Marker Topic: /visualization_marker_goals
       Name: Marker
       Namespaces:
-        {}
+        text bedroom: true
+        text charger: true
+        text hall1: true
+        text kitchen: true
+        text origin: true
+        text point1: true
+        text roomcenter: true
+        text shelf: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -165,7 +172,14 @@ Visualization Manager:
       Marker Topic: /visualization_marker_goals_arrow
       Name: Marker
       Namespaces:
-        {}
+        arrow bedroom: true
+        arrow charger: true
+        arrow hall1: true
+        arrow kitchen: true
+        arrow origin: true
+        arrow point1: true
+        arrow roomcenter: true
+        arrow shelf: true
       Queue Size: 100
       Value: true
     - Arrow Length: 0.3
@@ -209,7 +223,7 @@ Visualization Manager:
       Length: 0.2
       Name: Axes
       Radius: 0.05
-      Reference Frame: laser_link
+      Reference Frame: base_link
       Value: true
     - Class: rviz/Axes
       Enabled: true
@@ -242,22 +256,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.83579
+      Distance: 4.39124
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.1575
-        Y: -0.163805
-        Z: -0.998125
+        X: 4.51458
+        Y: 1.58295
+        Z: -1.65448
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.754797
+      Pitch: 1.2348
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.841285
+      Yaw: 0.851285
     Saved: ~
 Window Geometry:
   Displays:
