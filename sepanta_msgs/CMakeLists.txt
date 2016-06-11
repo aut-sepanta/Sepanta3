@@ -43,7 +43,10 @@ add_message_files(
     nodestatuslist.msg
     modelsName.msg
     voltagedata.msg
-    
+    Person.msg
+    PersonArray.msg
+    Leg.msg
+    LegArray.msg
 )
 
 add_service_files(

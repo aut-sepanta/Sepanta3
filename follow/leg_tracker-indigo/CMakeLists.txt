@@ -12,20 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-add_message_files(
-  FILES
-  Person.msg
-  PersonArray.msg
-  Leg.msg
-  LegArray.msg
-)
-
-generate_messages(   
-  DEPENDENCIES  
-  std_msgs  
-  geometry_msgs
-)  
-
 
 catkin_package(
   CATKIN_DEPENDS message_runtime

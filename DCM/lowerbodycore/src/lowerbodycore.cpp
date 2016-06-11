@@ -69,7 +69,6 @@ bool isledenable = false;
 int balarm = 0;
 char led_color[3] = {0};
 
-
 ros::Publisher chatter_pub[20];
 ros::Publisher chatter_pub_motor[20];
 ros::Publisher pub_ack;

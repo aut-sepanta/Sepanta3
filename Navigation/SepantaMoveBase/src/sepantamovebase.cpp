@@ -85,8 +85,6 @@ void SepantaMoveBase::send_omni(double x,double y ,double w)
 {
         geometry_msgs::Twist myTwist;
 
-
-
         #ifdef VIRTUALMODE
        
             myTwist.linear.x = x;
@@ -919,47 +917,16 @@ void SepantaMoveBase::GetAmclPose(const geometry_msgs::PoseWithCovarianceStamped
     amclOrientation[2] = msg->pose.pose.orientation.z;
     amclOrientation[3] = msg->pose.pose.orientation.w;
     amclTetha = Quat2Rad(amclOrientation);
-
-
 }
 
 void SepantaMoveBase::GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg)
 {
     tempPosition[0] = msg->pose.position.x;
     tempPosition[1] = msg->pose.position.y;
-    orientation[0] = msg->pose.orientation.x;
-    orientation[1] = msg->pose.orientation.y;
-    orientation[2] = msg->pose.orientation.z;
-    orientation[3] = msg->pose.orientation.w;
     tempTetha = Quat2Rad(orientation);
+    
     if (tempTetha < 0) tempTetha += 2*M_PI;
 
-    ros::Duration _delta_t = msg->header.stamp - old_time; //delta t in sec
-    double delta_t = _delta_t.toSec();
-
-    //cout<<"Temp POSE : "<<tempPosition[0]<<" "<<tempPosition[1]<<" "<<tempTetha<<endl;
-    //cout<<"POSITION"<<tempPosition[0]*100<<" | "<<tempPosition[1]*100<<" | "<<Rad2Deg(tempTetha)<<endl;
-    bool valid = calc_error(tempPosition[0],tempPosition[1],tempTetha,position[0],position[1],tetha,delta_t);
-    if ( true )
-    {
-        hectorPosition[0] = tempPosition[0];
-        hectorPosition[1] = tempPosition[1];
-        hectorTetha = tempTetha;
-    }
-    else
-    {
-        cout<<"Keeped POSE : "<<position[0]<<" "<<position[1]<<" "<<tetha<<endl;
-        if( getlogicstate() != 3) //if we are not in revcovery state and this is not caused by out request or hector reseting
-        {
-            cout<<coutcolor_red<<"problem with position"<<coutcolor0<<endl;
-            //hector_problem_detected();
-        }
-
-       
-    }
-
-    old_time = msg->header.stamp;
-    //===================================== 
 }
 
 void SepantaMoveBase::CheckHectorStatus(const std_msgs::Bool::ConstPtr &msg)
