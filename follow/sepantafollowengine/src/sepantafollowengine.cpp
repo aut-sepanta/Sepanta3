@@ -1,9 +1,14 @@
 #include <SepantaFollow.h>
 
+
+actionlib::SimpleActionClient<sepanta_msgs::MasterAction> * ac;
+
+
 SepantaFollowEngine::SepantaFollowEngine() : 
 App_exit(false),
 _thread_Logic(&SepantaFollowEngine::logic_thread,this),
-_thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this)
+_thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this),
+_thread_logic_action(&SepantaFollowEngine::action_thread,this)
 {
     init();
 }
@@ -31,6 +36,14 @@ bool SepantaFollowEngine::isidexist(int id)
 double SepantaFollowEngine::Quat2Rad(double orientation[])
 {
     tf::Quaternion q(orientation[0], orientation[1], orientation[2], orientation[3]);
+    tf::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    return yaw;
+}
+
+double SepantaFollowEngine::Quat2Rad2(tf::Quaternion q)
+{
     tf::Matrix3x3 m(q);
     double roll, pitch, yaw;
     m.getRPY(roll, pitch, yaw);
@@ -69,7 +82,7 @@ bool SepantaFollowEngine::find_user_for_follow()
         double _x = list_persons.at(i).pose.position.x;
         double _y = list_persons.at(i).pose.position.y;
 
-        if ( _x > 0 && abs(_y) < 0.3 )
+        if ( _x > 0.5 && _x < 3 && abs(_y) < 0.4 )
         {
             double dist = GetDistance(0,0,_x,_y);
             if ( dist < dist_min )
@@ -104,6 +117,73 @@ void SepantaFollowEngine::force_stop()
 int follow_state;
 int find_state;
 
+void go_to_location(double x,double y)
+{
+  ac = new actionlib::SimpleActionClient<sepanta_msgs::MasterAction>("SepantaMoveBaseAction", true);
+  // wait for the action server to start
+  ac->waitForServer(); //will wait for infinite time
+
+  ROS_INFO("Action server started, sending goal.");
+  // send a goal to the action
+  sepanta_msgs::MasterGoal goal;
+  goal.action = "exe";
+  goal.id = "";
+  //goal.x = (int)(x * 100);
+  //goal.y = (int)(y * 100);
+  //goal.yaw = 0;
+
+  ac->sendGoal(goal);
+
+  //wait for the action to return
+  bool finished_before_timeout = ac->waitForResult(ros::Duration(1000));
+
+  if (finished_before_timeout)
+  {
+    actionlib::SimpleClientGoalState state = ac->getState();
+    ROS_INFO("Action finished: %s",state.toString().c_str());
+
+    sepanta_msgs::MasterResult::ConstPtr _res = ac->getResult();
+
+     ROS_INFO("Action result : %s",_res->result.c_str());
+
+  }
+  else
+  {
+     ac->cancelGoal ();
+     ROS_INFO("Action did not finish before the time out.");
+  }
+}
+
+double goal_x;
+double goal_y;
+int action_state = 0;
+
+double old_goal_x;
+double old_goal_y;
+
+void SepantaFollowEngine::action_thread()
+{
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    std::cout<<"action thread started"<<endl;
+
+    while ( ros::ok() && !App_exit )
+    {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
+        if ( action_state == 0 )
+        {
+            cout<<"wait for red dot to go there"<<endl;
+            action_state = 1;
+        }
+        else if ( action_state == 2)
+        {
+            cout<<"Go to : "<<goal_x<<" "<<goal_y<<endl;
+            go_to_location(goal_x,goal_y);
+            action_state = 0;
+        }
+    }
+}
+
 void SepantaFollowEngine::logic_thread()
 {
     follow_state = 0;
@@ -113,7 +193,7 @@ void SepantaFollowEngine::logic_thread()
  
     while(ros::ok() && !App_exit)
     {
-         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+         boost::this_thread::sleep(boost::posix_time::milliseconds(500));
 
          if ( follow_state == 0 )
          {
@@ -153,28 +233,78 @@ void SepantaFollowEngine::logic_thread()
              }
              else
              {
-
-                 cout<<"theta : "<<Rad2Deg(Tetha)<<endl;
-
-                  //double e_x1 = target_person.pose.position.x * cos(0) + target_person.pose.position.y * sin(0);
-                  //double e_y1 = - target_person.pose.position.x * sin(0) + target_person.pose.position.y * cos(0);
-
-                 // double e_x =  (target_person.pose.position.x -Position[0])* cos(Tetha) - (target_person.pose.position.y-Position[1]) * sin(Tetha);
-                 // double e_y =  (target_person.pose.position.x -Position[0]) *sin(Tetha) + (target_person.pose.position.y-Position[1])* cos(Tetha);
-
-                
-
                   double e_x = Position[0]+ (target_person.pose.position.x+0.27)* cos(Tetha) - (target_person.pose.position.y)* sin(Tetha);
                   double e_y = Position[1]+ (target_person.pose.position.x+0.27) *sin(Tetha) + (target_person.pose.position.y)* cos(Tetha);
+                  double g[4];
+                  g[0] = target_person.pose.orientation.x;
+                  g[1] = target_person.pose.orientation.y;
+                  g[2] = target_person.pose.orientation.z;
+                  g[3] = target_person.pose.orientation.w;
 
-                  cout<<"[state = 2] TRACK : "<<target_person.ID<<" "<<e_x<<" "<<e_y<<endl;
+                  double e_yaw = Rad2Deg(Quat2Rad(g));
 
-                  bool result = isidexist(target_person.ID);
-                 if ( result == false )
-                 {
-                     cout<<"[state = 2] User Lost"<<endl;
-                     follow_state = 0;
-                 }
+                  cout<<"YAW : "<<e_yaw<<endl;
+
+                  double r_costmap = 1;
+                  double Y = e_y - Position[0];
+                  double X = e_x - Position[1];
+                  double R = sqrt(X*X + Y*Y);
+                  double r = R - r_costmap;
+
+                  double x_goal = ( X * r ) / R;
+                  double y_goal = ( x_goal * Y ) / X;
+
+
+                visualization_msgs::Marker points;
+
+                points.header.frame_id =  "map";
+                points.header.stamp = ros::Time::now();
+                points.ns = "point";
+                points.action = visualization_msgs::Marker::ADD;
+                points.pose.orientation.w = 1.0;
+                points.id = 0;
+                points.type = visualization_msgs::Marker::POINTS;
+                points.scale.x = 0.1;
+                points.scale.y = 0.1;
+                points.color.r = 1;
+                points.color.a = 1.0;
+
+                geometry_msgs::Point p;
+                p.x = x_goal;
+                p.y = y_goal;
+                p.z = 0;
+
+                points.points.push_back(p);
+
+                marker_pub.publish(points);
+
+                  if ( r > 1 )
+                  {
+                       goal_x = e_x;
+                       goal_y = e_y;
+
+                       double delta = (old_goal_x - goal_x) * (old_goal_x - goal_x) + (old_goal_y - goal_y) * (old_goal_y - goal_y);
+                       delta = sqrt(delta);
+
+                       if ( delta > 0.5 )
+                       {
+                            if ( action_state == 1 )
+                            {
+                                old_goal_y = goal_y;
+                                old_goal_x = goal_x;
+
+                                action_state = 2;
+                            }
+                            else
+                            if ( action_state == 2)
+                            {
+                                   ac->cancelGoal();
+                                   action_state = 1;
+                            }
+
+                       }
+                  }
+                  
              }
 
          }
@@ -236,6 +366,7 @@ sub_handles[2] = node_handles[2].subscribe("/people_tracked",10,&SepantaFollowEn
 //============================================================================================
 mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("SepantaFollowEngine/cmd_vel", 10);
 scan10hz_pub = node_handles[3].advertise<sensor_msgs::LaserScan>("/scan_10hz", 10);
+ marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_follow_target", 10);
 //============================================================================================
 //pub_tts = node_handles[6].advertise<std_msgs::String>("/texttospeech/message", 10);
 //============================================================================================

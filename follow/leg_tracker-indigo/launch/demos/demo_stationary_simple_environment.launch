@@ -16,8 +16,8 @@
   <node pkg="leg_tracker" type="local_occupancy_grid_mapping" name="local_occupancy_grid_mapping" output="screen"/>
   
   <!-- run rviz -->                
-  <node pkg="rviz" type="rviz" name="rviz"
-    args="-d $(find leg_tracker)/rosbags/demos/rviz/demo_stationary_simple_environment.rviz"/>  
+  <!--<node pkg="rviz" type="rviz" name="rviz"
+    args="-d $(find leg_tracker)/rosbags/demos/rviz/demo_stationary_simple_environment.rviz"/> -->  
 
 
     

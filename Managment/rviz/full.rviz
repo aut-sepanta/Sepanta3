@@ -4,11 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Marker1
-        - /Marker2
-        - /LaserScan1
-        - /Axes1
-        - /Axes2
+        - /Marker4
       Splitter Ratio: 0.5
     Tree Height: 463
   - Class: rviz/Selection
@@ -149,7 +145,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_steps
       Name: Marker
       Namespaces:
-        points: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -157,14 +153,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_goals
       Name: Marker
       Namespaces:
-        text bedroom: true
-        text charger: true
-        text hall1: true
-        text kitchen: true
-        text origin: true
-        text point1: true
-        text roomcenter: true
-        text shelf: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -172,14 +161,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_goals_arrow
       Name: Marker
       Namespaces:
-        arrow bedroom: true
-        arrow charger: true
-        arrow hall1: true
-        arrow kitchen: true
-        arrow origin: true
-        arrow point1: true
-        arrow roomcenter: true
-        arrow shelf: true
+        {}
       Queue Size: 100
       Value: true
     - Arrow Length: 0.3
@@ -198,8 +180,8 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
+      Color: 170; 0; 0
+      Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -212,7 +194,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.1
+      Size (m): 0.06
       Style: Flat Squares
       Topic: /scan
       Use Fixed Frame: true
@@ -231,6 +213,14 @@ Visualization Manager:
       Name: Axes
       Radius: 0.05
       Reference Frame: camera_link
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /visualization_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
@@ -256,22 +246,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.39124
+      Distance: 3.80865
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 4.51458
-        Y: 1.58295
-        Z: -1.65448
+        X: -5.20877
+        Y: 2.09766
+        Z: 4.32486
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.2348
+      Pitch: 0.3748
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.851285
+      Yaw: 2.75629
     Saved: ~
 Window Geometry:
   Displays:

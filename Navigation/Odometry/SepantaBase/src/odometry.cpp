@@ -546,6 +546,9 @@ int main(int argc, char** argv)
      odom_trans.transform.translation.z = 0;
      odom_trans.transform.rotation = odom_quat;
 
+     bool _p = false;
+
+     if ( _p )
      odom_broadcaster.sendTransform(odom_trans);
     
     nav_msgs::Odometry odom;
@@ -565,6 +568,7 @@ int main(int argc, char** argv)
     // odom.twist.twist.angular.z = 0;
 
     //publish the message
+    if ( _p )
     chatter_pub[1].publish(odom);
 
     // // publish isrobotmove

@@ -68,6 +68,9 @@
 #include <sepanta_msgs/PersonArray.h>
 #include <sepanta_msgs/Leg.h>
 #include <sepanta_msgs/LegArray.h>
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/terminal_state.h>
+#include <sepanta_msgs/MasterAction.h>
 
 using std::string;
 using std::exception;
@@ -103,6 +106,7 @@ SepantaFollowEngine();
 ~SepantaFollowEngine();
 
 double Quat2Rad(double orientation[]);
+double Quat2Rad2(tf::Quaternion q);
 void say_message(string data);
 void send_omni(double x,double y ,double w);
 void force_stop();
@@ -113,6 +117,7 @@ void chatterCallback_persons(const sepanta_msgs::PersonArray::ConstPtr &msg);
 void logic_thread();
 bool isidexist(int id);
 void scan10hz_thread();
+void action_thread();
 void init();
 void kill();
 bool find_user_for_follow();
@@ -123,11 +128,13 @@ ros::NodeHandle node_handles[20];
 ros::Subscriber sub_handles[5];
 boost::thread _thread_Logic;
 boost::thread _thread_10hz_publisher;
+boost::thread _thread_logic_action;
 
 bool App_exit;
 bool say_enable;
 bool isttsready;
 ros::Publisher pub_tts;
+ros::Publisher marker_pub;
 ros::Publisher scan10hz_pub;
 ros::Publisher mycmd_vel_pub;
 ros::ServiceClient say_service;

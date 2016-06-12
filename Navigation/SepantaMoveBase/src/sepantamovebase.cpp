@@ -1,6 +1,8 @@
 #include <sepantamovebase.h>
 
 
+
+
 // #define VIRTUALMODE
 
 SepantaMoveBase::SepantaMoveBase() : 
