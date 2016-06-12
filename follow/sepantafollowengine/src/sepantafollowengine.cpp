@@ -7,8 +7,8 @@ actionlib::SimpleActionClient<sepanta_msgs::MasterAction> * ac;
 SepantaFollowEngine::SepantaFollowEngine() : 
 App_exit(false),
 _thread_Logic(&SepantaFollowEngine::logic_thread,this),
-_thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this),
-_thread_logic_action(&SepantaFollowEngine::action_thread,this)
+_thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this)
+//_thread_logic_action(&SepantaFollowEngine::action_thread,this)
 {
     init();
 }
@@ -97,6 +97,24 @@ bool SepantaFollowEngine::find_user_for_follow()
     return valid;
 }
 
+void SepantaFollowEngine::change_led(int r,int g,int b)
+{
+  sepanta_msgs::led _msg;
+
+  if( r != 0 || g != 0 || b != 0)
+  {
+     _msg.enable = true;
+     _msg.colorR = r;
+     _msg.colorG = g;
+     _msg.colorB = b;
+  }
+  else
+  {
+    _msg.enable = false;
+  }
+
+  led_pub.publish(_msg);
+}
 void SepantaFollowEngine::send_omni(double x,double y ,double w)
 {
         geometry_msgs::Twist myTwist;
@@ -197,6 +215,7 @@ void SepantaFollowEngine::logic_thread()
 
          if ( follow_state == 0 )
          {
+            change_led(250,0,0);
             cout<<"[state = 0] : wait for user "<<endl;
             follow_state = 1;
             find_state = 0;
@@ -206,6 +225,7 @@ void SepantaFollowEngine::logic_thread()
              cout<<"[state = 1] : find_state : "<<find_state<<endl;
 
              bool result = find_user_for_follow();
+             change_led(0,0,250);
 
              if ( result )
              {
@@ -228,11 +248,13 @@ void SepantaFollowEngine::logic_thread()
              bool result = isidexist(target_person.ID);
              if ( result == false )
              {
+                 change_led(250,0,0);
                  cout<<"[state = 2] User Lost"<<endl;
                  follow_state = 0;
              }
              else
              {
+                  change_led(0,250,0);
                   double e_x = Position[0]+ (target_person.pose.position.x+0.27)* cos(Tetha) - (target_person.pose.position.y)* sin(Tetha);
                   double e_y = Position[1]+ (target_person.pose.position.x+0.27) *sin(Tetha) + (target_person.pose.position.y)* cos(Tetha);
                   double g[4];
@@ -243,7 +265,7 @@ void SepantaFollowEngine::logic_thread()
 
                   double e_yaw = Rad2Deg(Quat2Rad(g));
 
-                  cout<<"YAW : "<<e_yaw<<endl;
+                  //cout<<"YAW : "<<e_yaw<<endl;
 
                   double r_costmap = 1;
                   double Y = e_y - Position[0];
@@ -278,6 +300,9 @@ void SepantaFollowEngine::logic_thread()
 
                 marker_pub.publish(points);
 
+
+                  cout<<"r :"<<r<<endl;
+
                   if ( r > 1 )
                   {
                        goal_x = e_x;
@@ -286,13 +311,15 @@ void SepantaFollowEngine::logic_thread()
                        double delta = (old_goal_x - goal_x) * (old_goal_x - goal_x) + (old_goal_y - goal_y) * (old_goal_y - goal_y);
                        delta = sqrt(delta);
 
+                       cout<<"delta :"<<delta<<endl;
+
                        if ( delta > 0.5 )
                        {
                             if ( action_state == 1 )
                             {
                                 old_goal_y = goal_y;
                                 old_goal_x = goal_x;
-
+                                
                                 action_state = 2;
                             }
                             else
@@ -367,6 +394,7 @@ sub_handles[2] = node_handles[2].subscribe("/people_tracked",10,&SepantaFollowEn
 mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("SepantaFollowEngine/cmd_vel", 10);
 scan10hz_pub = node_handles[3].advertise<sensor_msgs::LaserScan>("/scan_10hz", 10);
  marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_follow_target", 10);
+ led_pub = node_handles[8].advertise<sepanta_msgs::led>("/lowerbodycore/led", 10);
 //============================================================================================
 //pub_tts = node_handles[6].advertise<std_msgs::String>("/texttospeech/message", 10);
 //============================================================================================

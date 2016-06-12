@@ -71,6 +71,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <sepanta_msgs/MasterAction.h>
+#include <sepanta_msgs/led.h>
 
 using std::string;
 using std::exception;
@@ -107,6 +108,7 @@ SepantaFollowEngine();
 
 double Quat2Rad(double orientation[]);
 double Quat2Rad2(tf::Quaternion q);
+void change_led(int r,int g,int b);
 void say_message(string data);
 void send_omni(double x,double y ,double w);
 void force_stop();
@@ -133,6 +135,7 @@ boost::thread _thread_logic_action;
 bool App_exit;
 bool say_enable;
 bool isttsready;
+ros::Publisher led_pub;
 ros::Publisher pub_tts;
 ros::Publisher marker_pub;
 ros::Publisher scan10hz_pub;

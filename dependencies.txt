@@ -14,5 +14,9 @@
 13 ) sudo apt-get install libspnav-dev
 14 ) sudo apt-get install ros-indigo-joy
 15 ) sudo apt-get install ros-indigo-joystick-drivers
+16 ) sudo apt-get install python-scipy
+17 ) sudo apt-get install python-pip
+18 ) sudo pip install pykalman
+19 )
 
 
