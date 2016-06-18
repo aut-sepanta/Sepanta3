@@ -733,7 +733,7 @@ int main(int argc, char **argv)
 
         std::string name = strs.at(strs.size()-1);
         models_ename.push_back(name);
-        std_out(name,"brown");
+        //std_out(name,"brown");
     }
 
     std::cout<< models_ename.size() << std::endl;
@@ -752,12 +752,12 @@ int main(int argc, char **argv)
 
         std::string name = strs.at(strs.size()-1);
         shell_ename.push_back(name);
-        std_out(name,"brown");
+        //std_out(name,"brown");
     }
 
     std::cout<< shell_ename.size() << std::endl;
 
-    std_out("======================================== Ready ========================================","green");
+    std_out("======================================== Ready !","green");
 
     pub_status = n.advertise<sepanta_msgs::nodestatuslist>("manager/node_status", 10);
     sub_log = n.subscribe("/manager/log", 1, main_log_callback);

@@ -6,6 +6,7 @@
 
 actionlib::SimpleActionClient<sepanta_msgs::MasterAction> * ac;
 
+
 void thread_logic()
 {
     boost::this_thread::sleep(boost::posix_time::milliseconds(5000));
@@ -32,7 +33,7 @@ int main (int argc, char **argv)
   // send a goal to the action
   sepanta_msgs::MasterGoal goal;
   goal.action = "exe";
-  goal.id = "hall1";
+  goal.id = "point1";
 
   ac->sendGoal(goal);
 

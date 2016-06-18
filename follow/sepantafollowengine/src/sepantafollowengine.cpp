@@ -1,14 +1,11 @@
 #include <SepantaFollow.h>
 
-
 actionlib::SimpleActionClient<sepanta_msgs::MasterAction> * ac;
-
 
 SepantaFollowEngine::SepantaFollowEngine() : 
 App_exit(false),
 _thread_Logic(&SepantaFollowEngine::logic_thread,this),
 _thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this)
-//_thread_logic_action(&SepantaFollowEngine::action_thread,this)
 {
     init();
 }
@@ -115,62 +112,9 @@ void SepantaFollowEngine::change_led(int r,int g,int b)
 
   led_pub.publish(_msg);
 }
-void SepantaFollowEngine::send_omni(double x,double y ,double w)
-{
-        geometry_msgs::Twist myTwist;
-
-        myTwist.linear.x = x;
-        myTwist.linear.y = -y;
-        myTwist.angular.z = -w;
-     
-        mycmd_vel_pub.publish(myTwist); 
-}
-
-void SepantaFollowEngine::force_stop()
-{
-    send_omni(0,0,0);
-    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-}
 
 int follow_state;
 int find_state;
-
-void go_to_location(double x,double y)
-{
-  ac = new actionlib::SimpleActionClient<sepanta_msgs::MasterAction>("SepantaMoveBaseAction", true);
-  // wait for the action server to start
-  ac->waitForServer(); //will wait for infinite time
-
-  ROS_INFO("Action server started, sending goal.");
-  // send a goal to the action
-  sepanta_msgs::MasterGoal goal;
-  goal.action = "exe";
-  goal.id = "";
-  //goal.x = (int)(x * 100);
-  //goal.y = (int)(y * 100);
-  //goal.yaw = 0;
-
-  ac->sendGoal(goal);
-
-  //wait for the action to return
-  bool finished_before_timeout = ac->waitForResult(ros::Duration(1000));
-
-  if (finished_before_timeout)
-  {
-    actionlib::SimpleClientGoalState state = ac->getState();
-    ROS_INFO("Action finished: %s",state.toString().c_str());
-
-    sepanta_msgs::MasterResult::ConstPtr _res = ac->getResult();
-
-     ROS_INFO("Action result : %s",_res->result.c_str());
-
-  }
-  else
-  {
-     ac->cancelGoal ();
-     ROS_INFO("Action did not finish before the time out.");
-  }
-}
 
 double goal_x;
 double goal_y;
@@ -179,28 +123,7 @@ int action_state = 0;
 double old_goal_x;
 double old_goal_y;
 
-void SepantaFollowEngine::action_thread()
-{
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-    std::cout<<"action thread started"<<endl;
 
-    while ( ros::ok() && !App_exit )
-    {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-        if ( action_state == 0 )
-        {
-            cout<<"wait for red dot to go there"<<endl;
-            action_state = 1;
-        }
-        else if ( action_state == 2)
-        {
-            cout<<"Go to : "<<goal_x<<" "<<goal_y<<endl;
-            go_to_location(goal_x,goal_y);
-            action_state = 0;
-        }
-    }
-}
 
 void SepantaFollowEngine::logic_thread()
 {
@@ -211,7 +134,7 @@ void SepantaFollowEngine::logic_thread()
  
     while(ros::ok() && !App_exit)
     {
-         boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+         boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 
          if ( follow_state == 0 )
          {
@@ -236,6 +159,7 @@ void SepantaFollowEngine::logic_thread()
                 {
                     find_state = 0;
                     follow_state = 2;
+
                 }
              }
              else
@@ -245,29 +169,31 @@ void SepantaFollowEngine::logic_thread()
          }
          else if ( follow_state == 2 )
          {
+         	 
              bool result = isidexist(target_person.ID);
              if ( result == false )
              {
                  change_led(250,0,0);
                  cout<<"[state = 2] User Lost"<<endl;
+                 sepanta_move->exe_cancel();
                  follow_state = 0;
              }
              else
              {
                   change_led(0,250,0);
-                  double e_x = Position[0]+ (target_person.pose.position.x+0.27)* cos(Tetha) - (target_person.pose.position.y)* sin(Tetha);
-                  double e_y = Position[1]+ (target_person.pose.position.x+0.27) *sin(Tetha) + (target_person.pose.position.y)* cos(Tetha);
-                  double g[4];
-                  g[0] = target_person.pose.orientation.x;
-                  g[1] = target_person.pose.orientation.y;
-                  g[2] = target_person.pose.orientation.z;
-                  g[3] = target_person.pose.orientation.w;
+                  double e_x = Position[0]+ (target_person.pose.position.x+0.27) * cos(Tetha) - (target_person.pose.position.y) * sin(Tetha);
+                  double e_y = Position[1]+ (target_person.pose.position.x+0.27) * sin(Tetha) + (target_person.pose.position.y) * cos(Tetha);
+                  //double g[4];
+                  //g[0] = target_person.pose.orientation.x;
+                  //g[1] = target_person.pose.orientation.y;
+                  //g[2] = target_person.pose.orientation.z;
+                  ///g[3] = target_person.pose.orientation.w;
 
-                  double e_yaw = Rad2Deg(Quat2Rad(g));
+                  //double e_yaw = Rad2Deg(Quat2Rad(g));
 
                   //cout<<"YAW : "<<e_yaw<<endl;
 
-                  double r_costmap = 1;
+                  double r_costmap = 0.5;
                   double Y = e_y - Position[0];
                   double X = e_x - Position[1];
                   double R = sqrt(X*X + Y*Y);
@@ -299,39 +225,13 @@ void SepantaFollowEngine::logic_thread()
                 points.points.push_back(p);
 
                 marker_pub.publish(points);
-
-
-                  cout<<"r :"<<r<<endl;
-
-                  if ( r > 1 )
-                  {
-                       goal_x = e_x;
-                       goal_y = e_y;
-
-                       double delta = (old_goal_x - goal_x) * (old_goal_x - goal_x) + (old_goal_y - goal_y) * (old_goal_y - goal_y);
-                       delta = sqrt(delta);
-
-                       cout<<"delta :"<<delta<<endl;
-
-                       if ( delta > 0.5 )
-                       {
-                            if ( action_state == 1 )
-                            {
-                                old_goal_y = goal_y;
-                                old_goal_x = goal_x;
-                                
-                                action_state = 2;
-                            }
-                            else
-                            if ( action_state == 2)
-                            {
-                                   ac->cancelGoal();
-                                   action_state = 1;
-                            }
-
-                       }
-                  }
-                  
+                
+                goal_data l;
+                l.x = (int)(x_goal * 100);
+                l.y = (int)(y_goal * 100);
+                l.yaw = 0;
+                sepanta_move->exe_slam(l);
+  
              }
 
          }
@@ -376,32 +276,25 @@ void SepantaFollowEngine::chatterCallback_persons(const sepanta_msgs::PersonArra
     // cout<<"people detected : "<<list_persons.size()<<endl;
 }
 
+
 void SepantaFollowEngine::init()
 {
 
 ROS_INFO("SepantaFollowEngine Version 1.0.0 :*");
 
-bool say_enable;
 App_exit = false;
-say_enable = false;
-isttsready = false;
 scan10hz_can_send = false;
 //============================================================================================
 sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, &SepantaFollowEngine::GetPos,this);
 sub_handles[1] = node_handles[1].subscribe("/scan",10,&SepantaFollowEngine::chatterCallback_laser,this);
 sub_handles[2] = node_handles[2].subscribe("/people_tracked",10,&SepantaFollowEngine::chatterCallback_persons,this);
 //============================================================================================
-mycmd_vel_pub = node_handles[3].advertise<geometry_msgs::Twist>("SepantaFollowEngine/cmd_vel", 10);
 scan10hz_pub = node_handles[3].advertise<sensor_msgs::LaserScan>("/scan_10hz", 10);
- marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_follow_target", 10);
- led_pub = node_handles[8].advertise<sepanta_msgs::led>("/lowerbodycore/led", 10);
-//============================================================================================
-//pub_tts = node_handles[6].advertise<std_msgs::String>("/texttospeech/message", 10);
-//============================================================================================
-//sub_handles[3] = node_handles[3].subscribe("/texttospeech/queue", 10, &SepantaFollowEngine::chatterCallback_ttsfb,this);
-//say_service = node_handles[11].serviceClient<sepanta_msgs::command>("texttospeech/say");
-//============================================================================================
-    
+marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_follow_target", 10);
+led_pub = node_handles[8].advertise<sepanta_msgs::led>("/lowerbodycore/led", 10);
+
+sepanta_move = new smove();
+
 ROS_INFO("Init done");
 
 }
@@ -410,4 +303,11 @@ void SepantaFollowEngine::kill()
 {
     _thread_Logic.interrupt();
     _thread_Logic.join();
+
+    _thread_PathFwr.interrupt();
+    _thread_PathFwr.join();
+
+    _thread_Vis.interrupt();
+    _thread_Vis.join();
+
 }

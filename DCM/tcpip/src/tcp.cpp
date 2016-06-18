@@ -8,6 +8,7 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Int32.h"
 
+#include <ros/package.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <tcpacceptor.h>
@@ -36,6 +37,8 @@
 #include <move_base_msgs/MoveBaseActionGoal.h>
 #include <sepanta_msgs/NodeAction.h>
 #include <sepanta_msgs/log.h>
+#include <sepanta_msgs/Body.h>
+#include <sepanta_msgs/BodyArray.h>
 
 int speedx = 150;
 int speedy = 150;
@@ -55,6 +58,9 @@ TCPAcceptor* acceptor_tcp1 = NULL;
 TCPStream* stream_tcp2 = NULL;
 TCPAcceptor* acceptor_tcp2 = NULL;
 
+TCPStream* stream_tcp3 = NULL;
+TCPAcceptor* acceptor_tcp3 = NULL;
+
 bool App_exit = false;
 
 string out_put = "";
@@ -62,12 +68,108 @@ ros::ServiceServer __srv_stop;
 
 ros::Publisher chatter_pub_ack;
 ros::Publisher chatter_pub_log;
-
+ros::Publisher bodyPub;
 ros::ServiceServer service_tcp ;
 
 bool isconnected = false;
 
 std::vector<std::string> command_list;
+
+std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
+string trim(string& str)
+{
+    size_t first = str.find_first_not_of(' ');
+    size_t last = str.find_last_not_of(' ');
+    int x = last-first+1;
+    if ( x > 0 && x < str.size())
+    return str.substr(first,x);
+
+    return "";
+}
+
+
+void process_body(string jsonCharArray)
+{
+        sepanta_msgs::BodyArray bodyArray;
+      
+        try
+        {
+             std::vector<string> parts = split(jsonCharArray,'|');
+             cout<<parts.size()<<endl;
+             cout<<jsonCharArray<<endl;
+
+             for(int i=0;i<6;i++)
+             {
+                sepanta_msgs::Body body;
+            
+                string _istracked =  parts[i*27 + 0];
+                if ( _istracked == "True")
+                body.isTracked = true;
+                else
+                body.isTracked = false;
+
+                cout<<_istracked<<endl;
+
+                string _trackid = parts[i*27 + 1];
+                body.trackingId = std::stoi(_trackid);
+
+                for(int j=0;j<25;j++)
+                {
+                    sepanta_msgs::JointOrientationAndType JOAT;
+                    sepanta_msgs::JointPositionAndState JPAS;
+                    std::string fieldName;
+
+                    JOAT.orientation.x = 0;
+                    JOAT.orientation.y = 0;
+                    JOAT.orientation.z = 0;
+                    JOAT.orientation.w = 0;
+                    JOAT.jointType = j;
+                    string _j = parts[i*27 + 2 + j];
+                    std::vector<string> parts2 = split(_j,',');
+                     
+                    JPAS.position.x = std::stof(parts2[0]);
+                    JPAS.position.y = std::stof(parts2[1]);
+                    JPAS.position.z = std::stof(parts2[2]);
+                    string _s = parts2[3];
+
+                    if ( _s == "True")
+                    JPAS.trackingState = true;
+                    else 
+                    JPAS.trackingState = false;
+
+                    JPAS.jointType = j;
+                    
+                    body.jointOrientations.push_back(JOAT);
+                    body.jointPositions.push_back(JPAS);
+                 }
+
+                 bodyArray.bodies.push_back(body);
+            }
+        }
+        catch (...)
+        {
+            std::cout<<"An exception occured"<<std::endl;
+        }
+
+        bodyPub.publish(bodyArray);
+          cout<<"----"<<endl;
+}
+
 
 void send_ack()
 {
@@ -446,7 +548,60 @@ void tcp_read_tcp2() //3100
         }
     }
 }
+void tcp_read_tcp3() //3200
+{
+    stream_tcp3 = NULL;
+    acceptor_tcp3 = NULL;
+    acceptor_tcp3 = new TCPAcceptor(3200);
 
+    if (acceptor_tcp3->start() == 0) {
+        while (App_exit == false) {
+            cout<<"wait for tcp..."<<endl;
+            stream_tcp3 = acceptor_tcp3->accept();
+            cout<<"tcp connected 3..."<<endl;
+            send_log("tcp connected 3");
+            if (stream_tcp3 != NULL) {
+                ssize_t len;
+                char line[1000];
+                int header = 0;
+                string valid_data = "";
+                isconnected = true;
+                while ((len = stream_tcp3->receive(line, sizeof(line))) > 0 && App_exit ==false)
+                {
+                    //cout<<line<<endl;
+
+                    for ( int i = 0 ; i < len ; i++)
+                    {
+                        if ( line[i] == '%' && header == 0)
+                        {
+                            header++;
+                        }
+                        else
+                            if ( header == 1)
+                                 {
+                                        if ( line[i] != '$')
+                                            valid_data += line[i];
+                                        else
+                                        {
+                                            // cout<<valid_data<<endl;
+                                            //=================================
+                                            string temp = valid_data;
+                                            process_body(temp);
+                                            //==================================
+                                            valid_data = "";
+                                            header = 0;
+                                        }
+                                    }
+                    }
+                }
+                delete stream_tcp3;
+                cout<<"tcp disconnected3..."<<endl;
+                send_log("tcp disconnected3");
+                isconnected = false;
+            }
+        }
+    }
+}
 void chatterCallback_tcp(const std_msgs::String::ConstPtr &msg)
 {
     string in_put = msg->data;
@@ -501,8 +656,6 @@ bool tcp_request(sepanta_msgs::sound::Request  &req,sepanta_msgs::sound::Respons
     return res.result;
 }
 
-
-
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "tcpcore");
@@ -512,6 +665,7 @@ int main(int argc, char** argv)
 
     boost::thread _threadsp1(&tcp_read_tcp1);
     boost::thread _threadsp2(&tcp_read_tcp2);
+    boost::thread _threadsp3(&tcp_read_tcp3);
     boost::thread _threadsend(&sendd);
 
     ros::Rate ros_rate(20);
@@ -523,6 +677,8 @@ int main(int argc, char** argv)
     chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
     chatter_pub[4] = node_handles[5].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 1);
     chatter_pub[3] = node_handles[3].advertise<std_msgs::String>("tcpip/es", 1);
+
+    bodyPub = node_handles[3].advertise<sepanta_msgs::BodyArray>("/kinect2/bodyArray",1);
 
     //==========================================================================================
     sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
@@ -541,6 +697,7 @@ int main(int argc, char** argv)
     loop_rate2.sleep();
 
     send_log("tcp core started done...");
+    string kill_path =  ros::package::getPath("managment") + "/shell/tcpkill.sh";
 
     while(ros::ok())
     {
@@ -550,9 +707,11 @@ int main(int argc, char** argv)
         send_ack();
     }
 
+  
+    system(kill_path.c_str());
+    std::cout<<"KILL TCP DONE"<<std::endl;
+
     App_exit = true;
-
-
 
     _threadsp1.interrupt();
     _threadsp1.join();
@@ -562,12 +721,17 @@ int main(int argc, char** argv)
     _threadsp2.join();
     _threadsp2.~thread();
 
+    _threadsp3.interrupt();
+    _threadsp3.join();
+    _threadsp3.~thread();
+
     _threadsend.interrupt();
     _threadsend.join();
     _threadsend.~thread();
 
     acceptor_tcp1->~TCPAcceptor();
     acceptor_tcp2->~TCPAcceptor();
+    acceptor_tcp3->~TCPAcceptor();
     
     delete acceptor_tcp1;
     delete stream_tcp1;
@@ -575,7 +739,8 @@ int main(int argc, char** argv)
     delete acceptor_tcp2;
     delete stream_tcp2;
 
- 
+    delete acceptor_tcp3;
+    delete stream_tcp3;
 
     return 0;
 }

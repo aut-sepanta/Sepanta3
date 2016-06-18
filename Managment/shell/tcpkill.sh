@@ -1,7 +1,6 @@
 #!/bin/bash
 
-rosnode kill /windows_communication_tcp
-killall core_tcp
+rosnode kill /tcpcore
 killall core_tcp
 
 

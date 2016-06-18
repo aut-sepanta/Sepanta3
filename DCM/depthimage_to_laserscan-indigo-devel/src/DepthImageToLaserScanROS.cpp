@@ -71,7 +71,7 @@ void DepthImageToLaserScanROS::connectCb(const ros::SingleSubscriberPublisher& p
   if (!sub_ && pub_.getNumSubscribers() > 0) {
     ROS_DEBUG("Connecting to depth topic.");
     image_transport::TransportHints hints("raw", ros::TransportHints(), pnh_);
-    sub_ = it_.subscribeCamera("/camera/depth/image", 10, &DepthImageToLaserScanROS::depthCb, this, hints);
+    sub_ = it_.subscribeCamera("/kinect2/sd/image_depth_rect", 10, &DepthImageToLaserScanROS::depthCb, this, hints);
   }
 }
 

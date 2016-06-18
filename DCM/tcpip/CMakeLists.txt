@@ -13,7 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   dynamixel_msgs
   sepanta_msgs
+ 
 )
+
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 find_package(Boost COMPONENTS system thread date_time REQUIRED)
 find_package(PkgConfig REQUIRED)

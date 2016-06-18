@@ -47,6 +47,15 @@ add_message_files(
     PersonArray.msg
     Leg.msg
     LegArray.msg
+    Activities.msg
+    Appearance.msg
+    Audio.msg
+    Body.msg
+    BodyArray.msg
+    Expressions.msg
+    JointOrientationAndType.msg
+    JointPositionAndState.msg
+    Lean.msg
 )
 
 add_service_files(

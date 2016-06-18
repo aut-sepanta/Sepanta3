@@ -32,7 +32,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${SERIAL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-add_executable(SepantaFollow src/sepantafollowengine_node.cpp src/sepantafollowengine.cpp)
+add_executable(SepantaFollow src/sepantafollowengine_node.cpp src/sepantafollowengine.cpp src/smove.cpp)
 target_link_libraries(SepantaFollow ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 add_dependencies(SepantaFollow sepanta_msgs_generate_messages_cpp)
 

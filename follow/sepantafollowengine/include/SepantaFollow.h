@@ -1,5 +1,5 @@
-#ifndef _SEPANTA_MOVE_BASE_H
-#define _SEPANTA_MOVE_BASE_H
+#ifndef _SEPANTA_FOLLOW_H
+#define _SEPANTA_FOLLOW_H
 
 #include "ros/ros.h"
 #include <tf/tf.h>
@@ -72,6 +72,7 @@
 #include <actionlib/client/terminal_state.h>
 #include <sepanta_msgs/MasterAction.h>
 #include <sepanta_msgs/led.h>
+#include <smove.h>
 
 using std::string;
 using std::exception;
@@ -90,16 +91,6 @@ struct person
 		geometry_msgs::Pose pose;
 };
 
-inline double Deg2Rad(double deg)
-{
-    return deg * M_PI / 180;
-}
-
-inline double Rad2Deg(double rad)
-{
-    return rad * 180 / M_PI;
-}
-
 class SepantaFollowEngine
 {
 public:
@@ -109,8 +100,7 @@ SepantaFollowEngine();
 double Quat2Rad(double orientation[]);
 double Quat2Rad2(tf::Quaternion q);
 void change_led(int r,int g,int b);
-void say_message(string data);
-void send_omni(double x,double y ,double w);
+
 void force_stop();
 double GetDistance(double x1, double y1, double x2, double y2);
 void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg);
@@ -119,10 +109,20 @@ void chatterCallback_persons(const sepanta_msgs::PersonArray::ConstPtr &msg);
 void logic_thread();
 bool isidexist(int id);
 void scan10hz_thread();
+void ResetLimits();
+void ReduceLimits();
+int calc_next_point();
+void errors_update();
 void action_thread();
+void vis_thread();
 void init();
 void kill();
 bool find_user_for_follow();
+nav_msgs::Path call_make_plan();
+void controller_update(int x,bool y,bool theta);
+void chatterCallback_ttsfb(const std_msgs::String::ConstPtr &msg);
+void PathFwr();
+void test_vis();
 
 person target_person;
 
@@ -131,22 +131,21 @@ ros::Subscriber sub_handles[5];
 boost::thread _thread_Logic;
 boost::thread _thread_10hz_publisher;
 boost::thread _thread_logic_action;
+boost::thread _thread_PathFwr;
+boost::thread _thread_Vis;
 
 bool App_exit;
-bool say_enable;
-bool isttsready;
 ros::Publisher led_pub;
-ros::Publisher pub_tts;
 ros::Publisher marker_pub;
 ros::Publisher scan10hz_pub;
 ros::Publisher mycmd_vel_pub;
-ros::ServiceClient say_service;
-int sayMessageId;
 double Position[2];
 double orientation[4];
 double Tetha;
 bool scan10hz_can_send;
 std::vector<person> list_persons;
+smove *sepanta_move;
+
 
 };
 

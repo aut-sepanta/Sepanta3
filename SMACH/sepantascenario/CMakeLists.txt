@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs 
   dynamixel_msgs
   sepanta_msgs
+  k2_client
 )
 
 find_package(Boost  REQUIRED)
@@ -43,6 +44,9 @@ add_executable(scenario1 src/scenario1.cpp)
 target_link_libraries(scenario1 ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 add_dependencies(scenario1 sepanta_msgs_generate_messages_cpp)
 
+add_executable(stage1_navigation src/stage1_navigation.cpp)
+target_link_libraries(stage1_navigation ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_dependencies(stage1_navigation sepanta_msgs_generate_messages_cpp)
 
 
 
