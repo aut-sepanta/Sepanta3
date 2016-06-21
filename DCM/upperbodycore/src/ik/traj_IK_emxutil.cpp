@@ -2,7 +2,7 @@
 // File: traj_IK_emxutil.cpp
 //
 // MATLAB Coder version            : 3.0
-// C/C++ source code generated on  : 26-May-2016 04:27:53
+// C/C++ source code generated on  : 20-Jun-2016 19:33:14
 //
 
 // Include Files
@@ -96,27 +96,6 @@ void emxInit_real_T(emxArray_real_T **pEmxArray, int numDimensions)
 // Return Type  : void
 //
 void emxInit_real_T1(emxArray_real_T **pEmxArray, int numDimensions)
-{
-  emxArray_real_T *emxArray;
-  int i;
-  *pEmxArray = (emxArray_real_T *)malloc(sizeof(emxArray_real_T));
-  emxArray = *pEmxArray;
-  emxArray->data = (double *)NULL;
-  emxArray->numDimensions = numDimensions;
-  emxArray->size = (int *)malloc((unsigned int)(sizeof(int) * numDimensions));
-  emxArray->allocatedSize = 0;
-  emxArray->canFreeData = true;
-  for (i = 0; i < numDimensions; i++) {
-    emxArray->size[i] = 0;
-  }
-}
-
-//
-// Arguments    : emxArray_real_T **pEmxArray
-//                int numDimensions
-// Return Type  : void
-//
-void emxInit_real_T2(emxArray_real_T **pEmxArray, int numDimensions)
 {
   emxArray_real_T *emxArray;
   int i;

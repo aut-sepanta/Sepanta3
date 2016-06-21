@@ -11,10 +11,10 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "rt_defines.h"
-#include "rt_nonfinite.h"
-#include "rtwtypes.h"
-#include "simple_IK_types.h"
+#include "ik/rt_defines.h"
+#include "ik/rt_nonfinite.h"
+#include "ik/rtwtypes.h"
+#include "ik/simple_IK_types.h"
 
 // Function Declarations
 extern void linspace(double d1, double d2, double y[91]);

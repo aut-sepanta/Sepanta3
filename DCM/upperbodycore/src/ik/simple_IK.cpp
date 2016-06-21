@@ -95,9 +95,9 @@ bool simple_IK(const double q_init[3], const double final[2], double q[3])
   //  --- partial fk ---
   //  ---
   //  -----------------------------
-  linspace(((8.5 + 22.0 * cos(q_init[0])) + 24.8 * cos(q_init[0] + q_init[1])) +
-           8.0 * cos((q_init[0] + q_init[1]) + q_init[2]), final[0], X_temp);
-  linspace((22.0 * sin(q_init[0]) + 24.8 * sin(q_init[0] + q_init[1])) + 8.0 *
+  linspace(((19.5 + 21.8 * cos(q_init[0])) + 17.2 * cos(q_init[0] + q_init[1])) +
+           23.5 * cos((q_init[0] + q_init[1]) + q_init[2]), final[0], X_temp);
+  linspace((21.8 * sin(q_init[0]) + 17.2 * sin(q_init[0] + q_init[1])) + 23.5 *
            sin((q_init[0] + q_init[1]) + q_init[2]), final[1], Y_temp);
   for (k = 0; k < 90; k++) {
     T[12 * k] = 0.0;
@@ -130,8 +130,8 @@ bool simple_IK(const double q_init[3], const double final[2], double q[3])
   
     //  ----------------------
     //  ----------------------
-    c = (T[9 + 12 * i] - 8.5) - 8.0 * T[12 * i];
-    d = T[10 + 12 * i] - 8.0 * T[1 + 12 * i];
+    c = (T[9 + 12 * i] - 19.5) - 23.5 * T[12 * i];
+    d = T[10 + 12 * i] - 23.5 * T[1 + 12 * i];
 
     //  ----------------------
     int iteration = 1000000;
@@ -140,14 +140,14 @@ bool simple_IK(const double q_init[3], const double final[2], double q[3])
       iteration--;
 
       //std::cout<<"I : "<<iteration<<" E : "<<E<<std::endl;
-      er1 = (22.0 * cos(q1) + 24.8 * cos(q1 + q2)) - c;
-      er2 = (22.0 * sin(q1) + 24.8 * sin(q1 + q2)) - d;
+      er1 = (21.8 * cos(q1) + 17.2 * cos(q1 + q2)) - c;
+      er2 = (21.8 * sin(q1) + 17.2 * sin(q1 + q2)) - d;
       E = er1 * er1 + er2 * er2;
       x = q1 + q2;
       b_x = q1 + q2;
-      q1 += -0.0001 * (2.0 * er1 * (-22.0 * sin(q1) - 24.8 * sin(q1 + q2)) + 2.0
-                       * er2 * (22.0 * cos(q1) + 24.8 * cos(q1 + q2)));
-      q2 += -0.0001 * (2.0 * er1 * (-24.8 * sin(x)) + 2.0 * er2 * (24.8 * cos
+      q1 += -0.0001 * (2.0 * er1 * (-21.8 * sin(q1) - 17.2 * sin(q1 + q2)) + 2.0
+                       * er2 * (21.8 * cos(q1) + 17.2 * cos(q1 + q2)));
+      q2 += -0.0001 * (2.0 * er1 * (-17.2 * sin(x)) + 2.0 * er2 * (17.2 * cos
         (b_x)));
     }
 

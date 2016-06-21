@@ -32,7 +32,8 @@ int imageSize = 2764800;
 int streamSize = 2768640;// imageSize + sizeof(double);
 std::string cameraName = "rgb";
 std::string imageTopicSubName = "/kinect2/hd/image_color_rect";
-std::string cameraInfoSubName = "/kinect2/hd/image_color_rect/camera_info";
+//std::string cameraInfoSubName = "/kinect2/hd/image_color_rect/camera_info";
+std::string cameraInfoSubName = "/kinect2/depth/camera_info";
 
 int main(int argC,char **argV)
 {

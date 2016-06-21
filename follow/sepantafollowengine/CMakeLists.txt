@@ -22,7 +22,11 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost  REQUIRED)
 find_package(PkgConfig REQUIRED)
 find_package(PkgConfig REQUIRED)
+link_directories(${PCL_LIBRARY_DIRS}) 
 pkg_check_modules(EIGEN REQUIRED eigen3)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 catkin_package(
       INCLUDE_DIRS include 
@@ -31,6 +35,9 @@ catkin_package(
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${SERIAL_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 add_executable(SepantaFollow src/sepantafollowengine_node.cpp src/sepantafollowengine.cpp src/smove.cpp)
 target_link_libraries(SepantaFollow ${catkin_LIBRARIES} ${Boost_LIBRARIES} )

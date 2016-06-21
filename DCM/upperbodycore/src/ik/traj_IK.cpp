@@ -2,14 +2,14 @@
 // File: traj_IK.cpp
 //
 // MATLAB Coder version            : 3.0
-// C/C++ source code generated on  : 26-May-2016 23:28:29
+// C/C++ source code generated on  : 20-Jun-2016 19:33:14
 //
 
 // Include Files
 #include "ik/rt_nonfinite.h"
 #include "ik/traj_IK.h"
 #include "ik/traj_IK_emxutil.h"
-#include <iostream>
+#include <iostream>   
 #include <stdio.h>
 // Function Declarations
 static double rt_atan2d_snf(double u0, double u1);
@@ -120,6 +120,7 @@ static double rt_powd_snf(double u0, double u1)
 //                emxArray_real_T *v3
 // Return Type  : void
 //
+
 bool traj_IK(const double q_init[3], const double final[2], double TE, double f,
              emxArray_real_T *Q, emxArray_real_T *v1, emxArray_real_T *v2,
              emxArray_real_T *v3)
@@ -157,9 +158,9 @@ bool traj_IK(const double q_init[3], const double final[2], double TE, double f,
 
   //  --- path points ---
   //  --- partial fk ---
-  X1 = ((8.5 + 22.0 * cos(q_init[0])) + 24.8 * cos(q_init[0] + q_init[1])) + 8.0
-    * cos((q_init[0] + q_init[1]) + q_init[2]);
-  Y1 = (22.0 * sin(q_init[0]) + 24.8 * sin(q_init[0] + q_init[1])) + 8.0 * sin
+  X1 = ((19.5 + 21.8 * cos(q_init[0])) + 17.2 * cos(q_init[0] + q_init[1])) +
+    23.5 * cos((q_init[0] + q_init[1]) + q_init[2]);
+  Y1 = (21.8 * sin(q_init[0]) + 17.2 * sin(q_init[0] + q_init[1])) + 23.5 * sin
     ((q_init[0] + q_init[1]) + q_init[2]);
 
   //  ---
@@ -281,32 +282,31 @@ bool traj_IK(const double q_init[3], const double final[2], double TE, double f,
 
     //  ----------------------
     //  ----------------------
-    c = (T->data[T->size[0] * 3 + T->size[0] * T->size[1] * i] - 8.5) - 8.0 *
+    c = (T->data[T->size[0] * 3 + T->size[0] * T->size[1] * i] - 19.5) - 23.5 *
       T->data[T->size[0] * T->size[1] * i];
-    d = T->data[(T->size[0] * 3 + T->size[0] * T->size[1] * i) + 1] - 8.0 *
+    d = T->data[(T->size[0] * 3 + T->size[0] * T->size[1] * i) + 1] - 23.5 *
       T->data[1 + T->size[0] * T->size[1] * i];
 
-    //  ----------------------
+
     int iteration = 1000000;
-    while (E > 1.0E-8 && iteration > 0) 
-    {
+    //  ----------------------
+    while (E > 1.0E-8 && iteration > 0) {
       iteration--;
-      er1 = (22.0 * cos(q1) + 24.8 * cos(q1 + q2)) - c;
-      er2 = (22.0 * sin(q1) + 24.8 * sin(q1 + q2)) - d;
+      er1 = (21.8 * cos(q1) + 17.2 * cos(q1 + q2)) - c;
+      er2 = (21.8 * sin(q1) + 17.2 * sin(q1 + q2)) - d;
       E = er1 * er1 + er2 * er2;
       delta1 = q1 + q2;
       x = q1 + q2;
-      q1 += -0.0001 * (2.0 * er1 * (-22.0 * sin(q1) - 24.8 * sin(q1 + q2)) + 2.0
-                       * er2 * (22.0 * cos(q1) + 24.8 * cos(q1 + q2)));
-      q2 += -0.0001 * (2.0 * er1 * (-24.8 * sin(delta1)) + 2.0 * er2 * (24.8 *
+      q1 += -0.0001 * (2.0 * er1 * (-21.8 * sin(q1) - 17.2 * sin(q1 + q2)) + 2.0
+                       * er2 * (21.8 * cos(q1) + 17.2 * cos(q1 + q2)));
+      q2 += -0.0001 * (2.0 * er1 * (-17.2 * sin(delta1)) + 2.0 * er2 * (17.2 *
         cos(x)));
     }
 
-    if ( iteration <= 0 )
-    {
-    	return false;
+    if ( iteration <= 0 )   
+    {   
+      return false;   
     }
-
     //  ----------------------
     newq[0] = q1;
     newq[1] = q2;
@@ -316,8 +316,6 @@ bool traj_IK(const double q_init[3], const double final[2], double TE, double f,
       Q->data[i + Q->size[0] * i0] = newq[i0];
     }
   }
-
-  
 
   emxFree_real_T(&T);
   emxInit_real_T(&v, 2);
@@ -369,8 +367,7 @@ bool traj_IK(const double q_init[3], const double final[2], double TE, double f,
   }
 
   emxFree_real_T(&v);
-
-  return true;
+   return true;
 }
 
 //

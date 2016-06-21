@@ -57,12 +57,14 @@ void DepthImageToLaserScanROS::depthCb(const sensor_msgs::ImageConstPtr& depth_m
 	      const sensor_msgs::CameraInfoConstPtr& info_msg){
   try
   {
+  
     sensor_msgs::LaserScanPtr scan_msg = dtl_.convert_msg(depth_msg, info_msg);
     pub_.publish(scan_msg);
   }
   catch (std::runtime_error& e)
   {
     ROS_ERROR_THROTTLE(1.0, "Could not convert depth image to laserscan: %s", e.what());
+   
   }
 }
 
@@ -71,7 +73,7 @@ void DepthImageToLaserScanROS::connectCb(const ros::SingleSubscriberPublisher& p
   if (!sub_ && pub_.getNumSubscribers() > 0) {
     ROS_DEBUG("Connecting to depth topic.");
     image_transport::TransportHints hints("raw", ros::TransportHints(), pnh_);
-    sub_ = it_.subscribeCamera("/kinect2/sd/image_depth_rect", 10, &DepthImageToLaserScanROS::depthCb, this, hints);
+    sub_ = it_.subscribeCamera("/camera/depth/image", 10, &DepthImageToLaserScanROS::depthCb, this, hints);
   }
 }
 

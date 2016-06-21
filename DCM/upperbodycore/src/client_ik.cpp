@@ -18,8 +18,8 @@ int main (int argc, char **argv)
   ROS_INFO("Action server started, sending goal.");
   // send a goal to the action
   sepanta_msgs::MasterGoal goal;
-  goal.iParam1 = 100;
-  goal.iParam2 = 800;
+  goal.iParam1 = 300;
+  goal.iParam2 = 450;
   goal.iParam3 = 5;
 
   ac.sendGoal(goal);

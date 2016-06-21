@@ -13,13 +13,11 @@
                 right3_controller
                 right4_controller
                 right5_controller
-                right6_controller
                 left1_controller
                 left2_controller
                 left3_controller
                 left4_controller
                 left5_controller
-                left6_controller
                 headYaw_controller
                 headPitch_controller"
           output="screen"/>

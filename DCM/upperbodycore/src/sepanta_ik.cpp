@@ -90,20 +90,17 @@ float IKSystem::convert_motor_to_degree(string model_name,float value)
 
 float IKSystem::convert_degreeMotor_to_degreeIK(int index,float value)
 {
-    if ( index == 1) return (-1 * (value - 90)); else
-    if ( index == 2) return (-1 * value); else
-    if ( index == 3) return (-1 * value); else 
-    if ( index == 5) return (value + 179); 
-
+    if ( index == 1) return (-1 * (value - 85) / 1.64); else
+    if ( index == 2) return (-1 * (value - 27) / 1.64); else
+    if ( index == 3) return (-1 * (value - 22) / 1.64); else 
     return -1;
 }
 
 float IKSystem::convert_degreeIK_to_degreeMotor(int index,float value)
 {
-    if ( index == 1) return (-1 * value + 90); else
-    if ( index == 2) return (-1 * value); else
-    if ( index == 3) return (-1 * value); else 
-    if ( index == 5) return (value - 179); 
+    if ( index == 1) return (value * -1 * 1.64 + 85); else
+    if ( index == 2) return (value * -1 * 1.64 + 27); else
+    if ( index == 3) return (value * -1 * 1.64 + 22); else 
 
     return -1;
 }
@@ -159,10 +156,10 @@ bool IKSystem::convert_all_positions(double * positions,int size)
 
    for ( int i = 0 ; i < size ; i++)
    {
-       positions[i] =  convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(1,Rad2Deg(positions[i])));
+       positions[i] =  convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(1,Rad2Deg(positions[i])));
        if ( positions[i] > current_data[0].max || positions[i] < current_data[0].min ) return false;
        
-       positions[i + size] =  convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(2,Rad2Deg(positions[i + size])));
+       positions[i + size] =  convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(2,Rad2Deg(positions[i + size])));
        if ( positions[i + size] > current_data[1].max || positions[i + size] < current_data[1].min ) return false;
        
        positions[i + 2 * size] =  convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(3,Rad2Deg(positions[i + 2 * size])));
@@ -190,13 +187,10 @@ int IKSystem::convert_radPerSecond_to_speedMotor(double value)
 
 void IKSystem::motors_callback(const sepanta_msgs::upperbodymotorsfeedback::ConstPtr &msg)
 {
-   //std::cout<<"get feedbacks "<<msg->motorfeedbacks.size() <<std::endl;
-
    sepanta_msgs::motorfeedback m1 = msg->motorfeedbacks.at(0);
    sepanta_msgs::motorfeedback m2 = msg->motorfeedbacks.at(1);
    sepanta_msgs::motorfeedback m3 = msg->motorfeedbacks.at(2);
-   sepanta_msgs::motorfeedback m5 = msg->motorfeedbacks.at(4);
-
+ 
    ros::Time timeNow = ros::Time::now();
 
    current_data[0].position = m1.position;
@@ -220,56 +214,40 @@ void IKSystem::motors_callback(const sepanta_msgs::upperbodymotorsfeedback::Cons
    current_data[2].max = m3.max;
    current_data[2].timestamp = timeNow;
 
-   current_data[4].position = m5.position;
-   current_data[4].speed = m5.speed;
-   current_data[4].min = m5.min;
-   current_data[4].init = m5.init;
-   current_data[4].max = m5.max;
-   current_data[4].timestamp = timeNow;
-
- 
-   
-   double p1  = Deg2Rad(convert_degreeMotor_to_degreeIK(1,convert_motor_to_degree("MX-106",current_data[0].position)));
-   double p2  = Deg2Rad(convert_degreeMotor_to_degreeIK(2,convert_motor_to_degree("MX-106",current_data[1].position)));
+   double p1  = Deg2Rad(convert_degreeMotor_to_degreeIK(1,convert_motor_to_degree("MX-64",current_data[0].position)));
+   double p2  = Deg2Rad(convert_degreeMotor_to_degreeIK(2,convert_motor_to_degree("MX-64",current_data[1].position)));
    double p3  = Deg2Rad(convert_degreeMotor_to_degreeIK(3,convert_motor_to_degree("MX-64",current_data[2].position)));
-   double p5  = Deg2Rad(convert_degreeMotor_to_degreeIK(5,convert_motor_to_degree("MX-64",current_data[4].position)));
-
+  
    current_data[0].position_rad_ik = p1;
    current_data[1].position_rad_ik = p2;
    current_data[2].position_rad_ik = p3;
-   current_data[4].position_rad_ik = p5;
-
-   //double c1  = convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(1,Rad2Deg(p1)));
-   // double c2  = convert_degree_to_motor("MX-106",convert_degreeIK_to_degreeMotor(2,Rad2Deg(p2)));
-   // double c3  = convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(3,Rad2Deg(p3)));
-   // double c5  = convert_degree_to_motor("MX-64",convert_degreeIK_to_degreeMotor(5,Rad2Deg(p5)));
-
-   // std::cout<<"check 1 : "<<current_data[0].position<<"alireza "<<p1<<"motor "<<c1<<std::endl;
-   // std::cout<<"check 2 : "<<current_data[1].position<<"alireza "<<p2<<"motor "<<c2<<std::endl;
-   // std::cout<<"check 3 : "<<current_data[2].position<<"alireza "<<p3<<"motor "<<c3<<std::endl;
-   // std::cout<<"check 5 : "<<current_data[4].position<<"alireza "<<p5<<"motor "<<c5<<std::endl;
-
-   //msg->motorfeedback.size() 
+ 
+   double c1  = convert_degree_to_motor("MX-64", convert_degreeIK_to_degreeMotor(1,Rad2Deg(p1)));
+   double c2  = convert_degree_to_motor("MX-64", convert_degreeIK_to_degreeMotor(2,Rad2Deg(p2)));
+   double c3  = convert_degree_to_motor("MX-64", convert_degreeIK_to_degreeMotor(3,Rad2Deg(p3)));
+  
+   //std::cout<<"check 1 : "<<current_data[0].position<<" alireza 1 : "<<p1<<" motor 1 : "<<c1<<std::endl;
+   //std::cout<<"check 2 : "<<current_data[1].position<<" alireza 2 : "<<p2<<" motor 2 : "<<c2<<std::endl;
+   //std::cout<<"check 3 : "<<current_data[2].position<<" alireza 3 : "<<p3<<" motor 3 : "<<c3<<std::endl;
 }
 
 void IKSystem::update_arm_motors(int positions[3],int speed[3])
 {
-    //cout<<speed[0]<<" "<<speed[1]<<" "<<speed[2]<<endl;
     sepanta_msgs::motor _msg;
 
     _msg.position = positions[0];
     _msg.speed = abs(speed[0]);
-    cout<<"1 :"<<_msg.position<<" "<<_msg.speed<<endl;
+   // cout<<"1 :"<<_msg.position<<" "<<_msg.speed<<endl;
     motor_pub[0].publish(_msg);
 
     _msg.position = positions[1];
     _msg.speed = abs(speed[1]);
-    cout<<"2 :"<<_msg.position<<" "<<_msg.speed<<endl;
+  //  cout<<"2 :"<<_msg.position<<" "<<_msg.speed<<endl;
     motor_pub[1].publish(_msg);
 
     _msg.position = positions[2];
     _msg.speed = abs(speed[2]);
-    cout<<"3 :"<<_msg.position<<" "<<_msg.speed<<endl;
+  //  cout<<"3 :"<<_msg.position<<" "<<_msg.speed<<endl;
     motor_pub[2].publish(_msg);
 }
 

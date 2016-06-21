@@ -902,7 +902,6 @@ int main(int argc, char **argv)
     ros::Subscriber sub_handles[50];
     
     //-----------------------------------------------------------------------------------------
-
     sub_handles[0] = node_handles[10].subscribe("/motor_states/dx_port", 10, chatterCallbackw);
     sub_handles[1] = node_handles[10].subscribe("upperbodycorein_right_motors", 10, chatterCallback_right_motors); //all right motors
     sub_handles[2] = node_handles[10].subscribe("upperbodycorein_left_motors", 10, chatterCallback_left_motors); //all left motors

@@ -2,7 +2,7 @@
 // File: rt_defines.h
 //
 // MATLAB Coder version            : 3.0
-// C/C++ source code generated on  : 25-May-2016 21:40:53
+// C/C++ source code generated on  : 20-Jun-2016 19:33:14
 //
 #ifndef __RT_DEFINES_H__
 #define __RT_DEFINES_H__

@@ -69,6 +69,7 @@ ros::ServiceServer __srv_stop;
 ros::Publisher chatter_pub_ack;
 ros::Publisher chatter_pub_log;
 ros::Publisher bodyPub;
+ros::Publisher doorpub;
 ros::ServiceServer service_tcp ;
 
 bool isconnected = false;
@@ -102,6 +103,7 @@ string trim(string& str)
     return "";
 }
 
+int door_distance = 0;
 
 void process_body(string jsonCharArray)
 {
@@ -158,8 +160,13 @@ void process_body(string jsonCharArray)
                     body.jointPositions.push_back(JPAS);
                  }
 
+               
                  bodyArray.bodies.push_back(body);
             }
+
+                  
+            door_distance = std::stoi(parts[162]);
+                 
         }
         catch (...)
         {
@@ -167,7 +174,10 @@ void process_body(string jsonCharArray)
         }
 
         bodyPub.publish(bodyArray);
-          cout<<"----"<<endl;
+
+     
+
+        cout<<"----"<<endl;
 }
 
 
@@ -670,26 +680,26 @@ int main(int argc, char** argv)
 
     ros::Rate ros_rate(20);
 
-    ros::NodeHandle node_handles[15];
+    ros::NodeHandle node_handle;
     ros::Subscriber sub_handles[15];
 
-    chatter_pub[1] = node_handles[1].advertise<std_msgs::String>("tcpip/out", 1); 
-    chatter_pub[2] = node_handles[2].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
-    chatter_pub[4] = node_handles[5].advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 1);
-    chatter_pub[3] = node_handles[3].advertise<std_msgs::String>("tcpip/es", 1);
+    chatter_pub[1] = node_handle.advertise<std_msgs::String>("tcpip/out", 1); 
+    chatter_pub[2] = node_handle.advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
+    chatter_pub[4] = node_handle.advertise<geometry_msgs::Twist>("sepantamovebase/cmd_vel", 1);
+    chatter_pub[3] = node_handle.advertise<std_msgs::String>("tcpip/es", 1);
 
-    bodyPub = node_handles[3].advertise<sepanta_msgs::BodyArray>("/kinect2/bodyArray",1);
-
+    bodyPub = node_handle.advertise<sepanta_msgs::BodyArray>("/kinect2/bodyArray",1);
+    doorpub = node_handle.advertise<std_msgs::Int32>("/doorDistance",1);
     //==========================================================================================
-    sub_handles[0] = node_handles[4].subscribe("tcpip/in",10,chatterCallback_tcp);
-    sub_handles[1] = node_handles[5].subscribe("manager/node_status",10,chatterCallback_manager);
+    sub_handles[0] = node_handle.subscribe("tcpip/in",10,chatterCallback_tcp);
+    sub_handles[1] = node_handle.subscribe("manager/node_status",10,chatterCallback_manager);
     
     ros::NodeHandle nn;
     chatter_pub_ack = nn.advertise<std_msgs::String>("/core_tcp/ack",10);
     chatter_pub_log = nn.advertise<sepanta_msgs::log>("/manager/log",10);
 
-    service_start = node_handles[4].serviceClient<sepanta_msgs::NodeAction>("manager/start");
-    service_stop  = node_handles[5].serviceClient<sepanta_msgs::NodeAction>("manager/stop");
+    service_start = node_handle.serviceClient<sepanta_msgs::NodeAction>("manager/start");
+    service_stop  = node_handle.serviceClient<sepanta_msgs::NodeAction>("manager/stop");
 
     service_tcp = nn.advertiseService("pgitic_service_tcp", tcp_request);
 
@@ -701,8 +711,14 @@ int main(int argc, char** argv)
 
     while(ros::ok())
     {
-        ros::spinOnce();
+    	ros::spinOnce();
         ros_rate.sleep();
+        
+    	 std_msgs::Int32 _msg;
+         _msg.data = door_distance;
+         doorpub.publish(_msg);
+
+        
         send_es();
         send_ack();
     }

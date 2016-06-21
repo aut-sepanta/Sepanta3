@@ -11,8 +11,8 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "rt_defines.h"
-#include "rt_nonfinite.h"
+#include "ik/rt_defines.h"
+#include "ik/rt_nonfinite.h"
 #include "rtwtypes.h"
 #include "simple_IK_types.h"
 

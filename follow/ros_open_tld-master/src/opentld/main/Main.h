@@ -37,6 +37,9 @@
 #include "TLD.h"
 #include "ImAcq.h"
 #include "Gui.h"
+#include "cv_bridge/cv_bridge.h"
+#include <sensor_msgs/image_encodings.h>
+#include <sepanta_msgs/command.h>
 
 using namespace tld;
 using namespace cv;
@@ -68,12 +71,15 @@ public:
 	bool loadModel;
 	const char *modelPath;
 	const char *modelExportFile;
+
 	int seed;
 	//New
 	bool keyboardControl;
 	bool flag;
 	bool reuseFrameOnce;
 	bool skipProcessingOnce;
+	ros::ServiceServer service_cmd;
+	ros::NodeHandle my_node;
 	FILE *resultsFile;
 	Trajectory trajectory;
 	//ROS
@@ -119,9 +125,12 @@ public:
         delete tld;
         imAcqFree(imAcq);
     }
+
+    bool callback_cmd(sepanta_msgs::command::Request& request, sepanta_msgs::command::Response& response);
 	void doWork(const sensor_msgs::Image::ConstPtr& msg);
 	void publish(cv::Rect *currBB);
 	void loadRosparam();
+	void init();
     
 };
 

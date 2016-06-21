@@ -2,7 +2,7 @@
  * File: rt_nonfinite.h
  *
  * MATLAB Coder version            : 3.0
- * C/C++ source code generated on  : 25-May-2016 21:40:53
+ * C/C++ source code generated on  : 20-Jun-2016 19:33:14
  */
 
 #ifndef __RT_NONFINITE_H__
@@ -12,7 +12,7 @@
 #endif
 
 #include <stddef.h>
-#include "rtwtypes.h"
+#include "ik/rtwtypes.h"
 
 extern real_T rtInf;
 extern real_T rtMinusInf;

@@ -2,7 +2,7 @@
 // File: traj_IK_emxAPI.cpp
 //
 // MATLAB Coder version            : 3.0
-// C/C++ source code generated on  : 26-May-2016 04:27:53
+// C/C++ source code generated on  : 20-Jun-2016 19:33:14
 //
 
 // Include Files
@@ -23,7 +23,7 @@ emxArray_real_T *emxCreateND_real_T(int numDimensions, int *size)
   emxArray_real_T *emx;
   int numEl;
   int i;
-  emxInit_real_T2(&emx, numDimensions);
+  emxInit_real_T(&emx, numDimensions);
   numEl = 1;
   for (i = 0; i < numDimensions; i++) {
     numEl *= size[i];
@@ -48,7 +48,7 @@ emxArray_real_T *emxCreateWrapperND_real_T(double *data, int numDimensions, int 
   emxArray_real_T *emx;
   int numEl;
   int i;
-  emxInit_real_T2(&emx, numDimensions);
+  emxInit_real_T(&emx, numDimensions);
   numEl = 1;
   for (i = 0; i < numDimensions; i++) {
     numEl *= size[i];
@@ -76,7 +76,7 @@ emxArray_real_T *emxCreateWrapper_real_T(double *data, int rows, int cols)
   int i;
   size[0] = rows;
   size[1] = cols;
-  emxInit_real_T2(&emx, 2);
+  emxInit_real_T(&emx, 2);
   numEl = 1;
   for (i = 0; i < 2; i++) {
     numEl *= size[i];
@@ -103,7 +103,7 @@ emxArray_real_T *emxCreate_real_T(int rows, int cols)
   int i;
   size[0] = rows;
   size[1] = cols;
-  emxInit_real_T2(&emx, 2);
+  emxInit_real_T(&emx, 2);
   numEl = 1;
   for (i = 0; i < 2; i++) {
     numEl *= size[i];
@@ -132,7 +132,7 @@ void emxDestroyArray_real_T(emxArray_real_T *emxArray)
 //
 void emxInitArray_real_T(emxArray_real_T **pEmxArray, int numDimensions)
 {
-  emxInit_real_T2(pEmxArray, numDimensions);
+  emxInit_real_T(pEmxArray, numDimensions);
 }
 
 //

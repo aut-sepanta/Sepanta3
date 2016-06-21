@@ -8,7 +8,7 @@
 #define __SIMPLE_IK_TYPES_H__
 
 // Include Files
-#include "rtwtypes.h"
+#include "ik/rtwtypes.h"
 #endif
 
 //

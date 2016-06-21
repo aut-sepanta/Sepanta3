@@ -73,6 +73,12 @@
 #include <sepanta_msgs/MasterAction.h>
 #include <sepanta_msgs/led.h>
 #include <smove.h>
+#include <sensor_msgs/Image.h>
+#include <sensor_msgs/Image.h>
+#include <sepanta_msgs/Object.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
 
 using std::string;
 using std::exception;
@@ -106,6 +112,7 @@ double GetDistance(double x1, double y1, double x2, double y2);
 void GetPos(const geometry_msgs::PoseStamped::ConstPtr &msg);
 void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg);
 void chatterCallback_persons(const sepanta_msgs::PersonArray::ConstPtr &msg);
+void rgbImageCallback(const sensor_msgs::ImageConstPtr& input_image);
 void logic_thread();
 bool isidexist(int id);
 void scan10hz_thread();
@@ -126,7 +133,7 @@ void test_vis();
 
 person target_person;
 
-ros::NodeHandle node_handles[20];
+ros::NodeHandle node_handle;
 ros::Subscriber sub_handles[5];
 boost::thread _thread_Logic;
 boost::thread _thread_10hz_publisher;
@@ -139,6 +146,9 @@ ros::Publisher led_pub;
 ros::Publisher marker_pub;
 ros::Publisher scan10hz_pub;
 ros::Publisher mycmd_vel_pub;
+image_transport::Publisher small_image_pub;
+ros::NodeHandle nh;
+image_transport::ImageTransport it;
 double Position[2];
 double orientation[4];
 double Tetha;

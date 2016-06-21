@@ -10,7 +10,7 @@
                     port_name: "/dev/serial/by-id/usb-FTDI_USBZDXL_ADWAP295-if00-port0"
                     baud_rate: 1000000
                     min_motor_id: 1
-                    max_motor_id: 14
+                    max_motor_id: 22
                     update_rate: 20
         </rosparam>
     </node>

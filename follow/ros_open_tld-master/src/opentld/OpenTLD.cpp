@@ -38,20 +38,22 @@ using tld::Settings;
 
 int main(int argc, char **argv)
 {
-    
+	ros::init(argc, argv, "TobotDriver");
 	//Algo stuff
 	Main *main = new Main();
+	main->init();
+	
 	Config config;
 	ImAcq *imAcq = imAcqAlloc();
 	Gui *gui = new Gui();
 	
 	//Ros stuff
-	ros::init(argc, argv, "TobotDriver");
 	ros::NodeHandle my_node;
 	ros::Rate loop_rate(10);
-	ros::Publisher poete=my_node.advertise<geometry_msgs::PolygonStamped>("/tracking", 1000);
-	ros::Subscriber scribe=my_node.subscribe<sensor_msgs::Image>( "/camera/rgb/image_color",1000, &Main::doWork, main);
 
+	ros::Publisher poete=my_node.advertise<geometry_msgs::PolygonStamped>("/tracking", 1);
+	ros::Subscriber scribe=my_node.subscribe<sensor_msgs::Image>("/kinect2/small/image_color_rect",1, &Main::doWork, main);
+	
 	main->gui = gui;
 	main->imAcq = imAcq;
 	main->poete = &poete;
@@ -69,10 +71,12 @@ int main(int argc, char **argv)
 	srand(main->seed);
 	//imAcqInit(imAcq);
 
-	if(main->showOutput){
+	if(main->showOutput)
+	{
 		gui->init();
 	}
-	while(ros::ok()){
+	while(ros::ok())
+	{
 		ros::spinOnce();
 	}
 

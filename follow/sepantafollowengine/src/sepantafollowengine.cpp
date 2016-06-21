@@ -5,7 +5,8 @@ actionlib::SimpleActionClient<sepanta_msgs::MasterAction> * ac;
 SepantaFollowEngine::SepantaFollowEngine() : 
 App_exit(false),
 _thread_Logic(&SepantaFollowEngine::logic_thread,this),
-_thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this)
+_thread_10hz_publisher(&SepantaFollowEngine::scan10hz_thread,this),
+it(nh)
 {
     init();
 }
@@ -276,6 +277,36 @@ void SepantaFollowEngine::chatterCallback_persons(const sepanta_msgs::PersonArra
     // cout<<"people detected : "<<list_persons.size()<<endl;
 }
 
+void SepantaFollowEngine::rgbImageCallback(const sensor_msgs::ImageConstPtr& input_image) 
+{
+    cv_bridge::CvImagePtr cv_ptr;
+    cv_ptr = cv_bridge::toCvCopy(input_image, sensor_msgs::image_encodings::BGR8);
+  
+    cv::Size s = cv_ptr->image.size();
+
+    //cout<<s.width<<endl;
+    //cout<<s.height<<endl;
+
+    float w = 1280;
+    float h = 720;
+    float ratio = w / h;
+    int w2 = 800;
+    int h2 = w2 / ratio;
+
+    cv::Size size(w2,h2);//the dst image size,e.g.100x100
+    cv::Mat dst;//dst image
+    //Mat src;//src image
+    cv::resize(cv_ptr->image,dst,size);//resize image
+
+    //cv::imshow("Objects Visualizer", dst);
+    //cv::waitKey(1);
+
+    sensor_msgs::ImagePtr msg = cv_bridge::CvImage(input_image->header, "bgr8", dst).toImageMsg();
+
+    small_image_pub.publish(msg); 
+   
+
+}
 
 void SepantaFollowEngine::init()
 {
@@ -284,14 +315,18 @@ ROS_INFO("SepantaFollowEngine Version 1.0.0 :*");
 
 App_exit = false;
 scan10hz_can_send = false;
+
 //============================================================================================
-sub_handles[0] = node_handles[0].subscribe("/slam_out_pose", 10, &SepantaFollowEngine::GetPos,this);
-sub_handles[1] = node_handles[1].subscribe("/scan",10,&SepantaFollowEngine::chatterCallback_laser,this);
-sub_handles[2] = node_handles[2].subscribe("/people_tracked",10,&SepantaFollowEngine::chatterCallback_persons,this);
+sub_handles[0] = node_handle.subscribe("/slam_out_pose", 10, &SepantaFollowEngine::GetPos,this);
+sub_handles[1] = node_handle.subscribe("/scan",10,&SepantaFollowEngine::chatterCallback_laser,this);
+sub_handles[2] = node_handle.subscribe("/people_tracked",10,&SepantaFollowEngine::chatterCallback_persons,this);
+sub_handles[3] = node_handle.subscribe("/kinect2/hd/image_color_rect", 1, &SepantaFollowEngine::rgbImageCallback,this);
+sub_handles[4] = node_handle.subscribe("kinect2/bodyArray",10,chatterCallback_kinect2_body);
 //============================================================================================
-scan10hz_pub = node_handles[3].advertise<sensor_msgs::LaserScan>("/scan_10hz", 10);
-marker_pub =  node_handles[7].advertise<visualization_msgs::Marker>("visualization_marker_follow_target", 10);
-led_pub = node_handles[8].advertise<sepanta_msgs::led>("/lowerbodycore/led", 10);
+scan10hz_pub = node_handle.advertise<sensor_msgs::LaserScan>("/scan_10hz", 10);
+marker_pub =  node_handle.advertise<visualization_msgs::Marker>("visualization_marker_follow_target", 10);
+led_pub = node_handle.advertise<sepanta_msgs::led>("/lowerbodycore/led", 10);
+small_image_pub = it.advertise("/kinect2/small/image_color_rect", 1);
 
 sepanta_move = new smove();
 

@@ -2,13 +2,13 @@
 // File: traj_IK_types.h
 //
 // MATLAB Coder version            : 3.0
-// C/C++ source code generated on  : 26-May-2016 04:27:53
+// C/C++ source code generated on  : 20-Jun-2016 19:33:14
 //
 #ifndef __TRAJ_IK_TYPES_H__
 #define __TRAJ_IK_TYPES_H__
 
 // Include Files
-#include "rtwtypes.h"
+#include "ik/rtwtypes.h"
 
 // Type Definitions
 #ifndef struct_emxArray__common

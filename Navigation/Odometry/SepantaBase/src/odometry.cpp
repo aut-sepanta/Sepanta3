@@ -176,136 +176,135 @@ void IK_solver(float delta_time)
 
     odom_speed_xyw[0] = convert_vx_mps(odom_speed_xyw[0]);
     odom_speed_xyw[1] = convert_vy_mps(odom_speed_xyw[1]);
-    odom_speed_xyw[2] = convert_w_radps(odom_speed_xyw[2]);
+    odom_speed_xyw[2] = convert_w_radps(odom_speed_xyw[2]) / 4;
+
+    //cout<<odom_speed_xyw[0]<<" "<<odom_speed_xyw[1]<<" "<<odom_speed_xyw[2]<<endl;
 
     odom_position_yaw[0] += odom_speed_xyw[0] * delta_time; //meter
     odom_position_yaw[1] += odom_speed_xyw[1] * delta_time; //meter
     odom_position_yaw[2] += odom_speed_xyw[2] * delta_time; //radian
 
-    cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<odom_position_yaw[2]<<endl;
+    cout<<odom_position_yaw[0]<<" "<<odom_position_yaw[1]<<" "<<Rad2Deg(odom_position_yaw[2])<<endl;
 
     publish_odometry_base_pose();
 }
 
 void Turn_GL(int degree)
 {
+    // ros::Rate r(50);
+    // if (isrobotmove == true) return;
+    // isrobotmove = true;
+
+    // if (degree > 360) degree -= 360;
+    // if (degree < 0) degree += 360;
+
+    // float error = Compass - degree;
+
+    // while ((error > 2 || error < -2 )&& App_exit == false)
+    // {
+    //     error = Compass - degree;
+
+    //     if (error >= 180) error = error - 360;
+    //     if (error < -180) error = 360 - error;
+
+    //     if (error > 150) error = 150;
+    //     if (error < -150) error = -150;
+
+    //     float error_total = error * kp_degree;
+    //     omnidrive(0, 0, error_total);
+    //     if ( cancel_request ) break;
+    //     r.sleep();
+    // }
+
+    // omnidrive(0, 0, 0);
+    // r.sleep();
+    // isrobotmove = false;
+}
+
+void Turn_GL_local(int degree)
+{
     ros::Rate r(50);
-    if (isrobotmove == 1) return;
-    isrobotmove = 1;
+    if (isrobotmove == true) return;
+    isrobotmove = true;
 
-    if (degree > 360) degree -= 360;
-    if (degree < 0) degree += 360;
+     float error = Deg2Rad(degree);
 
-    float error = Compass - degree;
+     int s = 1;
+     if ( error < 0 ) s = -1;
+     error = abs(error);
 
-    while ((error > 2 || error < -2 )&& App_exit == false)
-    {
-        error = Compass - degree;
+     reset_position();
 
-        if (error >= 180) error = error - 360;
-        if (error < -180) error = 360 - error;
-
-        if (error > 150) error = 150;
-        if (error < -150) error = -150;
-
-        float error_total = error * kp_degree;
-        omnidrive(0, 0, error_total);
+     while (  abs(odom_position_yaw[2]) < error && App_exit == false)
+     {
+     	cout<<Rad2Deg(abs(odom_position_yaw[2]))<<" "<<Rad2Deg(error)<<endl; 
+        omnidrive(0, 0, -1 * 100 * s);
         if ( cancel_request ) break;
         r.sleep();
     }
 
     omnidrive(0, 0, 0);
-    r.sleep();
-    isrobotmove = 0;
-}
-
-void Turn_GL_local(int degree)
-{
-    if (isrobotmove == 1) return;
-    int target = (Compass + degree) % 360;
-    if (target < 0) target += 360;
-    Turn_GL(target);
+    isrobotmove = false;
 }
 
 void Move_GLX(float SV, float distance)
 {
     ros::Rate r(50);
-    if (isrobotmove == 1) return;
+    if (isrobotmove == true) return;
 
-    isrobotmove = 1;
-    float set_degree = Compass;
-    double SW = 0;
+    isrobotmove = true;
+  
     reset_position();
 
     if ( distance < 0 ) SV = SV * -1;
 
     distance = abs(distance) / 100;
 
-    if (SV != 0 && distance > 0) {
-        while ( abs(odom_position_yaw[0]) < distance && App_exit == false) {
-            double error = Compass - set_degree;
+    if (SV != 0 && distance > 0) 
+    {
+        while ( abs(odom_position_yaw[0]) < distance && App_exit == false)
+        {
             cout<<abs(odom_position_yaw[0])<<" "<<distance<<endl; 
-
-            if (error >= 180) error = error - 360;
-            if (error < -180) error = 360 - error;
-            SW = error * kp_move ;
-
-            if (SW > 80) SW = 80;
-            if (SW < -80) SW = -80;
-
-            //float ss = sin(Deg2Rad(error)) * 300;
             omnidrive(SV, 0, 0);
-
             if ( cancel_request ) break;
-           r.sleep();
+            r.sleep();
         }
     }
 
     omnidrive(0, 0, 0);
     r.sleep();
 
-    isrobotmove = 0;
+    isrobotmove = false;
 }
 
 void Move_GLY(float SV, float distance)
 {
     ros::Rate r(50);
 
-    if (isrobotmove == 1) return;
+    if (isrobotmove == true) return;
+    isrobotmove = true;
 
-    isrobotmove = 1;
-    float set_degree = Compass;
-    double SW = 0;
     reset_position();
 
     if ( distance < 0 ) SV = SV * -1;
 
     distance = abs(distance) / 100;
 
-    if (SV != 0 && distance > 0) {
-
-        while ( abs(odom_position_yaw[1]) < distance && App_exit == false) {
-            double error = Compass - set_degree;
-            if (error >= 180) error = error - 360;
-            if (error < -180) error = 360 - error;
-            SW = error * kp_move;
-
-            if (SW > 80) SW = 80;
-            if (SW < -80) SW = -80;
-
+    if (SV != 0 && distance > 0) 
+    {
+        while ( abs(odom_position_yaw[1]) < distance && App_exit == false) 
+        {
+        	cout<<abs(odom_position_yaw[1])<<" "<<distance<<endl; 
             omnidrive(0, SV, 0);
-
             if ( cancel_request ) break;
-
             r.sleep();
         }
-
     }
 
     omnidrive(0, 0, 0);
     r.sleep();
 
-    isrobotmove = 0;
+    isrobotmove = false;
 }
 
 void chatterCallback_pose(const geometry_msgs::PoseStamped::ConstPtr &msg)
@@ -321,42 +320,12 @@ void chatterCallback_pose(const geometry_msgs::PoseStamped::ConstPtr &msg)
     slam_position_yaw[2] = ConvertQuatToYaw(pose.orientation); //radians
 }
 
-void chatterCallback_syscommand(const geometry_msgs::PoseStamped::ConstPtr &msg)
-{
-  
-}
-
-
 void chatterCallback_omnispeed(const sepanta_msgs::omnidata::ConstPtr &msg)
 {
     speed_Motor[0] = msg->d0;
     speed_Motor[1] = msg->d1;
     speed_Motor[2] = msg->d2;
     speed_Motor[3] = msg->d3;
-}
-
-void chatterCallback_irsensor(const sepanta_msgs::irsensor::ConstPtr &msg)
-{
-    IR[0] = msg->d0;
-    IR[1] = msg->d1;
-    IR[2] = msg->d2;
-    IR[3] = msg->d3;
-    IR[4] = msg->d4;
-    IR[5] = msg->d5;
-    IR[6] = msg->d6;
-    IR[7] = msg->d7;
-}
-
-void chatterCallback_lasersensor(const sepanta_msgs::irsensor::ConstPtr &msg)
-{
-    laser_IR[0] = msg->d0;
-    laser_IR[1] = msg->d1;
-    laser_IR[2] = msg->d2;
-    laser_IR[3] = msg->d3;
-    laser_IR[4] = msg->d4;
-    laser_IR[5] = msg->d5;
-    laser_IR[6] = msg->d6;
-    laser_IR[7] = msg->d7;
 }
 
 void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
@@ -369,18 +338,10 @@ void chatterCallback_cmd_vel(const geometry_msgs::Twist &twist_aux)
     int yy = 0;
     int ww = 0;
 
-   
-
     xx = (int)convert_mps_vx(vel_x);
     yy = (int)convert_mps_vy(vel_y);
     ww = (int)convert_radps_w(vel_th);
-
-    //xx = xx / 2;
-    //yy = yy / 2;
-    //ww = ww / 2;
-
-    cout<<"FROM MOVEBASE"<<vel_x<<" "<<vel_y<<" "<<vel_th<<endl;
-    cout<<"TO MOTORS"<<xx<<" "<<yy<<" "<<ww<<endl;
+  
     omnidrive(xx,yy,ww);
 }
 
@@ -460,14 +421,14 @@ public:
     {
         Move_GLY(Odometry_speed,value);
     }
-    else if ( interfacegoal->type == "tunrgl")
-    {
-        Turn_GL(value);
-    }
-    else if ( interfacegoal->type == "turngllocal" )
+    else if ( interfacegoal->type == "turn")
     {
         Turn_GL_local(value);
     }
+    // else if ( interfacegoal->type == "turngllocal" )
+    // {
+    //    // Turn_GL_local(value);
+    // }
 
     omnidrive(0, 0, 0);
 
@@ -498,37 +459,29 @@ int main(int argc, char** argv)
   ros::Time::init();
   Init();
   
-  ros::Rate ros_rate(30);
+  ros::Rate ros_rate(13); //check lowerbody hz
 
   ros::NodeHandle node_handles[15];
   ros::Subscriber sub_handles[15];
 
   chatter_pub[0] = node_handles[0].advertise<sepanta_msgs::omnidata>("lowerbodycore/omnidrive", 1);
   chatter_pub[1] = node_handles[1].advertise<nav_msgs::Odometry>("odom", 10);
-
-  //chatter_pub[3] = node_handles[3].advertise<std_msgs::Int32>("lowerbodycore/isrobotmove", 10);
   chatter_pub[4] = node_handles[4].advertise<nav_msgs::Odometry>("odometry_base/odometry", 10);
   chatter_pub[5] = node_handles[5].advertise<geometry_msgs::Pose>("odometry_base/pose", 10);
-
-  //=================================================================================================
   sub_handles[1] = node_handles[2].subscribe("sepantamovebase/cmd_vel", 10, chatterCallback_cmd_vel);
-  sub_handles[2] = node_handles[3].subscribe("lowerbodycore/irsensors", 10, chatterCallback_irsensor);
-  sub_handles[3] = node_handles[4].subscribe("lowerbodycore/lasersensors", 10, chatterCallback_lasersensor);
   sub_handles[4] = node_handles[5].subscribe("lowerbodycore/omnispeed", 10, chatterCallback_omnispeed);
   sub_handles[6] = node_handles[7].subscribe("slam_out_pose", 10, chatterCallback_pose);
-  //sub_handles[7] = node_handles[8].subscribe("odometry_base/syscommand", 10, chatterCallback_pose);
-
+  
   tf::TransformBroadcaster odom_broadcaster;
   tf::TransformBroadcaster odom_broadcaster2;
 
-  myactionserver act("sepanta_action");
+  myactionserver act("odometry_action");
   
   while(ros::ok())
   {
-
     ros::spinOnce();
     //======================================================
-    IK_solver(0.05);
+    IK_solver(0.076); //13 hz
 
     //std_msgs::Int32 mes;
     //mes.data = isrobotmove;
@@ -537,19 +490,19 @@ int main(int argc, char** argv)
     geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(slam_position_yaw[2]);
 
     geometry_msgs::TransformStamped odom_trans;
-     odom_trans.header.stamp = ros::Time::now();
+    odom_trans.header.stamp = ros::Time::now();
     odom_trans.header.frame_id = "odom";
     odom_trans.child_frame_id = "base_link";
 
     odom_trans.transform.translation.x = slam_position_yaw[0];
     odom_trans.transform.translation.y = slam_position_yaw[1];
-     odom_trans.transform.translation.z = 0;
-     odom_trans.transform.rotation = odom_quat;
+    odom_trans.transform.translation.z = 0;
+    odom_trans.transform.rotation = odom_quat;
 
-     bool _p = false;
+    bool _p = false;
 
-     if ( _p )
-     odom_broadcaster.sendTransform(odom_trans);
+    if ( _p )
+    odom_broadcaster.sendTransform(odom_trans);
     
     nav_msgs::Odometry odom;
     odom.header.stamp = ros::Time::now();

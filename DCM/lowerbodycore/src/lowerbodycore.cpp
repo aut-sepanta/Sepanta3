@@ -173,7 +173,7 @@ void chatterCallback_laser(const sensor_msgs::LaserScan::ConstPtr &msg)
 
     }
 
-    if ( laser_IR[3] < 50 || laser_IR[4] < 50 || laser_IR[5] < 50 )
+    if ( laser_IR[3] < 80 || laser_IR[4] < 80 || laser_IR[5] < 80 )
     {
     	isdooropened = false;
     }
@@ -495,8 +495,7 @@ void serial_logic()
 
                     //ROS_INFO("USB Serial Write");
                     boost::this_thread::sleep(boost::posix_time::milliseconds(15));
-                    
-                    continue; 
+                  
                    
                     uint8_t read;
 
@@ -514,14 +513,22 @@ void serial_logic()
 
                                 if ( read == 255)
                                 {
-                                    //cout<<"READ HEADER OK"<<endl;
+                                    cout<<"READ HEADER OK"<<endl;
                                     //Read Packet
                                     my_serial.read(result_read,8);
-                                    mobileplatform_motors_read[0] = result_read[0];
-                                    mobileplatform_motors_read[1] = result_read[1];
-                                    mobileplatform_motors_read[2] = result_read[2];
-                                    mobileplatform_motors_read[3] = result_read[3];
 
+                                    //TODO : Alireza
+                                    // mobileplatform_motors_read[0] = result_read[0];
+                                    // mobileplatform_motors_read[1] = result_read[1];
+                                    // mobileplatform_motors_read[2] = result_read[2];
+                                    // mobileplatform_motors_read[3] = result_read[3];
+                                    mobileplatform_motors_read[0] = mobileplatform_motors_write[0];
+                                    mobileplatform_motors_read[1] = mobileplatform_motors_write[1];
+                                    mobileplatform_motors_read[2] = mobileplatform_motors_write[2];
+                                    mobileplatform_motors_read[3] = mobileplatform_motors_write[3];
+                                    
+
+                                    cout<<mobileplatform_motors_read[0]<<mobileplatform_motors_read[1]<<mobileplatform_motors_read[2]<<mobileplatform_motors_read[3]<<endl;
                                     int teta = ( result_read[5] << 8 ) + ( result_read[4] ) ; //Compass (2 byte)
                              
                                     char ems = result_read[6];

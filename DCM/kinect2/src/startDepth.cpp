@@ -30,7 +30,9 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 int imageSize = 434176;
 int streamSize = 435200;// imageSize + sizeof(double);
 std::string cameraName = "depth";
-std::string imageTopicSubName = "/kinect2/sd/image_depth_rect";
+//std::string imageTopicSubName = "/kinect2/sd/image_depth_rect";
+//std::string cameraInfoSubName = "/kinect2/sd/image_depth_rect/camera_info";
+std::string imageTopicSubName = "/kinect2/depth/image";
 std::string cameraInfoSubName = "/kinect2/sd/image_depth_rect/camera_info";
 
 int main(int argC,char **argV)

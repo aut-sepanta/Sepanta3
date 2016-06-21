@@ -2,7 +2,7 @@
 // File: traj_IK.h
 //
 // MATLAB Coder version            : 3.0
-// C/C++ source code generated on  : 26-May-2016 23:28:29
+// C/C++ source code generated on  : 20-Jun-2016 19:33:14
 //
 #ifndef __TRAJ_IK_H__
 #define __TRAJ_IK_H__

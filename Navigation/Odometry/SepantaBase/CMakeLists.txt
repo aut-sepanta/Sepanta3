@@ -36,9 +36,15 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+
+
 add_executable(odometry src/odometry.cpp)
 target_link_libraries(odometry ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 add_dependencies(odometry sepanta_msgs_generate_messages_cpp)
+
+add_executable(client_odometry src/client_odometry.cpp)
+target_link_libraries(client_odometry ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_dependencies(client_odometry sepanta_msgs_generate_messages_cpp)
 
 add_executable(cmd_watchdog src/cmd_watchdog.cpp)
 target_link_libraries(cmd_watchdog ${catkin_LIBRARIES} ${Boost_LIBRARIES} )

@@ -107,7 +107,7 @@ using namespace ros;
 #define waypoint_2 "bedroom"
 #define waypoint_3 "shelf"
 #define waypoint_4 "kitchen"
-//#define ask_for_recover
+#define ask_for_recover
 
 enum _logic_state { idle, wait_for_door, on_waypoint1 , on_waypoint2 , on_waypoint3 , on_waypoint4 , go_to_waypoint1 , go_to_waypoint2 , go_to_waypoint3 , go_to_waypoint4 , recover_door , recover_obstacle , recover_human };
 enum _navigation_state { ready , run , cancel , error };
@@ -355,6 +355,310 @@ void send_feedback_to_speech(string cmd)
    _msg.data = cmd;
    pub_spr.publish(_msg);
 }
+
+
+
+void Function_1()
+{
+   // if ( Function_state == 0 )
+   // {
+   //    say_message("I am going to kitchen and i should bring a coca for you!");
+   //    Function_state = 1;
+   // }
+   // else if ( Function_state == 1)
+   // {
+   //    navigation_go_to("kitchen");
+   //    Function_state = 2;
+   // }
+   // else if ( Function_state == 2)
+   // {
+   //      cout<<coutcolor_blue<<"Function [1] STATE [2] : wait for navigation to kitchen"<<coutcolor0<<endl;
+	  //   	Function_state = 3;
+   // }
+   // else if ( Function_state == 3)
+   // {
+   //     Function1_result = false;
+   //     cout<<coutcolor_blue<<"Function [1] STATE [3] : Send Start for object"<<coutcolor0<<endl;
+   //     Function_state = 4;
+   // }
+   // else if ( Function_state == 4)
+   // {
+   // 	   cout<<coutcolor_blue<<"Function [1] STATE [4] : wait for object recognition"<<coutcolor0<<endl;
+   // 	   Function_state = 5;
+   // }
+   // else if ( Function_state == 5)
+   // {
+   //    Function1_result = process_object("coca");
+   //    if ( Function1_result )
+   //    {
+   //      say_message("well done ! , i found the coca !");
+   //      say_message("i wonder, if i had my arms , could i pick up the coca? Money does not guarantee hapiness. But no money, no arms! ");
+   //    }
+   //    else
+   //    {
+   //      say_message("I cant find the coca.");
+   //      say_message("it does not matter. I could not grab it even if I found it. Money does not guarantee hapiness. But no money, no arms! ");
+   //    }
+
+   //    Function_state = 6;
+   // }
+   // else if ( Function_state == 6)
+   // {
+   //    say_message("i am goint to room center to report my perception");
+   //    navigation_go_to("roomcenter");
+   //    Function_state = 7;
+   // }
+   // else if ( Function_state == 7)
+   // {
+   // 	   cout<<coutcolor_blue<<"Function [1] STATE [7] : wait for navigation to room center"<<coutcolor0<<endl;
+	  //    Function_state = 8;
+   // }
+   // else if ( Function_state == 8 )
+   // {
+   	   
+   //    if ( Function1_result )
+   //    {
+   //         say_message("well done ! , i found the coca !");
+   //         say_message("But if you expect me to bring it for you, prepare a set of arms for me!");
+   //    }
+   //    else
+   //    {
+   //         say_message("I cant find the coca.");
+   //         say_message("it does not matter. I could not grab it even if I found it.");
+   //    }
+   // 	   //========================================
+   // 	   say_message("operation Done");
+
+   // 	   Function_state = 0;
+   // 	   logic_state = 3;
+   // }
+}
+
+void Function_2()
+{
+   // cout<<"Header :"<<Function_state<<endl;
+   // if ( Function_state == 0 )
+   // {
+   //   question_counter = 0;
+   // 	 say_message("It is my pleasure to answer your questions!");
+   // 	 Function_state = 1;
+   // }
+   // else if ( Function_state == 1)
+   // {
+   // 	  say_message("ask");
+   //    send_feedback_to_speech("qstart");
+   //    Function_state = 2;
+   // }
+   // else if ( Function_state == 2)
+   // {
+   //    if ( isspeechready )
+   //    { 
+   //        isspeechready = false;
+   //        if ( speech_last_command == "qready")
+   //        {
+   //          //say_message("ask");
+   //          Function_state = 3;
+   //        }
+   //        else
+   //        {
+
+   //           send_feedback_to_speech("qstart");
+   //        }
+   //    }
+   // }
+   // else if ( Function_state == 3)
+   // {
+   //          //Ready 
+   //          if ( isspeechready )
+   //          {
+   //             isspeechready = false;
+   //             if ( speech_last_command != "0")
+   //             {
+   //               say_message(speech_last_command);
+   //               if ( question_counter < 4)
+   //               {
+   //               question_counter++;
+   //               Function_state = 1;
+   //               }
+   //               else
+   //               {
+   //                  say_message("Finished");
+   //                  Function_state = 4;
+   //               }
+   //             }
+   //             else
+   //             {
+   //                 Function_state = 1;
+   //             }
+   //          }
+   //          else
+   //          {
+   //                cout<<coutcolor_blue<<"Function [2] STATE [3] : wait for user question"<<coutcolor0<<endl;
+   //          }
+   // }
+   // else if ( Function_state == 4)
+   // {
+   //     Function_state = 0;
+   //     logic_state = 3;
+   // }
+}
+
+void Function_3()
+{
+     // if ( Function_state == 0 )
+     // {
+     //   string cmd = "I am going to find the " + desire_object_name + " for you";
+     //   say_message(cmd);
+     //   Function_state = 1;
+     // }
+     // else if ( Function_state == 1)
+     // {
+     //   navigation_go_to("bedroom");
+     //   Function_state = 2;
+     // }
+     // else if ( Function_state == 2)
+     // {
+     //      cout<<coutcolor_blue<<"Function [3] STATE [2] : wait for navigation to bedroom"<<coutcolor0<<endl;
+  	  //   	Function_state = 3;
+     // }
+     // else if ( Function_state == 3)
+     // {
+     //     Function3_result = false;
+     // 	   Function_state = 4;
+     // }
+     // else if ( Function_state == 4)
+     // {
+     //     cout<<coutcolor_blue<<"Function [3] STATE [4] : wait for object recognition"<<coutcolor0<<endl;
+     // 	   Function_state = 5;
+     // }
+     // else if ( Function_state == 5)
+     // {
+     //    bool result = process_object(desire_object_name);
+
+     //    if ( result )
+     //    {
+     //      //we find it
+     //      string cmd = "I Find the " + desire_object_name + " for you";
+     //      say_message(cmd);
+
+     //      cmd = "i wonder, if i had my arms could i pick up the  " +  desire_object_name + " ? Oh money ! money is the problem";
+     //      say_message(cmd);
+          
+              
+     //      say_message("i am going to the room center");
+     //      navigation_go_to("roomcenter");
+         
+     //      Function_state = 10;
+
+     //    }
+     //    else 
+     //    {
+     //      //we cant find it
+     //      string cmd = "I Could not find the " + desire_object_name + " in bedroom ";
+     //      say_message(cmd);
+
+     //      say_message("it is better to check the shelf , maybe i will find it there ");
+     //      navigation_go_to("shelf");
+        
+     //      Function_state = 6;
+     //    }
+     // }
+     // else if ( Function_state == 6)
+     // {
+     //      cout<<coutcolor_blue<<"Function [3] STATE [6] : wait for navigation to shelf"<<coutcolor0<<endl;
+  	  //   	Function_state = 7;    
+     // }
+     // else if ( Function_state == 7)
+     // {
+     //    Function3_result = false;
+     // 	  Function_state = 8;
+     // }
+     // else if ( Function_state == 8)
+     // {
+     //     cout<<coutcolor_blue<<"Function [3] STATE [8] : wait for object recognition"<<coutcolor0<<endl;
+     // 	   Function_state = 9;
+     // }
+     // else if ( Function_state == 9)
+     // {
+     //   bool result = process_object(desire_object_name);
+   	 //   string cmd = "";
+     //   if ( result )
+     //    {
+     //      //we find it
+     //       cmd = "I Find the " + desire_object_name + " for you";
+     //       say_message(cmd);
+     //       cmd = "I have the  " +  desire_object_name + ". But wait! How on earth can I pick it up when I have no arms!?";
+     //       say_message(cmd);
+     //    }
+     //    else 
+     //    {
+     //      //we cant find it
+     //     cmd = "I Could not find the " + desire_object_name + " on the shelf ";
+     //     say_message(cmd);
+     //     cmd = "i want to have 2 arms like my other friends and humans ! Oh money ! money is the problem";
+     //     say_message(cmd);
+         
+     //    }
+
+     //      say_message("i am going to the room center");
+     //      navigation_go_to("roomcenter");
+     //      Function_state = 10;
+     //   }
+     //   else if ( Function_state == 10)
+     //   {
+     //   	    cout<<coutcolor_blue<<"Function [3] STATE [10] : wait for navigation to room center"<<coutcolor0<<endl;
+    	//     	Function_state = 11;
+    	    
+     //   }
+     //   else if ( Function_state == 11 )
+     //   {
+     //   	   //report object recognition status
+     //   	   //========================================
+     //   	   say_message("operation Done");
+     //   	   Function_state = 0;
+     //   	   logic_state = 3;
+     //   }
+} 
+
+void process_speech_command(string message)
+{
+   // isspeechready = false;
+   // speech_last_command = "";
+
+   // if ( logic_state == 4 )
+   // {
+	  //  	if ( message == "ready")
+	  //  	{
+		 //   	logic_state = 5;
+		 //   	cout<<coutcolor_green<<"Speech is ready !"<<coutcolor0<<endl;
+	  //   }
+	  //   else if ( message == "#error#" )
+	  //   {
+	  //   	logic_state = 3;
+	  //   	cout<<coutcolor_red<<"Speech has error :"<< message <<coutcolor0<<endl;
+	  //   }
+   // }
+   // else if ( logic_state == 5 )
+   // {
+   //    //6 kitchen
+   //    //7 questions
+   //    //8 object
+   //    //=================================================
+   //     // cout<<coutcolor_green<<"SPEECH GET PROCESS : "<<message<<coutcolor0<<endl;
+   // 	   // if ( message == "1" ){logic_state = 6;}else
+   // 	   // if ( message == "2" ){logic_state = 7;}else
+   // 	   // if ( message == "3" ){logic_state = 8; desire_object_name = "soda";}else
+   // 	   // if ( message == "4" ){logic_state = 8; desire_object_name = "coffee";}else
+   // 	   // if ( message == "5" ){logic_state = 9;}
+   	 
+   // 	   // else
+   // 	   // {
+   //     // cout<<coutcolor_red<<"Invalid Speech Command for logic state 5 : "<< message <<coutcolor0<<endl;
+   //     // logic_state = 3;
+   // 	   // }
+   // }
+}
+
 
 string desire_location = "";
 _navigation_state navigation_state = ready;

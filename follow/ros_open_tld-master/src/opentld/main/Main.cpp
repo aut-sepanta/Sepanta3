@@ -31,13 +31,49 @@
 #include "TLDUtil.h"
 #include "Trajectory.h"
 #include "Timing.h"
-#include "cv_bridge/cv_bridge.h"
-#include <sensor_msgs/image_encodings.h>
 
 
 using namespace tld;
 using namespace cv;
+Mat grey;
 
+bool  Main::callback_cmd(sepanta_msgs::command::Request& request, sepanta_msgs::command::Response& response)
+{
+
+    if ( request.id == "learn_on" )
+    {
+          tld->learningEnabled = true;
+    }
+    else
+    if ( request.id == "learn_off" )
+    {
+           tld->learningEnabled = false;
+    }
+    else
+    if ( request.id == "setrec" )
+    {
+    	 int a = request.value1;
+    	 int b = request.value2;
+    	 int c = request.value3;
+    	 int d = request.value4;
+
+    	 CvRect box;
+    	 box.x = a;
+    	 box.y = b;
+    	 box.width = c;
+    	 box.height = d;
+		
+		 Rect r = Rect(box);
+		 tld->selectObject(grey, &r);
+    }
+    
+    return true;
+}
+
+void Main::init()
+{
+	service_cmd = my_node.advertiseService("opentld_cmd", &Main::callback_cmd , this);
+}
 
 void Main::doWork(const sensor_msgs::Image::ConstPtr& msg)
 {
@@ -49,7 +85,7 @@ void Main::doWork(const sensor_msgs::Image::ConstPtr& msg)
 		cv_bridge::CvImagePtr img2 =cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
 						 
 		Mat img(img2->image);
-		Mat grey;
+		
 		cvtColor(img, grey, CV_BGR2GRAY);
 
 		if(flag==true){
